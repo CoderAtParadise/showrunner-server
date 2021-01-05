@@ -1,0 +1,25 @@
+services:
+  showrunner-db:
+    image: mysql
+    environment: 
+      MYSQL_ROOT_PASSWORD: dev
+      MYSQL_DATABASE: showrunner
+    ports:
+      - "3306:3306"
+    expose:
+      - "3306"
+  admin:
+    image: adminer
+    ports:
+      - "8080:8080"
+  showrunner-server:
+    build: ./server
+    stdin_open: true
+    ports: 
+      - "3000:3000"
+    restart: always
+    depends_on: 
+      - showrunner-db
+networks:
+  showrunner-network:
+    driver: bridge
