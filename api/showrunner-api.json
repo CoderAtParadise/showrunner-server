@@ -23,7 +23,7 @@
           },
           "service": {
             "type": "string",
-            "example": "8am-10am"
+            "example": "8am"
           },
           "date": {
             "type": "string",
@@ -76,7 +76,10 @@
         "type": "object",
         "properties": {
           "media-notes": {
-            "$ref": "#/components/schemas/notes"
+            "$ref": "#/components/schemas/notes",
+            "xml": {
+                "name" : "Media-Notes"
+            }
           },
           "audio-notes": {
             "$ref": "#/components/schemas/notes"
@@ -397,7 +400,16 @@
             "description": "The service",
             "schema": {
               "type": "string",
-              "example": "8am-10am"
+              "example": "8am"
+            }
+          },
+          {
+            "in": "query",
+            "name": "date",
+            "description": "The date",
+            "schema": {
+              "type": "string",
+              "example": "2020-01-03"
             }
           }
         ],
@@ -434,57 +446,7 @@
         }
       }
     },
-    "/{campus}{service}/{date}/runsheet/": {
-      "get": {
-        "summary": "Returns a runsheet",
-        "tags": ["Runsheet"],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "campus",
-            "required": true,
-            "description": "The Campus",
-            "schema": {
-              "type": "string",
-              "example": "mackenzie"
-            }
-          },
-          {
-            "in": "path",
-            "name": "service",
-            "required": true,
-            "description": "The service",
-            "schema": {
-              "type": "string",
-              "example": "8am-10am"
-            }
-          },
-          {
-            "in": "path",
-            "name": "date",
-            "required": true,
-            "description": "The date",
-            "schema": {
-              "type": "string",
-              "example": "2020-01-03"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "A xml file",
-            "content": {
-              "application/xml": {
-                "schema": {
-                  "$ref": "#/components/schemas/runsheet"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/{campus}{service}/{date}/show": {
+    "/{campus}{service}/show": {
       "get": {
         "summary": "Returns an overview of the entire service",
         "tags": ["Show"],
@@ -506,13 +468,12 @@
             "description": "The service",
             "schema": {
               "type": "string",
-              "example": "8am-10am"
+              "example": "8am"
             }
           },
           {
-            "in": "path",
+            "in": "query",
             "name": "date",
-            "required": true,
             "description": "The date",
             "schema": {
               "type": "string",
@@ -522,7 +483,7 @@
         ]
       }
     },
-    "/{campus}/{service}/{date}/show/up-next": {
+    "/{campus}/{service}/show/up-next": {
       "get": {
         "summary": "Returns a what the current item is and what is up next",
         "tags": ["Show"],
@@ -544,14 +505,13 @@
             "description": "The service",
             "schema": {
               "type": "string",
-              "example": "8am-10am"
+              "example": "8am"
             }
           },
           {
-            "in": "path",
+            "in": "query",
             "name": "date",
-            "required": true,
-            "description": "The date",
+            "description": "The date for the runsheet. If empty returns the next closest in date.",
             "schema": {
               "type": "string",
               "example": "2020-01-03"
@@ -572,7 +532,7 @@
         }
       }
     },
-    "/{campus}/{service}/{data}/show/prompt": {
+    "/{campus}/{service}/show/prompt": {
       "get": {
         "summary": "Returns a what the current item is and what is up next",
         "tags": ["Show"],
@@ -594,13 +554,12 @@
             "description": "The service",
             "schema": {
               "type": "string",
-              "example": "8am-10am"
+              "example": "8am"
             }
           },
           {
-            "in": "path",
+            "in": "query",
             "name": "date",
-            "required": true,
             "description": "The date",
             "schema": {
               "type": "string",

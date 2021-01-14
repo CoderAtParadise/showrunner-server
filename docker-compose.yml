@@ -1,25 +1,40 @@
 services:
-  showrunner-db:
-    image: mysql
+  db:
+    image: mysql:8.0.22
+    container_name: db
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
     environment: 
       MYSQL_ROOT_PASSWORD: dev
+      MYSQL_USER: showrunner
+      MYSQL_PASSWORD: showrunner
       MYSQL_DATABASE: showrunner
+    volumes:
+      - showrunner-data:/var/lib/mysql
+      - ./database:/docker-entrypoint-initdb.d
     ports:
       - "3306:3306"
-    expose:
-      - "3306"
-  admin:
+    healthcheck:
+      test: ["CMD","mysqladmin","ping","-h","localhost"]
+      timeout: 20s
+      retries: 10
+  adminer:
     image: adminer
+    container_name: adminer
+    restart: always
     ports:
       - "8080:8080"
-  showrunner-server:
-    build: ./server
+  api:
+    build: ./api
     stdin_open: true
+    container_name: api
+    restart: always
+    volumes:
+      - showrunner-data:/var/lib/showrunner/api
     ports: 
       - "3000:3000"
-    restart: always
     depends_on: 
-      - showrunner-db
-networks:
-  showrunner-network:
-    driver: bridge
+      db:
+        condition: service_healthy
+volumes:
+  showrunner-data:

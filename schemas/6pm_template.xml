@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<template id = "mack6pm">
+    <team>
+        <role id = "preaching">
+            <position>Preaching</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "service host">
+            <position>Service Host</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "welcome">
+            <position>Welcome team leader</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "facilities">
+            <position>Facilities - PHONE ONLY</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "lock-up">
+            <position>Lock-up</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "covid officer">
+            <position>Covid Officer</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "service producer">
+            <position>Service Producer</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "media">
+            <position>Media</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "camera">
+            <position>Camera</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "lighting">
+            <position>Lighting</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "sound">
+            <position>Sound</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "foldback">
+            <position>Foldback</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "worship leader 1">
+            <position>Worship Leader</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "worship leader 2">
+            <position>Worship Leader</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "drums">
+            <position>Drums</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "bass">
+            <position>Bass</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "keys">
+            <position>Keys</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "guitar 1">
+            <position>Guitar</position>
+            <name edit="overwrite"/>
+        </role>
+        <role  id = "guitar 2">
+            <position>Guitar</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "singer 1">
+            <position>Singer</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "singer 2">
+            <position>Singer</position>
+            <name edit="overwrite"/>
+        </role>
+        <role id = "acoustic 1">
+            <position>Acoustic</position>
+            <name edit="overwrite"/>
+        </role>
+    </team>
+    <items>
+        <item>
+            <time>15:30</time>
+            <duration>20</duration>
+            <info>Setup</info>
+            <personnel>Tech &amp; Musos</personnel>
+        </item>
+        <item link="personnel">
+            <time>15:50</time>
+            <duration>10</duration>
+            <info>Prary (on stage)</info>
+        </item>
+        <item link="personnel">
+            <time>16:00</time>
+            <duration>75</duration>
+            <info>Sound Check &amp; Rehearsal</info>
+        </item>
+        <item>
+            <time>17:15</time>
+            <duration>7</duration>
+            <info>Pre-Service Prayer &amp; Production Meeting</info>
+            <personnel>ALL</personnel>
+        </item>
+        <item tags="start" link="peronnel">
+            <time>17:56</time>
+            <duration>4</duration>
+            <info> Set for Service and countdown</info>
+            <notes>
+                <media>Countdown video</media>
+            </notes>
+        </item>
+        <item id = "song 1">
+            <time>
+                <start_time>18:00</time>
+                <duration>20</duration>
+            </time>
+            <song edit="overwrite">
+                <title/>
+                <first-line/>
+                <key/>
+            </song>
+            <personnel edit="overwrite"/>
+            <notes edit="merge">
+                <media>Lyrics</media>
+            </notes>
+        </item>
+        <item id = "song 2" tag="removable" link="time|notes">
+            <song edit="overwrite">
+                <title/>
+                <first-line/>
+                <key/>
+            </song>
+            <personnel edit="overwrite"/>
+        </item>
+        <item id = "song 3" tag="removable" link="time|notes">
+            <song edit="overwrite">
+                <title/>
+                <first-line/>
+                <key/>
+            </song>
+            <personnel edit="overwrite"/>
+        </item>
+        <item id = "song 4" tag="removable" link="time|notes">
+            <song edit="overwrite">
+                <title/>
+                <first-line/>
+                <key/>
+            </song>
+            <personnel edit="overwrite"/>
+        </item>
+        <item>
+            <time edit="overwrite">18:20</time>
+            <duration edit="overwrite">5</duration>
+            <info>Service Hosting</info>
+            <personnel>@team[service host]</personnel>
+        </item>
+        <item id="welcome" link="time|personnel">
+            <info format="list">Welcome/Connect/Give</info>
+            <notes edit="merge">
+                <media>Welcome Slide</media>
+            </notes>
+        </item>
+        <item id="host 1" tag="removable" link="time|personnel">
+            <info edit="overwrite" format="list"/>
+            <notes edit="merge"/>
+        </item>
+        <item id ="message">
+            <time edit="overwrite">18:25</time>
+            <duration edit="overwrite">35</duration>
+            <info>Message</info>
+            <personnel>@[preaching]</personnel>
+            <notes edit="overwrite">
+                <media>Message Slides</media>
+                <audio>1 headset</audio>
+                <stage>Lectern</stage>
+            </notes>
+        </item>
+        <item id ="response" link="personnel">
+            <time edit="overwrite">19:00</time>
+            <duration edit="overwrite">5</duration>
+            <info>Response</info>
+        </item>
+        <item id = "response song 1">
+            <time>19:05</time>
+            <duration>5</duration>
+            <song edit="overwrite">
+                <title/>
+                <first-line/>
+                <key/>
+            </song>
+            <personnel edit="overwrite"/>
+            <notes edit="merge">
+                <media>Lyrics</media>
+            </notes>
+        </item>
+        <item id="service close">
+            <time>19:10</time>
+            <duration>0</duration>
+            <info>Service Close</info>
+            <personnel edit="overwrite"/>
+            <notes>
+                <audio>Spotify</audio>
+            </notes>
+        </item>
+    </items>
+    <notes>
+        <handouts/>
+        <services/>
+    </notes>
+</template>
