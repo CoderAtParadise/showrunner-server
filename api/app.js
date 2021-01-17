@@ -4,11 +4,6 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const redoc = require('redoc-express');
-const db = require('./db');
-
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
-var locationRouter = require('./routes/location')
 
 var app = express();
 
@@ -21,11 +16,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(db);
 
 app.get('/api/showrunner-api.json',(req,res)=> {res.sendFile('showrunner-api.json',{root: '.'});});
 app.get('/api',redoc({title: 'Showrunner API',specUrl:'showrunner-api.json'}));
-app.use(locationRouter);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
