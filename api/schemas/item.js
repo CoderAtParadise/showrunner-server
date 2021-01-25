@@ -19,5 +19,5 @@ video_info = {
     name: "",
     file: "",
     hash: "",
-    duration: "00:00"
+    duration: "+00:00:00"
 }

@@ -4,48 +4,67 @@ const zeroPad = (num, places) => {
 };
 
 class Timepoint {
-  constructor(hours, minutes, seconds, overflow = false) {
-    this.hours = Math.min(hours, 24);
-    this.minutes = Math.min(minutes, 59);
-    this.seconds = Math.min(seconds, 59);
-    this.overflow = overflow;
+  static Invalid = -1;
+  static Time = 0;
+  static RelStart = 1;
+  static RelEnd = 2;
+
+  constructor(props) {
+    const defaults = {
+      hours: 0,
+      minutes: 0,
+      seconds: 0,
+      type: Timepoint.RelStart,
+    };
+    props = Object.assign(defaults, props);
+    this.hours = Number(Math.min(props.hours, 24));
+    this.minutes = Number(Math.min(props.minutes, 59));
+    this.seconds = Number(Math.min(props.seconds, 59));
+    this.type = props.type;
   }
 
   static parse(string) {
-    console.log(string.charAt(0));
-    let overflow = string.charAt(0) === "-" ? true : false;
-    if (overflow) string = string.slice(1);
+    if (string === "--:--:--") return new Timer({ type: Timepoint.Invalid });
+    let type = string.charAt(0) === "-" ? 2 : string.charAt(0) === "+" ? 1 : 0;
+    if (type !== 0) string = string.slice(1);
     let values = string.split(":");
     let timepoint;
     switch (values.length) {
       case 2:
-        timepoint = new Timepoint(
-          0,
-          Number(values[0]),
-          Number(values[1]),
-          overflow
-        );
+        timepoint = new Timepoint({
+          minutes: Number(values[0]),
+          seconds: Number(values[1]),
+          type: type,
+        });
         break;
       case 3:
-        timepoint = new Timepoint(
-          Number(values[0]),
-          Number(values[1]),
-          Number(values[2]),
-          overflow
-        );
+        timepoint = new Timepoint({
+          hours: Number(values[0]),
+          minutes: Number(values[1]),
+          seconds: Number(values[2]),
+          type: type,
+        });
         break;
       default:
         console.error("Invalid Time format");
-        return new Timepoint(0, 0, 0);
+        return new Timepoint({ type: Timepoint.Invalid });
     }
     return timepoint;
   }
 
   static stringify(time) {
-    return `${time.overflow ? "-" : ""}${zeroPad(time.hours, 1)}:${zeroPad(
-      time.minutes,
-      2
-    )}:${zeroPad(time.seconds, 2)}`;
+    return time.type === Timepoint.Invalid
+      ? "--:--:--"
+      : `${
+          time.type === Timepoint.RelStart
+            ? "+"
+            : time.type === Timepoint.RelEnd
+            ? "-"
+            : ""
+        }${zeroPad(time.hours, 2)}:${zeroPad(time.minutes, 2)}:${zeroPad(
+          time.seconds,
+          2
+        )}`;
   }
 
   _greaterThan(other) {
@@ -59,13 +78,13 @@ class Timepoint {
   }
 
   _lessThan(other) {
-    return this.hours < other.hours
-      ? true
-      : this.minutes < other.minutes
-      ? true
-      : this.seconds < other.seconds
-      ? true
-      : false;
+    if (this.hours < other.hours) return true;
+    if (this.hours === other.hours) {
+      if (this.minutes < other.minutes) return true;
+      if (this.minutes === other.minutes)
+        if (this.seconds < other.seconds) return true;
+    }
+    return false;
   }
 
   _equals(other) {
@@ -86,7 +105,7 @@ class Timepoint {
     res = Math.abs(Math.floor(res / 60));
     let minutes = res % 60;
     let hours = Math.abs(Math.floor(res / 60));
-    return new Timepoint(hours, minutes, seconds);
+    return new Timepoint({ hours: hours, minutes: minutes, seconds: seconds });
   }
 
   _add(other) {
@@ -97,120 +116,163 @@ class Timepoint {
     res = Math.abs(Math.floor(res / 60));
     let minutes = res % 60;
     let hours = Math.abs(Math.floor(res / 60));
-    return new Timepoint(hours, minutes, seconds);
+    return new Timepoint({ hours: hours, minutes: minutes, seconds: seconds });
   }
 
   static _addHelper(lhs, rhs) {
-    if (lhs._equals(rhs)) return new Timepoint(0, 0, 0);
+    if (lhs._equals(rhs))
+      return new Timepoint({ hours: 0, minutes: 0, seconds: 0 });
     else if (lhs._lessThan(rhs)) {
       return rhs._subtract(lhs);
     } else if (lhs._greaterThan(rhs)) {
       let res = lhs._subtract(rhs);
-      res.overflow = true;
+      res.type = Timepoint.RelEnd;
       return res;
     }
   }
 
   lessThan(other) {
-    if (this.overflow && other.overflow) return _greaterthan(other);
-    else if (this.overflow && !other.overflow) return true;
-    else if (!this.overflow && other.overflow) return false;
-    else return this._lessthan(other);
+    if (this.type === Timepoint.RelEnd && other.type === Timepoint.RelEnd)
+      return _greaterthan(other);
+    else if (this.type === Timepoint.RelEnd && this.type === Timepoint.RelStart)
+      return true;
+    else if (
+      this.type === Timepoint.RelStart &&
+      other.type === Timepoint.RelEnd
+    )
+      return false;
+    else return this.type === other.type ? this._lessthan(other) : false;
   }
 
   greaterThan(other) {
-    if (this.overflow && other.overflow) return this._lessthan(other);
-    else if (this.overflow && !other.overflow) return false;
-    else if (!this.overflow && other.overflow) return true;
-    else return this._greaterthan(other);
+    if (this.type === Timepoint.RelEnd && other.type === Timepoint.RelEnd)
+      return this._lessthan(other);
+    else if (this.type === Timepoint.RelEnd && this.type === Timepoint.RelStart)
+      return false;
+    else if (
+      this.type === Timepoint.RelStart &&
+      other.type === Timepoint.RelEnd
+    )
+      return true;
+    else return this.type === other.type ? this._greaterthan(other) : false;
   }
 
   equals(other) {
-    if (this._equals(Timepoint.zeroTime) && other._equals(Timepoint.zeroTime))
+    if (
+      (this.type === Timepoint.RelStart || this.type === Timepoint.RelEnd) &&
+      this._equals(Timepoint.zeroTime) &&
+      other._equals(Timepoint.zeroTime)
+    )
       return true; //short-circuit -0:00:00 == 0:00:00
-    return this.overflow === other.overflow ? this._equals(other) : false;
+    return this.type === other.type ? this._equals(other) : false;
   }
 
   subtract(other) {
-    if (this.overflow && other.overflow) {
-      if (this._equals(other)) return new Timepoint(0, 0, 0);
+    if (this.type === Timepoint.RelEnd && other.type === Timepoint.RelEnd) {
+      if (this._equals(other))
+        return new Timepoint({ hours: 0, minutes: 0, seconds: 0 });
       let res = Timepoint._addHelper(this, other);
-      res.overflow = true;
+      res.type = Timepoint.RelEnd;
       return res;
-    } else if (this.overflow && !other.overflow) {
+    } else if (
+      this.type === Timepoint.RelEnd &&
+      other.type === Timepoint.RelStart
+    ) {
       let res = this._add(other);
-      res.overflow = true;
+      res.type = Timepoint.RelEnd;
       return res;
-    } else if (!this.overflow && other.overflow) return this._add(other);
+    } else if (
+      this.type === Timepoint.RelStart &&
+      other.type === Timepoint.RelEnd
+    )
+      return this._add(other);
     else {
       if (this._lessThan(other)) {
         let res = other._subtract(this);
-        res.overflow = true;
+        res.type = Timepoint.RelEnd;
         return res;
       } else return this._subtract(other);
     }
   }
 
   add(other) {
-    if (this.overflow && other.overflow) {
+    if (this.type === Timepoint.RelEnd && other.type === Timepoint.RelEnd) {
       let res = this._add(other);
-      res.overflow = true;
+      res.type = Timepoint.RelEnd;
       return res;
-    } else if (this.overflow && !other.overflow)
+    } else if (
+      this.type === Timepoint.RelEnd &&
+      other.type === Timepoint.RelStart
+    )
       return Timepoint._addHelper(this, other);
-    else if (!this.overflow && other.overflow)
+    else if (
+      this.type === Timepoint.RelStart &&
+      other.type === Timepoint.RelEnd
+    )
       return Timepoint._addHelper(other, this);
     else return this._add(other);
   }
 
   static now() {
     let now = new Date();
-    return new Timepoint(now.getHours(), now.getMinutes(), now.getSeconds());
+    return new Timepoint({
+      hours: now.getHours(),
+      minutes: now.getMinutes(),
+      seconds: now.getSeconds(),
+      type: Timepoint.Time,
+    });
   }
 
-  static zeroTime = new Timepoint(0, 0, 0);
-  static maxTime = new Timepoint(23, 59, 59);
-  static minTime = new Timepoint(23, 59, 59, true);
-  static idTime = new Timepoint(0, 0, 1);
+  static zeroTime = new Timepoint();
+  static maxTime = new Timepoint({ hours: 23, minutes: 59, seconds: 59 });
+  static minTime = new Timepoint({
+    hours: 23,
+    minutes: 59,
+    seconds: 59,
+    type: 2,
+  });
+  static idTime = new Timepoint({ seconds: 1 });
 }
 
 class Timer {
-  constructor() {
-    this.timepoint = new Timepoint(0, 0, 0);
-    this.runningTimepoint = new Timepoint(0, 0, 0);
-    this.isCountdown = false;
-    this.overflowAllowed = false;
-    this.running = false;
-  }
-
-  unpause() {
-    this.running = true;
-    return this;
-  }
-
-  pause() {
-    this.running = false;
-    return this;
+  constructor(props) {
+    const defaults = {
+      startpoint: new Timepoint({ type: Timepoint.Invalid }),
+      endpoint: new Timepoint({ type: Timepoint.Invalid }),
+      type: Timepoint.Countdown,
+      overrun: false,
+    };
+    props = Object.assign(defaults, props);
+    this.startpoint = props.startpoint;
+    this.endpoint = props.endpoint;
+    this.runningTimepoint = new Timepoint();
+    this.type = props.type;
+    this.overrun = props.overrun;
   }
 
   start() {
-    this.restart();
-    return this.unpause();
+    this.interval = setInterval(() => {this.update()},1000);
+    return this;
   }
 
   stop() {
-    this.pause();
-    return this.restart();
+    clearInterval(this.interval);
+    return this;
   }
 
+  create() {
+    this.restart();
+    this.start();
+    return this;
+  }
   restart() {
-    Object.assign(this.runningTimepoint, this.timepoint);
+    Object.assign(this.runningTimepoint, this.startpoint);
     return this;
   }
 
   isAtTimepoint(timepoint) {
     if (this.isCountdown) {
-      if (timepoint.overflow) return this.runningTimepoint._equals(timepoint);
+      if (timepoint.type) return this.runningTimepoint._equals(timepoint);
       else {
         let ac = this.timepoint.subtract(this.runningTimepoint);
         return ac._equals(timepoint);
@@ -218,64 +280,77 @@ class Timer {
     } else return this.runningTimepoint._equals(timepoint);
   }
 
-  increment(timepoint = Timepoint.idTime) {
-    this.runningTimepoint = this.runningTimepoint.add(timepoint);
-    return this;
-  }
-
-  decrement(timepoint = Timepoint.idTime) {
-    this.runningTimepoint = this.runningTimepoint.subtract(timepoint);
-    return this;
-  }
-
   update() {
-    if (this.running) {
-      if (
-        this.runningTimepoint.equals(Timepoint.maxTime) ||
-        this.runningTimepoint.equals(Timepoint.minTime)
-      ) {
-        this.stop();
+      switch (this.type) {
+        case Timer.Countdown:
+          this.runningTimepoint = this.runningTimepoint.subtract(
+            Timepoint.idTime
+          );
+          if (this.runningTimepoint.equals(Timepoint.minTime) || this.runningTimepoint.equals(this.endpoint) && !this.overrun)
+            this.stop();
+          break;
+        case Timer.Countdown_to_Time: //todo more work to make this work properly
+          this.runningTimepoint = Timer.endpoint._subtract(Timer.now());
+          if (this.runningTimepoint.equals(Timepoint.zeroTime) && !this.overrun)
+            this.stop();
+          break;
+        case Timer.Elapsed:
+          this.runningTimepoint = this.runningTimepoint.add(Timepoint.idTime);
+          if (this.runningTimepoint.equals(Timepoint.maxTime) || this.runningTimepoint.equals(this.endpoint) && !this.overrun)
+            this.stop();
+          break;
+        default:
+          console.error(`Unknown Timer type: ${this.type}`);
+          break;
       }
-      if (this.isCountdown) this.decrement();
-      else this.increment();
-    }
-    return this;
+      console.log(this.stringify());
   }
 
   stringify() {
     return Timepoint.stringify(this.runningTimepoint);
   }
+
+  static Countdown = "countdown";
+  static Countdown_to_Time = "countdown_to_time";
+  static Elapsed = "elapsed";
 }
 
-const t1 = new Timepoint(1, 2, 1);
-const t2 = new Timepoint(1, 2, 1, true);
-const t3 = new Timepoint(1, 3, 1);
-const t4 = new Timepoint(1, 3, 1, true);
+const timer_message_example = {
+  message_type: "timer",
+  timer: "example timer",
+  command: "create",
+  type: "countdown",
+  overrun: false,
+  startpoint: "+00:00:30",
+  endpoint: "+00:00:00",
+};
 
-/*console.log(Timepoint.stringify(t1.add(t1))); //2:04:02
-console.log(Timepoint.stringify(t1.add(t2))); //0:00:00
-console.log(Timepoint.stringify(t2.add(t1))); //0:00:00
-console.log(Timepoint.stringify(t2.add(t2))); //-2:04:02
-console.log(Timepoint.stringify(t3.add(t2))); //0:01:00
-console.log(Timepoint.stringify(t2.add(t3))); //0:01:00
-console.log(Timepoint.stringify(t4.add(t1))); //-0:01:00
-console.log(Timepoint.stringify(t1.add(t4))); //-0:01:00
-console.log(Timepoint.stringify(t1.subtract(t1))); //0:00:00
-console.log(Timepoint.stringify(t1.subtract(t2))); //2:04:02
-console.log(Timepoint.stringify(t2.subtract(t1))); //-2:04:02
-console.log(Timepoint.stringify(t2.subtract(t2))); //0:00:00
-console.log(Timepoint.stringify(t3.subtract(t2))); //2:05:02
-console.log(Timepoint.stringify(t2.subtract(t3))); //-2:05:02
-console.log(Timepoint.stringify(t2.subtract(t4))); //-0:01:00
-console.log(Timepoint.stringify(t2.subtract(t4))); //-0:01:00*/
-let timer = new Timer();
-timer.timepoint = new Timepoint(0,0,1);
-timer.isCountdown = true;
-timer.start();
-console.log(Timepoint.stringify(timer.update().runningTimepoint));
-console.log(Timepoint.stringify(timer.update().runningTimepoint));
+let timers = new Map();
+const handleTimerMessage = (message) => {
+  if (!timers.has(message.timer)) timers.set(message.timer, new Timer());
+  let timer = timers.get(message.timer);
+  switch (message.command) {
+    case "create":
+      timer.type = message.type;
+      timer.overrun = message.overrun;
+      timer.startpoint = Timepoint.parse(message.startpoint);
+      timer.endpoint = Timepoint.parse(message.endpoint);
+      timer.create();
+      break;
+    case "start":
+      timer.start();
+      break;
+    case "stop":
+      timer.stop();
+    case "restart":
+    default:
+      timer.restart();
+      break;
+  }
+};
 
 module.exports = {
   Timer: Timer,
   Timepoint: Timepoint,
 };
+handleTimerMessage(timer_message_example);

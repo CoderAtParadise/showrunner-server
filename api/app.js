@@ -5,7 +5,8 @@ var cookieParser = require('cookie-parser');
 var logger = require('morgan');
 const redoc = require('redoc-express');
 const ws = require('./ws/socket')(express());
-require("./components/timer")
+require("./components/timer");
+require('./components/runsheets');
 
 var app = ws.app;
 
