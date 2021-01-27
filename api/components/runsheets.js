@@ -1,27 +1,16 @@
 const fs = require('fs');
 const path = require('path');
-let listDir = (dirPath, extension, cb) => {
-    fs.readdir(dirPath, function(err, list) {
-      if (err) return cb(err);
-  
-      var filtered = list.map(function(fileName) {
-        return path.join(dirPath, fileName);
-      }).filter(function(filePath) {
-        return path.extname(filePath) === extension;
-      })
-  
-      cb(null, filtered);
-    })
-  }
+const {LoadDir} = require('./file_helper');
 
 const runsheetsDir = 'storage/runsheets';
 const templatesDir = 'storage/templates';
 let runsheets = new Map();
 let templates = new Map();
-let filter = (dir,output) => listDir(dir,'.json',(err,files) =>{
+let filter = (dir,output) => LoadDir(dir,'.json',(err,files) =>{
     files.forEach((file) => output.set(path.basename(file,'.json'),file));
 });
 filter(runsheetsDir,runsheets);
+filter(templatesDir,templates);
 
 fs.watch(runsheetsDir,(eventType,filename) => {
     filter(runsheetsDir,runsheets);

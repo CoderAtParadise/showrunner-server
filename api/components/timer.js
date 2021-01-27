@@ -101,7 +101,7 @@ class Timepoint {
     let tis = (this.hours * 60 + this.minutes) * 60 + this.seconds;
     let otis = (other.hours * 60 + other.minutes) * 60 + other.seconds;
     let res = tis - otis;
-    let seconds = res % 60;
+    let seconds = Math.abs(res % 60);
     res = Math.abs(Math.floor(res / 60));
     let minutes = res % 60;
     let hours = Math.abs(Math.floor(res / 60));
@@ -112,7 +112,7 @@ class Timepoint {
     let tis = (this.hours * 60 + this.minutes) * 60 + this.seconds;
     let otis = (other.hours * 60 + other.minutes) * 60 + other.seconds;
     let res = tis + otis;
-    let seconds = res % 60;
+    let seconds = Math.abs(res % 60);
     res = Math.abs(Math.floor(res / 60));
     let minutes = res % 60;
     let hours = Math.abs(Math.floor(res / 60));
@@ -251,7 +251,9 @@ class Timer {
   }
 
   start() {
-    this.interval = setInterval(() => {this.update()},1000);
+    this.interval = setInterval(() => {
+      this.update();
+    }, 1000);
     return this;
   }
 
@@ -260,14 +262,15 @@ class Timer {
     return this;
   }
 
-  create() {
-    this.restart();
-    this.start();
-    return this;
-  }
-  restart() {
+  reset() {
+    this.stop();
     Object.assign(this.runningTimepoint, this.startpoint);
     return this;
+  }
+
+  restart() {
+    this.reset();
+    return this.start();
   }
 
   isAtTimepoint(timepoint) {
@@ -281,29 +284,37 @@ class Timer {
   }
 
   update() {
-      switch (this.type) {
-        case Timer.Countdown:
-          this.runningTimepoint = this.runningTimepoint.subtract(
-            Timepoint.idTime
-          );
-          if (this.runningTimepoint.equals(Timepoint.minTime) || this.runningTimepoint.equals(this.endpoint) && !this.overrun)
-            this.stop();
-          break;
-        case Timer.Countdown_to_Time: //todo more work to make this work properly
-          this.runningTimepoint = Timer.endpoint._subtract(Timer.now());
-          if (this.runningTimepoint.equals(Timepoint.zeroTime) && !this.overrun)
-            this.stop();
-          break;
-        case Timer.Elapsed:
-          this.runningTimepoint = this.runningTimepoint.add(Timepoint.idTime);
-          if (this.runningTimepoint.equals(Timepoint.maxTime) || this.runningTimepoint.equals(this.endpoint) && !this.overrun)
-            this.stop();
-          break;
-        default:
-          console.error(`Unknown Timer type: ${this.type}`);
-          break;
-      }
-      console.log(this.stringify());
+    switch (this.type) {
+      case Timer.Countdown:
+        this.runningTimepoint = this.runningTimepoint.subtract(
+          Timepoint.idTime
+        );
+        if (
+          this.runningTimepoint.equals(Timepoint.minTime) ||
+          (this.runningTimepoint.equals(this.endpoint) && !this.overrun)
+        )
+          this.stop();
+        break;
+      case Timer.Countdown_to_Time:
+        this.runningTimepoint = this.endpoint.subtract(Timepoint.now());
+        if (
+          this.runningTimepoint.equals(Timepoint.minTime) ||
+          (this.runningTimepoint.equals(Timepoint.zeroTime) && !this.overrun)
+        )
+          this.stop();
+        break;
+      case Timer.Elapsed:
+        this.runningTimepoint = this.runningTimepoint.add(Timepoint.idTime);
+        if (
+          this.runningTimepoint.equals(Timepoint.maxTime) ||
+          (this.runningTimepoint.equals(this.endpoint) && !this.overrun)
+        )
+          this.stop();
+        break;
+      default:
+        console.error(`Unknown Timer type: ${this.type}`);
+        break;
+    }
   }
 
   stringify() {
@@ -315,42 +326,7 @@ class Timer {
   static Elapsed = "elapsed";
 }
 
-const timer_message_example = {
-  message_type: "timer",
-  timer: "example timer",
-  command: "create",
-  type: "countdown",
-  overrun: false,
-  startpoint: "+00:00:30",
-  endpoint: "+00:00:00",
-};
-
-let timers = new Map();
-const handleTimerMessage = (message) => {
-  if (!timers.has(message.timer)) timers.set(message.timer, new Timer());
-  let timer = timers.get(message.timer);
-  switch (message.command) {
-    case "create":
-      timer.type = message.type;
-      timer.overrun = message.overrun;
-      timer.startpoint = Timepoint.parse(message.startpoint);
-      timer.endpoint = Timepoint.parse(message.endpoint);
-      timer.create();
-      break;
-    case "start":
-      timer.start();
-      break;
-    case "stop":
-      timer.stop();
-    case "restart":
-    default:
-      timer.restart();
-      break;
-  }
-};
-
 module.exports = {
   Timer: Timer,
   Timepoint: Timepoint,
 };
-handleTimerMessage(timer_message_example);
