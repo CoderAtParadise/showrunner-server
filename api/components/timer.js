@@ -9,7 +9,7 @@ class Timepoint {
   static RelStart = 1;
   static RelEnd = 2;
 
-  constructor(props) {
+  constructor(props = {hours:0,minutes:0,seconds:0,type: Timepoint.RelStart}) {
     const defaults = {
       hours: 0,
       minutes: 0,

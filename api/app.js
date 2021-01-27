@@ -6,10 +6,9 @@ var logger = require("morgan");
 const redoc = require("redoc-express");
 const {getTimers} = require("./components/timer");
 require("./components/runsheets");
-require('./components/messages/timer_message');
-const EventEmitter = require('events');
+const events = require('./components/event');
+require('./components/cue');
 
-const events = new EventEmitter();
 var app = express();
 
 // view engine setup
@@ -21,18 +20,17 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
-app.use((req,res,next) => {req.events = events;next()});
 
-app.get("/api/showrunner-api.json", (req, res) => {
+app.get("/spec/showrunner-api.json", (req, res) => {
   res.sendFile("showrunner-api.json", { root: "." });
 });
 app.get(
-  "/api",
+  "/spec",
   redoc({ title: "Showrunner API", specUrl: "showrunner-api.json" })
 );
-app.use("/", require("./routes/index"));
 app.use(require("./routes/timers"));
 // catch 404 and forward to error handler
+
 app.use(function (req, res, next) {
   next(createError(404));
 });

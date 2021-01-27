@@ -2,7 +2,8 @@ const { json } = require("express");
 const EventEmitter = require("events");
 const express = require("express");
 const { getTimer,getTimers,Timepoint } = require("../components/timer");
-var router = express.Router();
+const router = express.Router();
+const eventhandler = require('../components/event');
 
 const sendTimers = (map) => {
   let obj = { clock: Timepoint.stringify(Timepoint.now()), timers: [] };
@@ -18,9 +19,13 @@ router.get("/timers", async (req, res) => {
   });
   res.flushHeaders();
   res.write("retry: 10000\n\n");
-  req.events.on("timer", () => {
+  eventhandler.on("timer", () => {
       res.write(`event: timer\ndata: ${sendTimers(getTimers)}\n\n`);
   });
+});
+
+router.get("/timer/create",(req,res,next) => {
+
 });
 
 router.get("/timer/:id", (req, res, next) => {

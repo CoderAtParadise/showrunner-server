@@ -1,6 +1,6 @@
-const { getTimer,addTimer,Timer, Timepoint } = require("../timer");
+const { getTimer, addTimer, Timer, Timepoint } = require("../../timer");
 
-const handleTimerMessage = (message) => {
+module.exports = (message) => {
   if (!getTimer(message.timer)) addTimer(message.timer, new Timer());
   let timer = getTimer(message.timer);
   switch (message.command) {
@@ -27,6 +27,7 @@ const handleTimerMessage = (message) => {
   }
 };
 
+/*
 const timer_message_example = {
   message_type: "timer",
   timer: "example",
@@ -36,5 +37,4 @@ const timer_message_example = {
   startpoint: "00:00:00",
   endpoint: "--:--:--",
 };
-
-handleTimerMessage(timer_message_example);
+*/
