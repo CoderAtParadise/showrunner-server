@@ -248,17 +248,16 @@ class Timer {
     this.runningTimepoint = new Timepoint();
     this.type = props.type;
     this.overrun = props.overrun;
+    this.running = false;
   }
 
   start() {
-    this.interval = setInterval(() => {
-      this.update();
-    }, 1000);
+    this.running = true;
     return this;
   }
 
   stop() {
-    clearInterval(this.interval);
+    this.running = false;
     return this;
   }
 
@@ -326,7 +325,20 @@ class Timer {
   static Elapsed = "elapsed";
 }
 
+let timers = new Map();
+
+const getTimer = (id) => {
+  return timers.get(id);
+};
+
+const addTimer = (id,data) => {
+  timers.set(id,data);
+}
+
 module.exports = {
   Timer: Timer,
   Timepoint: Timepoint,
+  getTimers: timers,
+  getTimer: getTimer,
+  addTimer: addTimer,
 };

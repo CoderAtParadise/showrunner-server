@@ -7,22 +7,4 @@ var router = express.Router();
   res.render('index', { title: 'Express' });
 });*/
 
-router.ws('/',(ws,req) => {
-  ws.on('message',(msg) =>  { ws.send(msg); });
-});
-
-router.ws('/echo', (ws, req) => {
-  ws.on('message', (msg) => {
-    ws.send(msg);
-  });
-});
-
-router.ws('/hello/:world',(ws,req) => {
-  ws.send('Working!');
-  ws.on('message', (msg) => {
-    console.log(msg); // eslint-disable-line no-console
-  });
-  console.log('socket hello', req.world); // eslint-disable-line no-console
-});
-
 module.exports = router;

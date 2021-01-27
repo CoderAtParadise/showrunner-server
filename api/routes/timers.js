@@ -1,76 +1,65 @@
 const { json } = require("express");
-var express = require("express");
-const { getTimer, allTimers } = require("../components/messages/timer_message");
-const { Timepoint } = require("../components/timer");
+const EventEmitter = require("events");
+const express = require("express");
+const { getTimer,getTimers,Timepoint } = require("../components/timer");
 var router = express.Router();
 
-const convertToObj = (map) => {
+const sendTimers = (map) => {
   let obj = { clock: Timepoint.stringify(Timepoint.now()), timers: [] };
   for (let [k, v] of map) obj.timers.push({ id: k, time: v.stringify() });
-  return obj;
+  return JSON.stringify(obj);
 };
 
-router.ws("/timers", (ws, req) => {
-  ws.send(JSON.stringify(convertToObj(allTimers)));
+router.get("/timers", async (req, res) => {
+  res.set({
+    "Cache-Control": "no-cache",
+    "Conten-Type": "text/event-stream",
+    'Connection': "keep-alive",
+  });
+  res.flushHeaders();
+  res.write("retry: 10000\n\n");
+  req.events.on("timer", () => {
+      res.write(`event: timer\ndata: ${sendTimers(getTimers)}\n\n`);
+  });
 });
 
-router.get("/timers/create", (req, res, next) => {});
-
-router.get("/timers/start", (req, res, next) => {
-  let id = req.query.timer;
-  if (!id) {
+router.get("/timer/:id", (req, res, next) => {
+  let command = req.query.command;
+  if (!command) {
     res
       .status(400)
-      .json({ error: true, message: "Missing query parameter: 'timer'" });
+      .json({ error: true, message: "Missing query parameter: 'command'" });
     return;
   }
-  let timer = getTimer(id);
+  let timer = getTimer(req.params.id);
   if (!timer) {
     res
       .status(404)
-      .json({ error: true, message: `No timer exists with id: ${id}` });
+      .json({ error: true, message: `No timer exists with id: ${req.params.id}` });
     return;
   }
-  timer.start();
-  res.status(200).json({ error: false, message: `Started timer: ${id}` });
-});
-
-router.get("/timers/stop", (req, res, next) => {
-  let id = req.query.timer;
-  if (!id) {
-    res
-      .status(400)
-      .json({ error: true, message: "Missing query parameter: 'timer'" });
-    return;
+  switch (command) {
+    case "start":
+      timer.start();
+      res.status(200).json({ error: false, message: `Started timer: ${req.params.id}}` });
+      break;
+    case "stop":
+      timer.stop();
+      res.status(200).json({ message: `Stopped timer: ${req.params.id}` });
+      break;
+    case "reset":
+        timer.reset();
+        res.status(200).json({message: `Reset timer: ${req.params.id}` });
+        break;
+    case "restart":
+        timer.restart();
+        res.status(200).json({ message: `Restarted timer: ${req.params.id}` });
+        break;
+    case "delete":
+        break;
+    default:
+        res.status(400).json({error:true,message: `Unknown Timer Command: ${req.params.id}`});
   }
-  let timer = getTimer(id);
-  if (!timer) {
-    res
-      .status(404)
-      .json({ error: true, message: `No timer exists with id: ${id}` });
-    return;
-  }
-  timer.stop();
-  res.status(200).json({ error: false, message: `Stopped timer: ${id}` });
-});
-
-router.get("/timers/reset", (req, res, next) => {
-  let id = req.query.timer;
-  if (!id) {
-    res
-      .status(400)
-      .json({ error: true, message: "Missing query parameter: 'timer'" });
-    return;
-  }
-  let timer = getTimer(id);
-  if (!timer) {
-    res
-      .status(404)
-      .json({ error: true, message: `No timer exists with id: ${id}` });
-    return;
-  }
-  timer.reset();
-  res.status(200).json({ error: false, message: `Reset timer: ${id}` });
 });
 
 module.exports = router;

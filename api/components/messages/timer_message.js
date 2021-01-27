@@ -1,16 +1,8 @@
-const { Timer, Timepoint } = require("../timer");
-
-let timers = new Map();
-
-const getTimer = (id) => {
-  console.log(id);
-  console.log(timers.get(id));
-  return timers.get(id);
-};
+const { getTimer,addTimer,Timer, Timepoint } = require("../timer");
 
 const handleTimerMessage = (message) => {
-  if (!timers.has(message.timer)) timers.set(message.timer, new Timer());
-  let timer = timers.get(message.timer);
+  if (!getTimer(message.timer)) addTimer(message.timer, new Timer());
+  let timer = getTimer(message.timer);
   switch (message.command) {
     case "create":
       timer.type = message.type;
@@ -34,6 +26,7 @@ const handleTimerMessage = (message) => {
       break;
   }
 };
+
 const timer_message_example = {
   message_type: "timer",
   timer: "example",
@@ -45,8 +38,3 @@ const timer_message_example = {
 };
 
 handleTimerMessage(timer_message_example);
-
-module.exports = {
-  getTimer: getTimer,
-  allTimers: timers,
-};
