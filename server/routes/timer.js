@@ -12,7 +12,7 @@ const sendTimers = (map) => {
 router.get("/timers", async (req, res) => {
   res.set({
     "Cache-Control": "no-cache",
-    "Conten-Type": "text/event-stream",
+    "Content-Type": "text/event-stream",
     'Connection': "keep-alive",
   });
   res.flushHeaders();

@@ -29,6 +29,7 @@ app.get(
   redoc({ title: "Showrunner API", specUrl: "showrunner-api.json" })
 );
 app.use(require("./routes/timer"));
+app.use(require("./routes/cue"));
 // catch 404 and forward to error handler
 
 app.use(function (req, res, next) {
