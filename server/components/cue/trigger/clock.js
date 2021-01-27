@@ -1,8 +1,8 @@
 const { Timepoint } = require("../../timer");
 
-module.exports = (time) => {
+module.exports = (trigger) => {
   return {
-    time: Timepoint.parse(time),
+    time: Timepoint.parse(trigger.time),
     check: () => {
       return Timepoint.now().equals(this.time);
     },

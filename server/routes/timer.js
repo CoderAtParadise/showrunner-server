@@ -1,8 +1,6 @@
-const { json } = require("express");
-const EventEmitter = require("events");
 const express = require("express");
-const { getTimer,getTimers,Timepoint } = require("../components/timer");
 const router = express.Router();
+const { getTimer,getTimers,Timepoint } = require("../components/timer");
 const eventhandler = require('../components/event');
 
 const sendTimers = (map) => {

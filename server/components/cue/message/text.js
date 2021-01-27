@@ -1,4 +1,4 @@
-const eventhandler = require("../event");
+const eventhandler = require("../../event");
 
 module.exports = (target, message) => {
   eventhandler.emit("cue", target, message);

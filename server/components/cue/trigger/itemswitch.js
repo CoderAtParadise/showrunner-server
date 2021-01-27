@@ -1,8 +1,8 @@
 const eventhandler = require("../../event");
 
-module.exports = (item) => {
+module.exports = (trigger) => {
   return {
-    item: item,
+    item: trigger.item,
     trigger: false,
     check: () => {
       eventhandler.on("itemswitch", (item) => {

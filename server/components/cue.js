@@ -1,5 +1,7 @@
 const eventhandler = require("./event");
 const { getTimer, Timepoint } = require("./timer");
+const fileHelper = require('./file_helper');
+const handleMessage = require('./messages');
 
 class Cue {
   constructor(props = { notify: [], trigger: {}, message: {} }) {
@@ -26,20 +28,3 @@ class Cue {
     this.run = true;
   }
 }
-
-let messageHandlers = new Map();
-function registerMessageHandler(type, handler) {
-  messageHandlers.set(type, handler);
-}
-
-function handleMessage(target, message) {
-  if (!messageHandlers.has(message.message_type)) {
-    console.error(`Unknown message type: ${message.message_type}`);
-    return;
-  }
-  messageHandlers.get(message.message_type)(target, message);
-}
-
-module.exports = {
-  registerMessageHandler: registerMessageHandler,
-};

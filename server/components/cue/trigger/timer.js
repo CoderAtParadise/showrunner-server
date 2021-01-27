@@ -1,16 +1,16 @@
 const eventhandler = require("../../event");
-const { getTimer, Timepoint } = require("./timer");
+const { getTimer, Timepoint } = require("../../timer");
 
-module.exports = (timer, time) => {
+module.exports = (trigger) => {
   return {
-    timer: timer,
-    time: Timepoint.parse(time),
+    timer: trigger.timer,
+    time: Timepoint.parse(trigger.time),
     triggered: false,
     check: () => {
       eventhandler.on("timer", () => {
         let timer = getTimer(this.timer);
         if (timer) {
-          if (timer.isAtTimepoint(time)) this.trigger = true;
+          if (timer.isAtTimepoint(this.time)) this.trigger = true;
         }
       });
       return this.trigger;
