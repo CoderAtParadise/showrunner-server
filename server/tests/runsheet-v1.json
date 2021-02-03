@@ -1,0 +1,395 @@
+{
+  "show_info": {
+    "show": "6pm SERVICE",
+    "date": "20210103",
+    "title": "Summer Favourites",
+    "subtitle": "Week 1"
+  },
+  "team" : [
+    {
+      "ref": "preaching",
+      "role" : "Preaching",
+      "name": "Brad Case"
+    },
+    {
+      "ref": "servicehost",
+      "role": "Service Host",
+      "name": "Andrew Mayne"
+    },
+    {
+      "ref": "welcome",
+      "role": "Welcome team leader",
+      "name":""
+    },
+    {
+      "ref": "facilities",
+      "role": "Facilities - PHONE ONLY",
+      "name": "(067 000 646)"
+    },
+    {
+      "ref": "lockup",
+      "role": "Lock-up",
+      "name": "Brad Case"
+    },
+    {
+      "ref":"covid",
+      "role": "Covid Officer",
+      "name": ""
+    },
+    {
+      "ref" : "serviceprod",
+      "role": "Serice Producer",
+      "name": "Eden Dean"
+    },
+    {
+      "ref": "media",
+      "role": "Media",
+      "name": ""
+    },
+    {
+      "ref": "camera",
+      "role": "Camera",
+      "name": "Jared Sexton"
+    },
+    {
+      "ref": "lighting",
+      "role": "Lighting",
+      "name": "Tom Barham"
+    },
+    {
+      "ref": "sound",
+      "role": "Sound",
+      "name": "Dan Clarke"      
+    },
+    {
+      "ref": "foldback",
+      "role": "Foldback",
+      "name": "Dave Tilley"
+    },
+    {
+      "ref": "wl1",
+      "role": "Worship Leaders",
+      "name": "Mark Dean"
+    },
+    {
+      "ref": "wl2",
+      "role": "Worship Leaders",
+      "name": "Mercy Case"
+    },
+    {
+      "ref": "drums",
+      "role": "Drums",
+      "name": "Jesse Bradford"
+    },
+    {
+      "ref": "bass",
+      "role": "Bass",
+      "name": "Josh Madden"
+    },
+    {
+      "ref": "keys",
+      "role": "Keys",
+      "name": "Kate Barham"
+    },
+    {
+      "ref": "gtr1",
+      "role": "Guitars",
+      "name": "Ryan Dodd"
+    },
+    {
+      "ref": "gtr2",
+      "role": "Guitars",
+      "name": "Max Woodroffe-Hill"
+    },
+    {
+      "ref": "sing1",
+      "role": "Singers",
+      "name": "Maddy Lucas"
+    },
+    {
+      "ref": "sing2",
+      "role": "Singers",
+      "name": "Kahrie Savanoff"
+    },
+    {
+      "ref": "ac",
+      "role": "Acoustic",
+      "name": ""
+    },
+    {
+      "ref": "md",
+      "role": "MD",
+      "name": "@gtr1"
+    }
+  ],
+  "items": [
+    {
+      "info": {
+        "type": "item",
+        "name": "Setup",
+        "duration": "+00:20:00",
+        "clock": "15:30:00",
+        "personnel": ["Tech & Musos"]
+      },
+      "cues": []
+    },
+    {
+      "info": {
+        "type": "item",
+        "name": "Prayer(on stage)",
+        "duration": "+00:10:00"
+      },
+      "cues": []
+    },
+    {
+      "info": {
+        "type": "item",
+        "name": "Sound Check & Rehearsal",
+        "duration": "+01:15:00"
+      },
+      "cues": []
+    },
+    {
+      "info": {
+        "type": "item",
+        "name": "Pre-Service Praryer & Production Meeting",
+        "duration": "+00:07:00",
+        "personnel": ["All"]
+      },
+      "cues": []
+    },
+    {
+      "info": {
+        "type": "video",
+        "__comment__": "video format not defined",
+        "clock": "17:56:00"
+      },
+      "cues": [
+        {
+          "notify": ["self"],
+          "trigger": { "type": "item_switch" },
+          "message": {
+            "type": "timer_control",
+            "command": "start",
+            "timer": "show"
+          }
+        },
+        {
+          "notify": ["all"],
+          "trigger": {
+            "type": "timer",
+            "timer": "duration",
+            "time": "-00:30:00",
+            "__comment__": "(-) from end of timer / (+) from start of timer"
+          },
+          "message": {
+            "type": "text",
+            "text": "30sec left of video",
+            "__comment__": "message not final"
+          }
+        },
+        {
+          "notify": ["self"],
+          "trigger": {
+            "type": "timer",
+            "timer": "duration",
+            "time": "+00:00:00"
+          },
+          "message": { "type": "item_control", "command": "next" }
+        }
+      ]
+    },
+    {
+      "info": {
+        "type": "item_group",
+        "group": "first_set",
+        "duration": "+00:20:00"
+      },
+      "cues": [
+        {
+          "notify": ["media"],
+          "trigger": { "type": "item_switch" },
+          "message": { "type": "text", "text": "Lyrics" }
+        }
+      ]
+    },
+    {
+      "info": {
+        "item_group": "first_set",
+        "type": "song",
+        "id": "Heaven Fall Down",
+        "__comment__": "Maybe ccli number for id",
+        "key": "C",
+        "personnel": ["@wl1"],
+        "_comment_": "(@) references team"
+      },
+      "cues": []
+    },
+    {
+      "info": {
+        "item_group": "first_set",
+        "type": "song",
+        "id": "Way Maker",
+        "key": "C",
+        "personnel": ["@wl2"]
+      },
+      "cues": []
+    },
+    {
+      "info": {
+        "item_group": "first_set",
+        "type": "song",
+        "id": "King of Kings",
+        "key": "D",
+        "personnel": ["@wl2"]
+      },
+      "cues": []
+    },
+    {
+      "info": {
+        "item_group": "first_set",
+        "type": "song",
+        "id": "Sing His Praise Again",
+        "key": "c",
+        "personnel": ["@wl2"]
+      },
+      "cues": []
+    },
+    {
+      "info": {
+        "type": "item_group",
+        "group": "hosting",
+        "duration": "+00:05:00",
+        "personnel": ["@servicehost"]
+      },
+      "cues": []
+    },
+    {
+      "info": {
+        "item_group": "hosting",
+        "type": "item",
+        "name": "Service Hosting"
+      },
+      "cue": []
+    },
+    {
+      "info": {
+        "item_group": "hosting",
+        "type": "item",
+        "name": "Welcome/Connect/Give"
+      },
+      "cues": [
+        {
+          "notify": ["media"],
+          "trigger": { "type": "item_switch" },
+          "message": {
+            "type": "text",
+            "text": "Welcome Slide",
+            "__comment__": "maybe a slide type"
+          }
+        }
+      ]
+    },
+    {
+      "info": {
+        "item_group": "hosting",
+        "type": "item",
+        "name": "YA Summer Nights"
+      },
+      "cues": [
+        {
+          "notify": ["media"],
+          "trigger": { "type": "item_switch" },
+          "message": {
+            "type": "text",
+            "text": "Slide",
+            "__comment__": "maybe a slide type"
+          }
+        }
+      ]
+    },
+    {
+      "info": {
+        "type": "item",
+        "name": "Message",
+        "duration": "+00:35:00",
+        "personnel": ["@preaching"]
+      },
+      "cues": [
+        {
+          "notify": ["media"],
+          "trigger": { "type": "item_switch" },
+          "message": {
+            "type": "text",
+            "text": "Message Slides"
+          }
+        },
+        {
+          "notify": ["audio"],
+          "trigger": { "type": "item_switch" },
+          "message": {
+            "type": "text",
+            "text": "1 headset"
+          }
+        },
+        {
+          "notify": ["stage"],
+          "trigger": { "type": "item_switch" },
+          "message": {
+            "type": "text",
+            "text": "lectern"
+          }
+        }
+      ]
+    },
+    {
+      "info": {
+        "type": "item",
+        "name": "Response",
+        "duration": "+00:05:00"
+      },
+      "cues": []
+    },
+    {
+      "info": {
+        "type": "song",
+        "id": "Reckless Love",
+        "key": "E",
+        "personnel": ["@wl1"]
+      },
+      "cues": [
+        {
+          "notify": ["media"],
+          "trigger": { "type": "item_switch" },
+          "message": { "type": "text", "text": "Lyrics" }
+        }
+      ]
+    },
+    {
+      "info": {
+        "type": "item",
+        "name": "Service Close"
+      },
+      "cues": [
+        {
+          "notify": ["self"],
+          "trigger": { "type": "item_switch" },
+          "message": {
+            "type": "timer_control",
+            "command": "stop",
+            "timer": "show"
+          }
+        },
+        {
+          "notify": ["self"],
+          "trigger": { "type": "item_switch" },
+          "message": {
+            "type": "timer_control",
+            "command": "stop",
+            "timer": "duration"
+          }
+        }
+      ]
+    }
+  ]
+}

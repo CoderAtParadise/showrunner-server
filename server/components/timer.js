@@ -21,6 +21,7 @@ class Timepoint {
     this.minutes = Number(Math.min(props.minutes, 59));
     this.seconds = Number(Math.min(props.seconds, 59));
     this.type = props.type;
+    this.running = false;
   }
 
   static parse(string) {
@@ -235,7 +236,7 @@ class Timepoint {
 }
 
 class Timer {
-  constructor(props) {
+  constructor(id,props = {startpoint:Timepoint.Invalid,endpoint: Timepoint.Invalid,type: Timepoint.Elapsed,overrun: false}) {
     const defaults = {
       startpoint: new Timepoint({ type: Timepoint.Invalid }),
       endpoint: new Timepoint({ type: Timepoint.Invalid }),
@@ -243,12 +244,17 @@ class Timer {
       overrun: false,
     };
     props = Object.assign(defaults, props);
+    this.id = id,
     this.startpoint = props.startpoint;
     this.endpoint = props.endpoint;
-    this.runningTimepoint = new Timepoint();
+    this.current = new Timepoint();
     this.type = props.type;
     this.overrun = props.overrun;
     this.running = false;
+  }
+
+  isRunning() {
+    return this.running;
   }
 
   start() {
@@ -263,7 +269,7 @@ class Timer {
 
   reset() {
     this.stop();
-    Object.assign(this.runningTimepoint, this.startpoint);
+    Object.assign(this.current, this.startpoint);
     return this;
   }
 
@@ -274,39 +280,39 @@ class Timer {
 
   isAtTimepoint(timepoint) {
     if (this.isCountdown) {
-      if (timepoint.type) return this.runningTimepoint._equals(timepoint);
+      if (timepoint.type) return this.current._equals(timepoint);
       else {
-        let ac = this.timepoint.subtract(this.runningTimepoint);
+        let ac = this.timepoint.subtract(this.current);
         return ac._equals(timepoint);
       }
-    } else return this.runningTimepoint._equals(timepoint);
+    } else return this.current._equals(timepoint);
   }
 
   update() {
     switch (this.type) {
       case Timer.Countdown:
-        this.runningTimepoint = this.runningTimepoint.subtract(
+        this.current = this.current.subtract(
           Timepoint.idTime
         );
         if (
-          this.runningTimepoint.equals(Timepoint.minTime) ||
-          (this.runningTimepoint.equals(this.endpoint) && !this.overrun)
+          this.current.equals(Timepoint.minTime) ||
+          (this.current.equals(this.endpoint) && !this.overrun)
         )
           this.stop();
         break;
       case Timer.Countdown_to_Time:
-        this.runningTimepoint = this.endpoint.subtract(Timepoint.now());
+        this.current = this.endpoint.subtract(Timepoint.now());
         if (
-          this.runningTimepoint.equals(Timepoint.minTime) ||
-          (this.runningTimepoint.equals(Timepoint.zeroTime) && !this.overrun)
+          this.current.equals(Timepoint.minTime) ||
+          (this.current.equals(Timepoint.zeroTime) && !this.overrun)
         )
           this.stop();
         break;
       case Timer.Elapsed:
-        this.runningTimepoint = this.runningTimepoint.add(Timepoint.idTime);
+        this.current = this.current.add(Timepoint.idTime);
         if (
-          this.runningTimepoint.equals(Timepoint.maxTime) ||
-          (this.runningTimepoint.equals(this.endpoint) && !this.overrun)
+          this.current.equals(Timepoint.maxTime) ||
+          (this.current.equals(this.endpoint) && !this.overrun)
         )
           this.stop();
         break;
@@ -317,7 +323,18 @@ class Timer {
   }
 
   stringify() {
-    return Timepoint.stringify(this.runningTimepoint);
+    return Timepoint.stringify(this.current);
+  }
+
+  status(run = undefined) {
+    return {
+      timer: this.id,
+      type: this.type,
+      startpoint: Timepoint.stringify(this.startpoint),
+      endpoint: Timepoint.stringify(this.endpoint),
+      current: Timepoint.stringify(this.current),
+      running: run !== undefined ? run : this.running
+    }
   }
 
   static Countdown = "countdown";
@@ -325,15 +342,25 @@ class Timer {
   static Elapsed = "elapsed";
 }
 
-let timers = new Map();
+const timers = new Map();
 
 const getTimer = (id) => {
   return timers.get(id);
 };
 
-const addTimer = (id,data) => {
-  timers.set(id,data);
+const addTimer = (timer) => {
+  timers.set(timer.id,timer);
 }
+
+const {eventhandler,addThisTickHadler} = require("./event");
+addThisTickHadler(() => {
+  timers.forEach((timer) => {
+    if (timer.isRunning()) timer.update();
+  });
+  eventhandler.emit("timer");
+})
+
+addTimer(new Timer("example",{type:Timer.Elapsed,startpoint:Timepoint.zeroTime}));
 
 module.exports = {
   Timer: Timer,

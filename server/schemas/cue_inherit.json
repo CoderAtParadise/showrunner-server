@@ -1,0 +1,5 @@
+{
+    "group": "",
+    "type": "inherit",
+    "inherit": ["timer.duration"]
+}

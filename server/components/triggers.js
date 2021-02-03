@@ -5,11 +5,11 @@ function registerTrigger(type,cb) {
 }
 
 module.exports = (trigger) => {
-    if(!triggers.has(trigger.trigger_type)) {
-        console.error(`Unknown trigger type: ${trigger.trigger_type}`);
+    if(!triggers.has(trigger.type)) {
+        console.error(`Unknown trigger type: ${trigger.type}`);
         return;
     }
-    return triggers.get(trigger.trigger_type)(trigger);
+    return triggers.get(trigger.type)(trigger);
 }
 
 registerTrigger("clock",require("./cue/trigger/clock"));

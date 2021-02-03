@@ -5,13 +5,15 @@ function registerMessageHandler(type, handler) {
   messageHandlers.set(type, handler);
 }
 
+registerMessageHandler("text",require("./cue/message/text"));
+registerMessageHandler("timer_control",require('./cue/message/timer_control'));
+registerMessageHandler("item_control",require("./cue/message/item_control"));
+
+
 module.exports = (target, message) => {
-    if (!messageHandlers.has(message.message_type)) {
-      console.error(`Unknown message type: ${message.message_type}`);
+    if (!messageHandlers.has(message.type)) {
+      console.error(`Unknown message type: ${message.type}`);
       return;
     }
-    messageHandlers.get(message.message_type)(target, message);
+    messageHandlers.get(message.type)(target, message);
   }
-
-registerMessageHandler("text",require("./cue/message/text"));
-registerMessageHandler("timer",require('./cue/message/timer'));

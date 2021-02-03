@@ -1,0 +1,9 @@
+{
+    "type": "timer",
+    "id": "service",
+    "timer": "elapsed",
+    "overrun": false,
+    "startpoint": "+00:00:00",
+    "endpoint": "--:--:--"
+  }
+  

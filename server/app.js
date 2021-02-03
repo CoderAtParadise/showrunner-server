@@ -6,7 +6,7 @@ var logger = require("morgan");
 const redoc = require("redoc-express");
 const {getTimers} = require("./components/timer");
 require("./components/runsheets");
-const events = require('./components/event');
+const {eventhandler} = require('./components/event');
 require('./components/cue');
 
 var app = express();
@@ -46,13 +46,5 @@ app.use(function (err, req, res, next) {
   res.status(err.status || 500);
   res.render("error");
 });
-
-//Update Loop
-setInterval(() => {
-  getTimers.forEach((timer, k, m) => {
-    if (timer.running) timer.update();
-  });
-  events.emit("timer");
-}, 1000);
 
 module.exports = app;

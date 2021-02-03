@@ -1,0 +1,124 @@
+{
+  "cues": [
+    {
+      "item": "setup",
+      "type": "display",
+      "display": "Setup"
+    },
+    {
+      "item": "setup",
+      "type": "personnel",
+      "personnel": ["Tech", "Musos"]
+    },
+    {
+      "item": "setup",
+      "type": "snippet",
+      "snippet": "duration_timer",
+      "override": {
+        "startpoint": "+00:20:00"
+      }
+    },
+    {
+      "item": "prayer-stage",
+      "type": "display",
+      "display": "Prayer(on stage)"
+    },
+    {
+      "item": "prayer-stage",
+      "type": "inherit",
+      "from": "@item(setup)",
+      "inherit": ["@personnel"]
+    },
+    {
+      "item": "prayer-stage",
+      "type": "snippet",
+      "snippet": "duration_timer",
+      "override": {
+        "startpoint": "+00:10:00"
+      }
+    },
+    {
+      "item": "rehearsal",
+      "type": "display",
+      "text": "Sound Check & Rehearsal"
+    },
+    {
+      "item": "rehearsal",
+      "type": "inherit",
+      "from": "@item(setup)",
+      "inherit": ["@personnel"]
+    },
+    {
+      "item": "rehearsal",
+      "type": "snippet",
+      "snippet": "duration_timer",
+      "override": {
+        "startpoint": "+01:15:00"
+      }
+    },
+    {
+      "item": "countdown",
+      "type": "video"
+    },
+    {
+      "item": "countdown",
+      "type": "sync",
+      "syncfrom": "@timer(video_timer)",
+      "syncto": "@timer(duration)"
+    },
+    {
+      "item": "countdown",
+      "type": "notify",
+      "notify": ["all"],
+      "trigger": {
+        "type": "timer",
+        "id": "video_timer",
+        "time": "-00:30:00"
+      },
+      "message": {
+        "type": "text",
+        "text": "30sec left of video"
+      }
+    },
+    {
+      "notify": ["system"],
+      "trigger": {
+        "type": "timer",
+        "timer": "video_timer",
+        "time": "+00:00:00"
+      },
+      "message": { "type": "item_control", "command": "next" }
+    },
+    {
+      "item": "song1",
+      "list": "first_set",
+      "type": "song",
+      "id": "Heaven Fall down",
+      "key": "C"
+    },
+    {
+      "item":"song1",
+      "type": "snippet",
+      "snippet": "duration_timer",
+      "override": {
+        "startpoint":"+00:20:00"
+      }
+    },
+    {
+      "item":"song1",
+      "type": "personnel",
+      "personnel": ["@team(wl1)"]
+    },
+    {
+      "item": "song2",
+      "type": "song",
+      "id": "Way Maker",
+      "key": "C"
+    },
+    {
+      "item":"song1",
+      "type": "personnel",
+      "personnel": ["@team(wl1)"]
+    }
+  ]
+}
