@@ -1,0 +1,62 @@
+{
+  "event_info": {
+    "name": ""
+  },
+  "preshow": {},
+  "sessions": [
+    {
+      "session_info": {
+        "start": ["08:00:00", "10:00:00"],
+        "duration": "+01:20:00"
+      },
+      "brackets": [
+        {
+          "display": "Pre-Roll",
+          "duration": "+00:05:00",
+          "clock": {
+            "overrun": "false",
+            "type": "countdown"
+          },
+          "items": [
+            {
+              "name": "Jan PreRoll Video",
+              "index": 0,
+              "duration": "+00:04:30",
+              "itemtime": true,
+              "directions": [
+                {
+                  "notify": ["audio"],
+                  "trigger": { "type": "item_start" },
+                  "message": {
+                    "type": "text",
+                    "message": "Audio from video Computer"
+                  }
+                },
+                {
+                  "notify": ["stage"],
+                  "trigger": { "type": "false_timer", "time": "-00:01:30/+00:03:00" },
+                  "message": { "type": "text", "message": "message" }
+                },
+                {
+                  "notify": ["producer"],
+                  "trigger": { "type": "timer", "time": "-00:00:30" },
+                  "message": { "type": "text", "message": "message" }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "worship",
+          "index": 1,
+          "duration": "+00:20:00",
+          "clock": {
+            "type": "elapsed",
+            "overrun": "true"
+          },
+          "items": []
+        }
+      ]
+    }
+  ]
+}

@@ -46,8 +46,7 @@ class Item {
     this.id = id;
     this.display = {};
     this.timers = [];
-    this.personnel = [];
-    this.notify = [];
+    this.cues = [];
   }
 
   static parse(obj) {

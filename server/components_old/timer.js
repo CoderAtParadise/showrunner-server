@@ -1,3 +1,5 @@
+const OverrunBehaviour = Object.freeze({""})
+
 const zeroPad = (num, places) => {
   if (num === undefined) num = 0;
   return String(num).padStart(places, "0");
@@ -9,7 +11,9 @@ class Timepoint {
   static RelStart = 1;
   static RelEnd = 2;
 
-  constructor(props = {hours:0,minutes:0,seconds:0,type: Timepoint.RelStart}) {
+  constructor(
+    props = { hours: 0, minutes: 0, seconds: 0, type: Timepoint.RelStart }
+  ) {
     const defaults = {
       hours: 0,
       minutes: 0,
@@ -69,13 +73,13 @@ class Timepoint {
   }
 
   _greaterThan(other) {
-    return this.hours > other.hours
-      ? true
-      : this.minutes > other.minutes
-      ? true
-      : this.seconds > other.seconds
-      ? true
-      : false;
+    if (this.hours > other.hours) return true;
+    if (this.hours === other.hours) {
+      if (this.minutes > other.minutes) return true;
+      if (this.minutes === other.minutes)
+        if (this.seconds > other.seconds) return true;
+    }
+    return false;
   }
 
   _lessThan(other) {
@@ -236,7 +240,15 @@ class Timepoint {
 }
 
 class Timer {
-  constructor(id,props = {startpoint:Timepoint.Invalid,endpoint: Timepoint.Invalid,type: Timepoint.Elapsed,overrun: false}) {
+  constructor(
+    id,
+    props = {
+      startpoint: Timepoint.Invalid,
+      endpoint: Timepoint.Invalid,
+      type: Timepoint.Elapsed,
+      overrun: false,
+    }
+  ) {
     const defaults = {
       startpoint: new Timepoint({ type: Timepoint.Invalid }),
       endpoint: new Timepoint({ type: Timepoint.Invalid }),
@@ -244,12 +256,12 @@ class Timer {
       overrun: false,
     };
     props = Object.assign(defaults, props);
-    this.id = id,
-    this.startpoint = props.startpoint;
+    (this.id = id), (this.startpoint = props.startpoint);
     this.endpoint = props.endpoint;
     this.current = new Timepoint();
     this.type = props.type;
-    this.overrun = props.overrun;
+    this.overrunBehaviour = props.overrun;
+    this.overrun = false;
     this.running = false;
   }
 
@@ -291,34 +303,19 @@ class Timer {
   update() {
     switch (this.type) {
       case Timer.Countdown:
-        this.current = this.current.subtract(
-          Timepoint.idTime
-        );
-        if (
-          this.current.equals(Timepoint.minTime) ||
-          (this.current.equals(this.endpoint) && !this.overrun)
-        )
-          this.stop();
-        break;
-      case Timer.Countdown_to_Time:
-        this.current = this.endpoint.subtract(Timepoint.now());
-        if (
-          this.current.equals(Timepoint.minTime) ||
-          (this.current.equals(Timepoint.zeroTime) && !this.overrun)
-        )
-          this.stop();
+        this.current = this.current.subtract(Timepoint.idTime);
         break;
       case Timer.Elapsed:
         this.current = this.current.add(Timepoint.idTime);
-        if (
-          this.current.equals(Timepoint.maxTime) ||
-          (this.current.equals(this.endpoint) && !this.overrun)
-        )
-          this.stop();
         break;
       default:
         console.error(`Unknown Timer type: ${this.type}`);
-        break;
+        this.running = false;
+        return;
+    }
+    if (this.current.equals(this.endpoint)) {
+      if (this.allowOverrun) this.overrun = true;
+      else this.stop();
     }
   }
 
@@ -333,12 +330,11 @@ class Timer {
       startpoint: Timepoint.stringify(this.startpoint),
       endpoint: Timepoint.stringify(this.endpoint),
       current: Timepoint.stringify(this.current),
-      running: run !== undefined ? run : this.running
-    }
+      running: run !== undefined ? run : this.running,
+    };
   }
 
   static Countdown = "countdown";
-  static Countdown_to_Time = "countdown_to_time";
   static Elapsed = "elapsed";
 }
 
@@ -349,18 +345,29 @@ const getTimer = (id) => {
 };
 
 const addTimer = (timer) => {
-  timers.set(timer.id,timer);
-}
+  timers.set(timer.id, timer);
+};
 
-const {eventhandler,addThisTickHadler} = require("./event");
+const { eventhandler, addThisTickHadler } = require("./event");
 addThisTickHadler(() => {
   timers.forEach((timer) => {
     if (timer.isRunning()) timer.update();
   });
   eventhandler.emit("timer");
-})
+});
 
-addTimer(new Timer("example",{type:Timer.Elapsed,startpoint:Timepoint.zeroTime}));
+//Default initialize the default timers
+addTimer(
+  new Timer("session", { type: Timer.Elapsed, startpoint: Timepoint.zeroTime })
+);
+
+addTimer(
+  new Timer("bracket", { type: Timer.Elapsed, startpoint: Timepoint.zeroTime })
+);
+
+addTimer(
+  new Timer("item", { type: Timer.Elapsed, startpoint: Timepoint.zeroTime })
+);
 
 module.exports = {
   Timer: Timer,
@@ -368,4 +375,7 @@ module.exports = {
   getTimers: timers,
   getTimer: getTimer,
   addTimer: addTimer,
+  sessionTimer: getTimer("session"),
+  bracketTimer: getTimer("bracket"),
+  itemTimer: getTimer("item"),
 };
