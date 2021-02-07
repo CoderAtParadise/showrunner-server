@@ -2,6 +2,7 @@ import express from "express";
 import morgan from "morgan";
 import Debug from "debug";
 import timerRouter from "./routes/timer"
+import "./components/item";
 
 const normalizePort = (val: any) => {
   let port = parseInt(val, 10);

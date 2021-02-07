@@ -1,12 +1,13 @@
-enum OverrunBehaviour {
+export enum OverrunBehaviour {
   STOP = "stop",
   HIDE = "hide",
   OVERRUN = "overrun",
 }
 
-enum TimerType {
+export enum TimerType {
   COUNTDOWN = "countdown",
   ELAPSED = "elapsed",
+  Reference = "reference",
 }
 
 enum TimeFormat {
@@ -83,9 +84,10 @@ export class Timepoint {
   equals(other: Timepoint) {
     if (
       (this.format === TimeFormat.RELSTART ||
-      this.format === TimeFormat.RELEND) &&
-        this._equals(Timepoint.ZEROTIME) &&
-        other._equals(Timepoint.ZEROTIME))
+        this.format === TimeFormat.RELEND) &&
+      this._equals(Timepoint.ZEROTIME) &&
+      other._equals(Timepoint.ZEROTIME)
+    )
       return true;
     return this.format === other.format ? this._equals(other) : false;
   }
@@ -137,7 +139,7 @@ export class Timepoint {
   }
 
   copy() {
-    return new Timepoint(this.hours,this.minutes,this.seconds,this.format);
+    return new Timepoint(this.hours, this.minutes, this.seconds, this.format);
   }
 
   _formatEqual(other: Timepoint, format: TimeFormat) {
@@ -228,12 +230,13 @@ interface TimerStatus {
 export interface Timer {
   id: string;
   type: TimerType;
-  overrunBehaviour: OverrunBehaviour;
-  startpoint: Timepoint;
-  endpoint: Timepoint;
-  current: Timepoint;
-  running: boolean;
-  overrun: boolean;
+  overrunBehaviour?: OverrunBehaviour;
+  startpoint?: Timepoint;
+  endpoint?: Timepoint;
+  current?: Timepoint;
+  running?: boolean;
+  overrun?: boolean;
+  currentTimer: () => Timepoint;
   isAtTimepoint: (other: Timepoint) => boolean;
   start: () => void;
   stop: () => void;
@@ -260,6 +263,10 @@ export class Countdown implements Timer {
     this.id = id;
     this.overrunBehaviour = overrunBehaviour;
     this.startpoint = startpoint;
+  }
+
+  currentTimer() {
+    return this.current;
   }
 
   update() {
@@ -314,7 +321,7 @@ export class Countdown implements Timer {
       current: this.current.tostring(),
       overrunBehavior: this.overrunBehaviour,
       overrun: this.overrun,
-      running: setRunning !== undefined ? setRunning: this.running,
+      running: setRunning !== undefined ? setRunning : this.running,
     };
   }
 }
@@ -336,6 +343,10 @@ export class Elapsed implements Timer {
     this.id = id;
     this.overrunBehaviour = overrunBehaviour;
     if (endpoint) this.endpoint = endpoint;
+  }
+
+  currentTimer() {
+    return this.current;
   }
 
   update() {
@@ -381,7 +392,7 @@ export class Elapsed implements Timer {
     this.reset();
     this.start();
   }
-  
+
   status(setRunning: boolean | undefined) {
     return {
       id: this.id,
@@ -391,8 +402,62 @@ export class Elapsed implements Timer {
       current: this.current.tostring(),
       overrunBehavior: this.overrunBehaviour,
       overrun: this.overrun,
-      running: setRunning !== undefined ? setRunning: this.running,
+      running: setRunning !== undefined ? setRunning : this.running,
     };
+  }
+}
+
+export class Reference implements Timer {
+  id: string;
+  type = TimerType.Reference;
+  ref: string;
+
+  constructor(id: string, ref: string) {
+    this.id = id;
+    this.ref = ref;
+  }
+
+  currentTimer() {
+    return getTimer(this.ref)?.currentTimer() || Timepoint.INVALID;
+  }
+
+  isAtTimepoint(other: Timepoint) {
+    return getTimer(this.ref)?.isAtTimepoint(other) || false;
+  }
+
+  status(setRunning: boolean | undefined) {
+    return (
+      getTimer(this.ref)?.status(setRunning) || {
+        id: this.id,
+        type: this.type,
+        startpoint: Timepoint.INVALID.tostring(),
+        endpoint: Timepoint.INVALID.tostring(),
+        current: Timepoint.INVALID.tostring(),
+        overrunBehavior: OverrunBehaviour.HIDE,
+        overrun: false,
+        running: false,
+      }
+    );
+  }
+
+  update() {
+    //noop
+  }
+
+  start() {
+    //noop
+  }
+
+  stop() {
+    //noop
+  }
+
+  reset() {
+    //noop
+  }
+
+  restart() {
+    //noop
   }
 }
 
@@ -415,11 +480,11 @@ addThisTickHandler(() => {
   eventhandler.emit("timer");
 });
 
-addTimer(new Elapsed("session",OverrunBehaviour.STOP));
-addTimer(new Elapsed("bracket",OverrunBehaviour.STOP));
-addTimer(new Elapsed("item",OverrunBehaviour.STOP));
+addTimer(new Elapsed("session", OverrunBehaviour.STOP));
+addTimer(new Elapsed("bracket", OverrunBehaviour.STOP));
+addTimer(new Elapsed("item", OverrunBehaviour.STOP));
 
-import Debug from "debug";
+/*import Debug from "debug";
 const debug = Debug("showrunner:tests");
 
 const t1 = new Timepoint(1, 2, 3, TimeFormat.RELSTART);
@@ -447,4 +512,4 @@ debug(t2.subtract(t4)); //+03:03:03
 const tt1 = new Countdown("tt1", OverrunBehaviour.STOP, new Timepoint(0, 5, 0));
 tt1.start();
 tt1.update();
-debug(tt1);
+debug(tt1);*/

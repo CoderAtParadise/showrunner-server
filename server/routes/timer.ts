@@ -23,7 +23,7 @@ class TimerObject {
 
 const sendTimers = (map: Map<string,Timer>) => {
   const obj = new TimersRespone();
-  map.forEach((value,key) => obj.timers.push(new TimerObject(key,value.current)));
+  map.forEach((value,key) => obj.timers.push(new TimerObject(key,value.currentTimer())));
   return JSON.stringify(obj);
 };
 

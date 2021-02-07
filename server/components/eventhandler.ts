@@ -1,15 +1,6 @@
 import EventEmitter from "events";
-import Debug from "debug";
-const debug = Debug("showrunner:eventhandler");
 
-class EventHandler extends EventEmitter {
-  emit(type: string, ...args: any) {
-    debug(`Fired event "${type}"`);
-    return super.emit(type, ...args) || super.emit("", ...args);
-  }
-}
-
-export const eventhandler: EventHandler = new EventHandler();
+export const eventhandler: EventEmitter = new EventEmitter();
 const thisTick: (() => void)[] = [];
 const nextTick: (() => void)[] = [];
 

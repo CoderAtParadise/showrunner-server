@@ -21,24 +21,28 @@
             {
               "name": "Jan PreRoll Video",
               "index": 0,
-              "duration": "+00:04:30",
-              "itemtime": true,
+              "clock": {
+                "type" : "countdown",
+                "overrun": "stop",
+                "time": "+00:04:30",
+                "showTime": true
+              },
               "directions": [
                 {
-                  "notify": ["audio"],
+                  "target": ["audio"],
                   "trigger": { "type": "item_start" },
                   "message": {
-                    "type": "text",
+                    "type": "note",
                     "message": "Audio from video Computer"
                   }
                 },
                 {
-                  "notify": ["stage"],
+                  "target": ["stage"],
                   "trigger": { "type": "false_timer", "time": "-00:01:30/+00:03:00" },
                   "message": { "type": "text", "message": "message" }
                 },
                 {
-                  "notify": ["producer"],
+                  "target": ["producer"],
                   "trigger": { "type": "timer", "time": "-00:00:30" },
                   "message": { "type": "text", "message": "message" }
                 }
