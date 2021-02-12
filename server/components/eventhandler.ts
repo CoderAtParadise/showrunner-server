@@ -1,6 +1,7 @@
 import EventEmitter from "events";
 
 export const eventhandler: EventEmitter = new EventEmitter();
+
 const thisTick: (() => void)[] = [];
 const nextTick: (() => void)[] = [];
 
@@ -12,5 +13,3 @@ setInterval(() => {
   nextTick.forEach(cb => cb());
   nextTick.length = 0;
 },1000);
-
-eventhandler.emit("derp");

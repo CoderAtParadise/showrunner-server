@@ -227,6 +227,21 @@ interface TimerStatus {
   running: boolean;
 }
 
+export class TimerSettings {
+  type: TimerType;
+  ref?: string;
+  overrunBehaviour?: OverrunBehaviour = OverrunBehaviour.STOP;
+  time?: Timepoint;
+  showTime? = false;
+  constructor(params: TimerSettings = {} as TimerSettings) {
+    this.type = params.type;
+    this.ref = params.ref;
+    this.overrunBehaviour = params.overrunBehaviour;
+    this.time = params.time;
+    this.showTime = params.showTime;
+  }
+}
+
 export interface Timer {
   id: string;
   type: TimerType;
@@ -245,6 +260,32 @@ export interface Timer {
   update: () => void;
   status: (setRunning: boolean | undefined) => TimerStatus;
 }
+
+export const loadTimer = (id: string, settings: TimerSettings) => {
+  let timer = getTimer(id);
+  if (timer) {
+    switch (settings.type) {
+      case TimerType.Reference:
+        timer = new Reference(timer.id, settings.ref || "noop");
+        break;
+      case TimerType.COUNTDOWN:
+        timer = new Countdown(
+          timer.id,
+          settings.overrunBehaviour || OverrunBehaviour.STOP,
+          settings.time || Timepoint.ZEROTIME.copy()
+        );
+        break;
+      case TimerType.ELAPSED:
+        timer = new Elapsed(
+          timer.id,
+          settings.overrunBehaviour || OverrunBehaviour.STOP,
+          settings.time || Timepoint.INVALID
+        );
+        break;
+    }
+    timer.reset();
+  }
+};
 
 export class Countdown implements Timer {
   id: string;
@@ -305,6 +346,7 @@ export class Countdown implements Timer {
   reset() {
     this.stop();
     this.current = this.startpoint.copy();
+    this.overrun = false;
   }
 
   restart() {
@@ -386,6 +428,7 @@ export class Elapsed implements Timer {
   reset() {
     this.stop();
     this.current = this.startpoint.copy();
+    this.overrun = false;
   }
 
   restart() {

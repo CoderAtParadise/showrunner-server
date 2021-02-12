@@ -1,10 +1,8 @@
-import {Router} from "express";
+import {Router,Request,Response} from "express";
 const router = Router();
 import { getTimer, getTimers, Timepoint, Timer } from "../components/timer";
 import { eventhandler, schedule } from "../components/eventhandler";
 import upgradeSSE from "../components/upgradeSSE";
-import { stringify } from "querystring";
-import { timeStamp } from "console";
 
 class TimersRespone {
   clock = Timepoint.now().tostring();
@@ -21,26 +19,21 @@ class TimerObject {
   }
 }
 
-const sendTimers = (map: Map<string,Timer>) => {
-  const obj = new TimersRespone();
-  map.forEach((value,key) => obj.timers.push(new TimerObject(key,value.currentTimer())));
-  return JSON.stringify(obj);
-};
-
-router.get("/timers", async (req: any, res: any) => {
+router.get("/timers", async (req: Request, res: Response) => {
   upgradeSSE(res);
+  const sendTimers = (map: Map<string,Timer>) => {
+    const obj = new TimersRespone();
+    map.forEach((value,key) => obj.timers.push(new TimerObject(key,value.currentTimer())));
+    return JSON.stringify(obj);
+  };
   eventhandler.on("timer", () => {
     res.write(`event: timer\ndata: ${sendTimers(getTimers)}\n\n`);
   });
 });
 
-router.post("/timer/create", (req: any, res: any) => {});
+router.post("/timer/create", (req: Request, res: Response) => {});
 
-router.get("/clock", (req: any, res: any) => {
-  res.status(200).json({ time: Timepoint.now().tostring() });
-});
-
-router.get("/timer/:id", (req: any, res: any) => {
+router.get("/timer/:id", (req: Request, res: Response) => {
   const timer = getTimer(req.params.id);
   if (!timer) {
     res.status(404).json({

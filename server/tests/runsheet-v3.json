@@ -2,27 +2,28 @@
   "event_info": {
     "name": ""
   },
-  "preshow": {},
   "sessions": [
     {
-      "session_info": {
-        "start": ["08:00:00", "10:00:00"],
-        "duration": "+01:20:00"
+      "display": "service",
+      "start": ["08:00:00", "10:00:00"],
+      "clock": {
+        "type": "countdown",
+        "overrun": "stop",
+        "time": "+01:20:00"
       },
       "brackets": [
         {
           "display": "Pre-Roll",
-          "duration": "+00:05:00",
           "clock": {
-            "overrun": "false",
-            "type": "countdown"
+            "type": "countdown",
+            "overrun": "stop",
+            "time": "+00:05:00"
           },
           "items": [
             {
               "name": "Jan PreRoll Video",
-              "index": 0,
               "clock": {
-                "type" : "countdown",
+                "type": "countdown",
                 "overrun": "stop",
                 "time": "+00:04:30",
                 "showTime": true
@@ -38,7 +39,10 @@
                 },
                 {
                   "target": ["stage"],
-                  "trigger": { "type": "false_timer", "time": "-00:01:30/+00:03:00" },
+                  "trigger": {
+                    "type": "false_timer",
+                    "time": "-00:01:30/+00:03:00"
+                  },
                   "message": { "type": "text", "message": "message" }
                 },
                 {
@@ -52,7 +56,6 @@
         },
         {
           "name": "worship",
-          "index": 1,
           "duration": "+00:20:00",
           "clock": {
             "type": "elapsed",

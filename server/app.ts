@@ -2,7 +2,10 @@ import express from "express";
 import morgan from "morgan";
 import Debug from "debug";
 import timerRouter from "./routes/timer"
-import "./components/item";
+import controlRouter from "./routes/control";
+import "./components/eventhandler";
+import "./components/bracket";
+import "./components/triggers/item_start";
 
 const normalizePort = (val: any) => {
   let port = parseInt(val, 10);
@@ -14,11 +17,12 @@ const normalizePort = (val: any) => {
 const app = express();
 const debug = Debug("showrunner:server");
 const port = normalizePort(process.env.PORT || "3001");
-app.use(morgan("dev",{stream: {write: msg => Debug("showrunner:http")}}));
+app.use(morgan("dev",{stream: {write: msg => Debug("showrunner:http")(msg)}}));
 app.use(timerRouter);
+app.use("/control",controlRouter);
 
 
 
 app.listen(port, () => {
-  debug(`Running at https://localhost:${port}`);
+  debug(`Running at http://localhost:${port}`);
 });

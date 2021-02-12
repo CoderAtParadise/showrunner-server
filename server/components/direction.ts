@@ -1,6 +1,9 @@
+import { Item } from "./item";
+
 export interface Trigger {
   type: string;
   check: () => boolean;
+  reset: () => void;
 }
 
 export interface Message {
@@ -18,6 +21,7 @@ export const registerMessageHandler = (type: string,handler: MessageHandler<any>
 }
 
 export class Direction {
+  item?: Item;
   targets: string[];
   trigger: Trigger;
   message: Message;
@@ -30,7 +34,7 @@ export class Direction {
   }
 
   shouldNotify() {
-    return !this.hasRun ? this.trigger.check() : false;
+    return !this.hasRun && this.item?.isActive() ? this.trigger.check() : false;
   }
 
   notify() {
@@ -40,6 +44,7 @@ export class Direction {
         console.log(`Unknown message type: ${this.message.type}`);
       else messageHandler?.handleMessage(target, this.message);
     });
+    this.trigger.reset();
     this.hasRun = true;
   }
 }

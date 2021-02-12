@@ -1,4 +1,6 @@
-const updgradeSSE = (res: any) => {
+import {Response} from "express";
+
+const updgradeSSE = (res: Response) => {
   //prettier-ignore
   res.set({
     "Cache-Control": "no-cache",
