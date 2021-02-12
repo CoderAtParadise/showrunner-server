@@ -70,24 +70,21 @@ export const deleteSession = (index: number) => {
   sessions.splice(index, 1);
 };
 
-const ses = new Session(
-  "service",
-  new TimerSettings({
-    type: TimerType.COUNTDOWN,
-    time: new Timepoint(1, 20, 0),
-  })
-);
+const ses = new Session("service", {
+  type: TimerType.COUNTDOWN,
+  time: new Timepoint(1, 20, 0),
+  showTime: false,
+});
 addSession(ses);
-const bra = new Bracket(
-  "Pre-Roll",
-  new TimerSettings({ type: TimerType.COUNTDOWN, time: new Timepoint(0, 5, 0) })
-);
+const bra = new Bracket("Pre-Roll", {
+  type: TimerType.COUNTDOWN,
+  time: new Timepoint(0, 5, 0),
+  showTime: false,
+});
 ses.addBracket(bra);
-const item = new Item(
-  "Jan PreRoll Video",
-  new TimerSettings({
-    type: TimerType.COUNTDOWN,
-    time: new Timepoint(0, 4, 30),
-  })
-);
+const item = new Item("Jan PreRoll Video", {
+  type: TimerType.COUNTDOWN,
+  time: new Timepoint(0, 4, 30),
+  showTime: false,
+});
 bra.addItem(item);

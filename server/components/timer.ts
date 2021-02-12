@@ -227,19 +227,12 @@ interface TimerStatus {
   running: boolean;
 }
 
-export class TimerSettings {
+export interface TimerSettings {
   type: TimerType;
   ref?: string;
-  overrunBehaviour?: OverrunBehaviour = OverrunBehaviour.STOP;
+  overrunBehaviour?: OverrunBehaviour;
   time?: Timepoint;
-  showTime? = false;
-  constructor(params: TimerSettings = {} as TimerSettings) {
-    this.type = params.type;
-    this.ref = params.ref;
-    this.overrunBehaviour = params.overrunBehaviour;
-    this.time = params.time;
-    this.showTime = params.showTime;
-  }
+  showTime: boolean;
 }
 
 export interface Timer {
@@ -289,13 +282,13 @@ export const loadTimer = (id: string, settings: TimerSettings) => {
 
 export class Countdown implements Timer {
   id: string;
-  type = TimerType.COUNTDOWN;
+  type: TimerType = TimerType.COUNTDOWN;
   overrunBehaviour: OverrunBehaviour;
   startpoint: Timepoint;
-  endpoint = Timepoint.ZEROTIME.copy();
-  current = Timepoint.INVALID.copy();
-  running = false;
-  overrun = false;
+  endpoint: Timepoint = Timepoint.ZEROTIME.copy();
+  current: Timepoint = Timepoint.INVALID.copy();
+  running: boolean = false;
+  overrun: boolean = false;
   constructor(
     id: string,
     overrunBehaviour: OverrunBehaviour,
@@ -370,13 +363,13 @@ export class Countdown implements Timer {
 
 export class Elapsed implements Timer {
   id: string;
-  type = TimerType.ELAPSED;
+  type:TimerType = TimerType.ELAPSED;
   overrunBehaviour: OverrunBehaviour;
-  startpoint = Timepoint.ZEROTIME.copy();
-  endpoint = Timepoint.INVALID.copy();
-  current = Timepoint.INVALID.copy();
-  running = false;
-  overrun = false;
+  startpoint: Timepoint = Timepoint.ZEROTIME.copy();
+  endpoint: Timepoint = Timepoint.INVALID.copy();
+  current: Timepoint = Timepoint.INVALID.copy();
+  running: boolean = false;
+  overrun: boolean = false;
   constructor(
     id: string,
     overrunBehaviour: OverrunBehaviour,
@@ -452,7 +445,7 @@ export class Elapsed implements Timer {
 
 export class Reference implements Timer {
   id: string;
-  type = TimerType.Reference;
+  type:TimerType = TimerType.Reference;
   ref: string;
 
   constructor(id: string, ref: string) {
@@ -515,7 +508,9 @@ export const getTimer = (id: string) => {
 export const addTimer = (timer: Timer) => {
   timers.set(timer.id, timer);
 };
+
 import { eventhandler, addThisTickHandler } from "./eventhandler";
+
 addThisTickHandler(() => {
   timers.forEach((timer: Timer) => {
     timer.update();

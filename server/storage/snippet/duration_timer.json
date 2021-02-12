@@ -1,8 +1,0 @@
-{
-  "type": "timer",
-  "id": "duration",
-  "timer": "countdown",
-  "overrun": false,
-  "startpoint": "+00:00:00",
-  "endpoint": "+00:00:00"
-}

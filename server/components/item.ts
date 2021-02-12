@@ -8,7 +8,7 @@ export class Item {
   display: string;
   clock: TimerSettings;
   directions: Direction[] = [];
-  disabled = false;
+  disabled: boolean = false;
 
   constructor(display: string, clock: TimerSettings) {
     this.display = display;

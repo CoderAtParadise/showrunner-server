@@ -25,7 +25,7 @@ export class Direction {
   targets: string[];
   trigger: Trigger;
   message: Message;
-  hasRun = false;
+  hasRun:boolean = false;
 
   constructor(targets: string[], trigger: Trigger, message: Message) {
     this.targets = targets;

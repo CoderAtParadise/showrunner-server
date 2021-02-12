@@ -6,24 +6,14 @@ import upgradeSSE from "../components/upgradeSSE";
 
 class TimersRespone {
   clock = Timepoint.now().tostring();
-  timers: TimerObject[] = [];
-}
-
-class TimerObject {
-  id: string;
-  current: string;
-
-  constructor(id: string,current: Timepoint) {
-    this.id = id;
-    this.current = current.tostring();
-  }
+  timers: {id:string,current:string}[] = [];
 }
 
 router.get("/timers", async (req: Request, res: Response) => {
   upgradeSSE(res);
   const sendTimers = (map: Map<string,Timer>) => {
     const obj = new TimersRespone();
-    map.forEach((value,key) => obj.timers.push(new TimerObject(key,value.currentTimer())));
+    map.forEach((value,key) => obj.timers.push({id:key,current:value.currentTimer().tostring()}));
     return JSON.stringify(obj);
   };
   eventhandler.on("timer", () => {

@@ -1,8 +1,0 @@
-{
-    "group": "",
-    "type": "timer",
-    "id" : "example",
-    "timer" : "countdown | countdown_to_time | elapsed",
-    "startpoint": "+00:05:00",
-    "endpoint": "+00:00:00"
-}

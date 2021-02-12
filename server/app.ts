@@ -5,7 +5,7 @@ import timerRouter from "./routes/timer"
 import controlRouter from "./routes/control";
 import "./components/eventhandler";
 import "./components/bracket";
-import "./components/triggers/item_start";
+import "./components/triggers/item_switch";
 
 const normalizePort = (val: any) => {
   let port = parseInt(val, 10);

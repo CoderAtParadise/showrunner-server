@@ -31,7 +31,7 @@
               "directions": [
                 {
                   "target": ["audio"],
-                  "trigger": { "type": "item_start" },
+                  "trigger": { "type": "switch:item" },
                   "message": {
                     "type": "note",
                     "message": "Audio from video Computer"
