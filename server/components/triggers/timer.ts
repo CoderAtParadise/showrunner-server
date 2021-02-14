@@ -1,8 +1,8 @@
-import {Trigger} from "../direction";
+import {ITrigger} from "../trigger";
 import { eventhandler } from "../eventhandler";
 import { getTimer, Timepoint } from "../timer";
 
-class timer implements Trigger {
+class timer implements ITrigger {
     type:string = "control:timer";
     timer: string;
     time:Timepoint;

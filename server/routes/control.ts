@@ -1,11 +1,6 @@
 import { Router, Request, Response } from "express";
 const router = Router();
 import { eventhandler, schedule } from "../components/eventhandler";
-import {
-  deleteSession,
-  sessions,
-  setActiveSession,
-} from "../components/session";
 import updgradeSSE from "../components/upgradeSSE";
 
 router.get("/current", (req: Request, res: Response) => {
@@ -17,13 +12,13 @@ router.get("/current", (req: Request, res: Response) => {
 });
 
 const checkSessionExists = (res: Response, sessionIndex: number) => {
-  if (sessions.length <= sessionIndex) {
+  /*if (sessions.length <= sessionIndex) {
     res
       .status(404)
       .json({ error: true, message: `Invalid Session Index: ${sessionIndex}` });
     return null;
   }
-  return sessions[sessionIndex];
+  return sessions[sessionIndex];*/
 };
 
 const checkBracketExists = (

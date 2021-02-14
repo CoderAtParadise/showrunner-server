@@ -5,7 +5,7 @@ import { eventhandler, schedule } from "../components/eventhandler";
 import upgradeSSE from "../components/upgradeSSE";
 
 class TimersRespone {
-  clock = Timepoint.now().tostring();
+  clock = Timepoint.now().toString();
   timers: {id:string,current:string}[] = [];
 }
 
@@ -13,7 +13,7 @@ router.get("/timers", async (req: Request, res: Response) => {
   upgradeSSE(res);
   const sendTimers = (map: Map<string,Timer>) => {
     const obj = new TimersRespone();
-    map.forEach((value,key) => obj.timers.push({id:key,current:value.currentTimer().tostring()}));
+    map.forEach((value,key) => obj.timers.push({id:key,current:value.currentTimer().toString()}));
     return JSON.stringify(obj);
   };
   eventhandler.on("timer", () => {
@@ -31,7 +31,7 @@ router.get("/timer/:id", (req: Request, res: Response) => {
       message: `No timer exists with id: ${req.params.id}`,
     });
   } else {
-    let command = req.query.command;
+    const command = req.query.command;
     if (!command) {
       res.status(200).json(timer.status(undefined));
       return;

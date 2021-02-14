@@ -1,3 +1,5 @@
+import IJson from "./IJson";
+
 export enum OverrunBehaviour {
   STOP = "stop",
   HIDE = "hide",
@@ -10,7 +12,7 @@ export enum TimerType {
   Reference = "reference",
 }
 
-enum TimeFormat {
+export enum TimeFormat {
   INVALID = "invalid",
   TIME = "time",
   RELSTART = "relstart",
@@ -39,8 +41,8 @@ export class Timepoint {
     this.format = format;
   }
 
-  static now() {
-    let now = new Date();
+  static now(): Timepoint {
+    const now = new Date();
     return new Timepoint(
       now.getHours(),
       now.getMinutes(),
@@ -49,7 +51,21 @@ export class Timepoint {
     );
   }
 
-  lessThan(other: Timepoint) {
+  static parse(timepoint: string | undefined): Timepoint | undefined {
+    if (!timepoint) return undefined;
+    if (timepoint === "--:--:--") return Timepoint.INVALID.copy();
+    const format: TimeFormat =
+      timepoint.charAt(0) === "+"
+        ? TimeFormat.RELSTART
+        : timepoint.charAt(0) === "-"
+        ? TimeFormat.RELEND
+        : TimeFormat.TIME;
+    if (format !== TimeFormat.TIME) timepoint = timepoint.slice(0);
+    const v: string[] = timepoint.split(":");
+    return new Timepoint(Number.parseInt(v[0]),Number.parseInt(v[1]),Number.parseInt(v[2]),format);
+  }
+
+  lessThan(other: Timepoint): boolean {
     if (this.format === TimeFormat.RELEND && other.format === TimeFormat.RELEND)
       return this._lessThan(other);
     else if (
@@ -65,7 +81,7 @@ export class Timepoint {
     else return this.format === other.format ? this._greaterThan(other) : false;
   }
 
-  greaterThan(other: Timepoint) {
+  greaterThan(other: Timepoint): boolean {
     if (this.format === TimeFormat.RELEND && other.format === TimeFormat.RELEND)
       return this._greaterThan(other);
     else if (
@@ -81,7 +97,7 @@ export class Timepoint {
     else return this.format === other.format ? this._lessThan(other) : false;
   }
 
-  equals(other: Timepoint) {
+  equals(other: Timepoint): boolean {
     if (
       (this.format === TimeFormat.RELSTART ||
         this.format === TimeFormat.RELEND) &&
@@ -92,38 +108,38 @@ export class Timepoint {
     return this.format === other.format ? this._equals(other) : false;
   }
 
-  subtract(other: Timepoint) {
+  subtract(other: Timepoint): Timepoint {
     if (this._formatEqual(other, TimeFormat.RELEND)) {
-      let res = this._subtract(other);
+      const res = this._subtract(other);
       if (this._lessThan(other)) res.format = TimeFormat.RELSTART;
       else res.format = this.format;
       return res;
     } else if (this._formatOpposite(other)) {
-      let res = this._add(other);
+      const res = this._add(other);
       res.format = this.format;
       return res;
     } else {
       if (this._lessThan(other)) {
-        let res = other._subtract(this);
+        const res = other._subtract(this);
         res.format = TimeFormat.RELEND;
         return res;
       } else return this._subtract(other);
     }
   }
 
-  add(other: Timepoint) {
+  add(other: Timepoint): Timepoint {
     if (this._formatEqual(other, TimeFormat.RELEND)) {
-      let res = this._add(other);
+      const res = this._add(other);
       res.format = TimeFormat.RELEND;
       return res;
     } else if (this._formatOpposite(other)) {
-      let res = this._subtract(other);
+      const res = this._subtract(other);
       res.format = other.format;
       return res;
     } else return this._add(other);
   }
 
-  tostring() {
+  toString(): string {
     return this.format === TimeFormat.INVALID
       ? "--:--:--"
       : `${
@@ -138,15 +154,15 @@ export class Timepoint {
         )}:${Timepoint.zeroPad(this.seconds, 2)}`;
   }
 
-  copy() {
+  copy(): Timepoint {
     return new Timepoint(this.hours, this.minutes, this.seconds, this.format);
   }
 
-  _formatEqual(other: Timepoint, format: TimeFormat) {
+  _formatEqual(other: Timepoint, format: TimeFormat): boolean {
     return this.format === other.format && this.format == format;
   }
 
-  _formatOpposite(other: Timepoint) {
+  _formatOpposite(other: Timepoint): boolean {
     if (
       (this.format === TimeFormat.RELEND &&
         other.format === TimeFormat.RELSTART) ||
@@ -157,7 +173,7 @@ export class Timepoint {
     else return false;
   }
 
-  _greaterThan(other: Timepoint) {
+  _greaterThan(other: Timepoint): boolean {
     if (this.hours > other.hours) return true;
     if (this.hours === other.hours) {
       if (this.minutes > other.minutes) return true;
@@ -167,7 +183,7 @@ export class Timepoint {
     return false;
   }
 
-  _lessThan(other: Timepoint) {
+  _lessThan(other: Timepoint): boolean {
     if (this.hours < other.hours) return true;
     if (this.hours === other.hours) {
       if (this.minutes < other.minutes) return true;
@@ -177,7 +193,7 @@ export class Timepoint {
     return false;
   }
 
-  _equals(other: Timepoint) {
+  _equals(other: Timepoint): boolean {
     return this.hours === other.hours
       ? this.minutes === other.minutes
         ? this.seconds === other.seconds
@@ -187,31 +203,29 @@ export class Timepoint {
       : false;
   }
 
-  _subtract(other: Timepoint) {
-    let tis = (this.hours * 60 + this.minutes) * 60 + this.seconds;
-    let otis = (other.hours * 60 + other.minutes) * 60 + other.seconds;
+  _subtract(other: Timepoint): Timepoint {
+    const tis = (this.hours * 60 + this.minutes) * 60 + this.seconds;
+    const otis = (other.hours * 60 + other.minutes) * 60 + other.seconds;
     let res = Math.abs(tis - otis);
-    let seconds = res % 60;
+    const seconds = res % 60;
     res = Math.floor(res / 60);
-    let minutes = res % 60;
-    let hours = Math.floor(res / 60);
+    const minutes = res % 60;
+    const hours = Math.floor(res / 60);
     return new Timepoint(hours, minutes, seconds, this.format);
   }
 
-  _add(other: Timepoint) {
-    let tis = (this.hours * 60 + this.minutes) * 60 + this.seconds;
-    let otis = (other.hours * 60 + other.minutes) * 60 + other.seconds;
+  _add(other: Timepoint): Timepoint {
+    const tis = (this.hours * 60 + this.minutes) * 60 + this.seconds;
+    const otis = (other.hours * 60 + other.minutes) * 60 + other.seconds;
     let res = Math.abs(tis + otis);
-    let seconds = res % 60;
+    const seconds = res % 60;
     res = Math.floor(res / 60);
-    let minutes = res % 60;
-    let hours = Math.floor(res / 60);
+    const minutes = res % 60;
+    const hours = Math.floor(res / 60);
     return new Timepoint(hours, minutes, seconds, this.format);
   }
 
-  _addHelper(other: Timepoint) {}
-
-  private static zeroPad(num: number, places: number) {
+  private static zeroPad(num: number, places: number): string {
     return String(num).padStart(places, "0");
   }
 }
@@ -234,6 +248,38 @@ export interface TimerSettings {
   time?: Timepoint;
   showTime: boolean;
 }
+
+interface TSJSON {
+  type: string;
+  ref?: string;
+  overrun?: string;
+  time?: string;
+  showTime: boolean;
+}
+
+export const TimerSettingsJson: IJson<TimerSettings> = {
+  serialize(value: TimerSettings): object {
+    const obj: TSJSON = {
+      type: value.type as string,
+      ref: value.ref,
+      overrun: value.overrunBehaviour as string,
+      time: value.time?.toString(),
+      showTime: value.showTime || false,
+    };
+    return obj;
+  },
+
+  deserialize(json: object): TimerSettings {
+    const value = json as TSJSON;
+    return {
+      type: value.type as TimerType,
+      ref: value.ref,
+      overrunBehaviour: value.overrun as OverrunBehaviour,
+      time: Timepoint.parse(value.time),
+      showTime: value.showTime !== undefined ? value.showTime : false ,
+    };
+  },
+};
 
 export interface Timer {
   id: string;
@@ -321,7 +367,7 @@ export class Countdown implements Timer {
     if (timepoint.format === TimeFormat.RELEND)
       return this.current._equals(timepoint);
     else if (timepoint.format === TimeFormat.RELSTART) {
-      let ac = this.startpoint.subtract(this.current);
+      const ac = this.startpoint.subtract(this.current);
       return ac._equals(timepoint);
     }
     return false;
@@ -351,9 +397,9 @@ export class Countdown implements Timer {
     return {
       id: this.id,
       type: this.type,
-      startpoint: this.startpoint.tostring(),
-      endpoint: this.endpoint.tostring(),
-      current: this.current.tostring(),
+      startpoint: this.startpoint.toString(),
+      endpoint: this.endpoint.toString(),
+      current: this.current.toString(),
       overrunBehavior: this.overrunBehaviour,
       overrun: this.overrun,
       running: setRunning !== undefined ? setRunning : this.running,
@@ -363,7 +409,7 @@ export class Countdown implements Timer {
 
 export class Elapsed implements Timer {
   id: string;
-  type:TimerType = TimerType.ELAPSED;
+  type: TimerType = TimerType.ELAPSED;
   overrunBehaviour: OverrunBehaviour;
   startpoint: Timepoint = Timepoint.ZEROTIME.copy();
   endpoint: Timepoint = Timepoint.INVALID.copy();
@@ -402,7 +448,7 @@ export class Elapsed implements Timer {
     if (this.endpoint.format === TimeFormat.INVALID)
       return this.current._equals(timepoint);
     else if (timepoint.format === TimeFormat.RELEND) {
-      let ac = this.endpoint.subtract(this.current);
+      const ac = this.endpoint.subtract(this.current);
       return ac._equals(timepoint);
     } else if (timepoint.format === TimeFormat.RELSTART)
       return this.current._equals(timepoint);
@@ -433,9 +479,9 @@ export class Elapsed implements Timer {
     return {
       id: this.id,
       type: this.type,
-      startpoint: this.startpoint.tostring(),
-      endpoint: this.endpoint.tostring(),
-      current: this.current.tostring(),
+      startpoint: this.startpoint.toString(),
+      endpoint: this.endpoint.toString(),
+      current: this.current.toString(),
       overrunBehavior: this.overrunBehaviour,
       overrun: this.overrun,
       running: setRunning !== undefined ? setRunning : this.running,
@@ -445,7 +491,7 @@ export class Elapsed implements Timer {
 
 export class Reference implements Timer {
   id: string;
-  type:TimerType = TimerType.Reference;
+  type: TimerType = TimerType.Reference;
   ref: string;
 
   constructor(id: string, ref: string) {
@@ -466,9 +512,9 @@ export class Reference implements Timer {
       getTimer(this.ref)?.status(setRunning) || {
         id: this.id,
         type: this.type,
-        startpoint: Timepoint.INVALID.tostring(),
-        endpoint: Timepoint.INVALID.tostring(),
-        current: Timepoint.INVALID.tostring(),
+        startpoint: Timepoint.INVALID.toString(),
+        endpoint: Timepoint.INVALID.toString(),
+        current: Timepoint.INVALID.toString(),
         overrunBehavior: OverrunBehaviour.HIDE,
         overrun: false,
         running: false,
@@ -510,6 +556,8 @@ export const addTimer = (timer: Timer) => {
 };
 
 import { eventhandler, addThisTickHandler } from "./eventhandler";
+import { deserialize } from "v8";
+import { stringify } from "querystring";
 
 addThisTickHandler(() => {
   timers.forEach((timer: Timer) => {

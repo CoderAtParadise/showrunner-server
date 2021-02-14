@@ -1,33 +1,17 @@
 import { Item } from "./item";
+import {IMessage,messageHandlers} from "./message";
+import {ITrigger,triggerHandlers} from "./trigger";
+import IJson from "./IJson";
 
-export interface Trigger {
-  type: string;
-  check: () => boolean;
-  reset: () => void;
-}
-
-export interface Message {
-  type: string;
-}
-
-export interface MessageHandler<T extends Message> {
-  handleMessage: (target: string, message: T) => void;
-}
-
-const messageHandlers = new Map<string, MessageHandler<any>>();
-
-export const registerMessageHandler = (type: string,handler: MessageHandler<any>) => {
-    messageHandlers.set(type,handler);
-}
 
 export class Direction {
   item?: Item;
   targets: string[];
-  trigger: Trigger;
-  message: Message;
-  hasRun:boolean = false;
+  trigger: ITrigger;
+  message: IMessage;
+  hasRun: boolean = false;
 
-  constructor(targets: string[], trigger: Trigger, message: Message) {
+  constructor(targets: string[], trigger: ITrigger, message: IMessage) {
     this.targets = targets;
     this.trigger = trigger;
     this.message = message;
@@ -39,7 +23,7 @@ export class Direction {
 
   notify() {
     this.targets.forEach((target: string) => {
-      let messageHandler = messageHandlers.get(this.message.type);
+      const messageHandler = messageHandlers.get(this.message.type);
       if (!messageHandlers)
         console.log(`Unknown message type: ${this.message.type}`);
       else messageHandler?.handleMessage(target, this.message);
@@ -48,3 +32,28 @@ export class Direction {
     this.hasRun = true;
   }
 }
+
+export const DirectionJson: IJson<Direction> = {
+  serialize(value: Direction): object {
+    return {
+      targets: value.targets,
+      trigger: triggerHandlers.get(value.trigger.type)?.json.serialize(value.trigger),
+      message: messageHandlers
+        .get(value.message.type)
+        ?.json.serialize(value.message),
+    };
+  },
+
+  deserialize(json: object): Direction {
+      const value = json as {
+        targets: string[];
+        trigger: { type: string };
+        message: { type: string };
+      };
+      const trigger = triggerHandlers.get(value.trigger.type)?.json.deserialize(value.trigger);
+      const message = messageHandlers
+        .get(value.message.type)
+        ?.json.deserialize(value.message);
+      return new Direction(value.targets, trigger, message);
+  },
+};

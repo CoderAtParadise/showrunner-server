@@ -1,23 +1,40 @@
 import { type } from "os";
-import { Bracket } from "./bracket";
-import { eventhandler } from "./eventhandler";
-import { Item } from "./item";
-import { loadTimer, Timepoint, TimerSettings, TimerType } from "./timer";
+import { Bracket, BracketJson } from "./bracket";
+import { eventhandler, schedule } from "./eventhandler";
+import {
+  getTimer,
+  loadTimer,
+  Timepoint,
+  TimerSettings,
+  TimerSettingsJson,
+} from "./timer";
+import IJson from "./IJson";
 
 export class Session {
   display: string;
+  startTimes: Timepoint[];
   clock: TimerSettings;
-  brackets: Bracket[] = [];
-  activeBracket = 0;
+  brackets: Bracket[];
+  activeBracket: number = 0;
 
-  constructor(display: string, clock: TimerSettings) {
+  constructor(
+    display: string,
+    startTime: Timepoint[],
+    clock: TimerSettings,
+    brackets: Bracket[]
+  ) {
     this.display = display;
     this.clock = clock;
+    this.startTimes = startTime;
+    this.brackets = brackets;
   }
 
   sessionSwitch() {
     loadTimer("session", this.clock);
     eventhandler.emit("switch:session");
+    schedule(() => {
+      getTimer("session")?.start();
+    });
   }
 
   addBracket(bracket: Bracket) {
@@ -34,13 +51,15 @@ export class Session {
       this.activeBracket === index &&
       this.activeBracket === this.brackets.length - 1
     )
-      activeSession--;
+      this.activeBracket--;
     this.brackets.splice(index, 1);
   }
 
-  setActive(index: number) {
-    this.activeBracket = index;
-    this.brackets[this.activeBracket].bracketSwitch();
+  setActive(index: number, restart: boolean) {
+    if (this.activeBracket !== index || restart) {
+      this.activeBracket = index;
+      this.brackets[this.activeBracket].bracketSwitch();
+    }
   }
 
   isActive(bracket: Bracket) {
@@ -48,43 +67,48 @@ export class Session {
   }
 }
 
-export const sessions: Session[] = [];
-export let activeSession = 0;
+export const SessionJson: IJson<Session> = {
+  serialize(value: Session): object {
+    const obj: {
+      display: string;
+      startTimes: string[];
+      clock: {};
+      brackets: object[];
+    } = {
+      display: value.display,
+      startTimes: [],
+      clock: TimerSettingsJson.serialize(value.clock),
+      brackets: [],
+    };
+    value.startTimes.forEach((value: Timepoint) =>
+      obj.startTimes.push(value.toString())
+    );
+    value.brackets.forEach((value: Bracket) =>
+      obj.brackets.push(BracketJson.serialize(value))
+    );
+    return obj;
+  },
 
-export const addSession = (session: Session) => {
-  addSessionAtIndex(sessions.length, session);
+  deserialize(json: object): Session {
+    const value = json as {
+      display: string;
+      startTimes: string[];
+      clock: {};
+      brackets: object[];
+    };
+    const brackets: Bracket[] = [];
+    const startTimes: Timepoint[] = [];
+    value.startTimes.forEach((json: string) =>
+      startTimes.push(Timepoint.parse(json) || Timepoint.INVALID.copy())
+    );
+    value.brackets.forEach((json: object) =>
+      brackets.push(BracketJson.deserialize(json))
+    );
+    return new Session(
+      value.display,
+      startTimes,
+      TimerSettingsJson.deserialize(value.clock),
+      brackets
+    );
+  },
 };
-
-export const addSessionAtIndex = (index: number, session: Session) => {
-  sessions.splice(index, 0, session);
-};
-
-export const setActiveSession = (index: number) => {
-  activeSession = index;
-  sessions[activeSession].sessionSwitch();
-};
-
-export const deleteSession = (index: number) => {
-  if (activeSession === index && activeSession === sessions.length - 1)
-    activeSession--;
-  sessions.splice(index, 1);
-};
-
-const ses = new Session("service", {
-  type: TimerType.COUNTDOWN,
-  time: new Timepoint(1, 20, 0),
-  showTime: false,
-});
-addSession(ses);
-const bra = new Bracket("Pre-Roll", {
-  type: TimerType.COUNTDOWN,
-  time: new Timepoint(0, 5, 0),
-  showTime: false,
-});
-ses.addBracket(bra);
-const item = new Item("Jan PreRoll Video", {
-  type: TimerType.COUNTDOWN,
-  time: new Timepoint(0, 4, 30),
-  showTime: false,
-});
-bra.addItem(item);
