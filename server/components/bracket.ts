@@ -1,6 +1,6 @@
 import { Session } from "./session";
 import { Item, ItemJson } from "./item";
-import { TimerSettings, loadTimer, getTimer, TimerSettingsJson } from "./timer";
+import { TimerSettings, loadTimer, getTimer, TimerSettingsJson, Timepoint } from "./timer";
 import { eventhandler, schedule } from "./eventhandler";
 import IJson from "./IJson";
 
@@ -9,7 +9,6 @@ export class Bracket {
   display: string;
   clock: TimerSettings;
   items: Item[];
-  activeIndex = 0;
 
   constructor(display: string, clock: TimerSettings, items: Item[]) {
     this.display = display;
@@ -18,11 +17,7 @@ export class Bracket {
   }
 
   bracketSwitch() {
-    loadTimer("bracket", this.clock);
     eventhandler.emit("switch:bracket");
-    schedule(() => {
-      getTimer("bracket")?.start();
-    });
   }
 
   addItem(item: Item) {
@@ -35,24 +30,11 @@ export class Bracket {
   }
 
   deleteItem(index: number) {
-    if (
-      this.activeIndex === index &&
-      this.activeIndex === this.items.length - 1
-    )
-      this.activeIndex--;
     this.items.splice(index, 1);
   }
 
-  setActive(index: number) {
-    this.activeIndex = index;
-    this.items[this.activeIndex].itemSwitch();
-  }
-
-  isActive(item: Item) {
-    return (
-      this.session?.isActive(this) &&
-      this.activeIndex === this.items.indexOf(item)
-    );
+  getItem(index:number): Item {
+    return this.items[index];
   }
 }
 

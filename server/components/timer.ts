@@ -51,8 +51,8 @@ export class Timepoint {
     );
   }
 
-  static parse(timepoint: string | undefined): Timepoint | undefined {
-    if (!timepoint) return undefined;
+  static parse(timepoint: string | undefined): Timepoint {
+    if (!timepoint) return Timepoint.INVALID;
     if (timepoint === "--:--:--") return Timepoint.INVALID.copy();
     const format: TimeFormat =
       timepoint.charAt(0) === "+"
@@ -243,17 +243,15 @@ interface TimerStatus {
 
 export interface TimerSettings {
   type: TimerType;
-  ref?: string;
-  overrunBehaviour?: OverrunBehaviour;
-  time?: Timepoint;
+  overrunBehaviour: OverrunBehaviour;
+  time: Timepoint;
   showTime: boolean;
 }
 
 interface TSJSON {
   type: string;
-  ref?: string;
-  overrun?: string;
-  time?: string;
+  overrun: string;
+  time: string;
   showTime: boolean;
 }
 
@@ -261,9 +259,8 @@ export const TimerSettingsJson: IJson<TimerSettings> = {
   serialize(value: TimerSettings): object {
     const obj: TSJSON = {
       type: value.type as string,
-      ref: value.ref,
       overrun: value.overrunBehaviour as string,
-      time: value.time?.toString(),
+      time: value.time?.  toString(),
       showTime: value.showTime || false,
     };
     return obj;
@@ -273,7 +270,6 @@ export const TimerSettingsJson: IJson<TimerSettings> = {
     const value = json as TSJSON;
     return {
       type: value.type as TimerType,
-      ref: value.ref,
       overrunBehaviour: value.overrun as OverrunBehaviour,
       time: Timepoint.parse(value.time),
       showTime: value.showTime !== undefined ? value.showTime : false ,
@@ -304,9 +300,6 @@ export const loadTimer = (id: string, settings: TimerSettings) => {
   let timer = getTimer(id);
   if (timer) {
     switch (settings.type) {
-      case TimerType.Reference:
-        timer = new Reference(timer.id, settings.ref || "noop");
-        break;
       case TimerType.COUNTDOWN:
         timer = new Countdown(
           timer.id,
@@ -556,8 +549,6 @@ export const addTimer = (timer: Timer) => {
 };
 
 import { eventhandler, addThisTickHandler } from "./eventhandler";
-import { deserialize } from "v8";
-import { stringify } from "querystring";
 
 addThisTickHandler(() => {
   timers.forEach((timer: Timer) => {

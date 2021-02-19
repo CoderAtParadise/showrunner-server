@@ -1,9 +1,6 @@
-import { type } from "os";
 import { Bracket, BracketJson } from "./bracket";
 import { eventhandler, schedule } from "./eventhandler";
 import {
-  getTimer,
-  loadTimer,
   Timepoint,
   TimerSettings,
   TimerSettingsJson,
@@ -15,7 +12,7 @@ export class Session {
   startTimes: Timepoint[];
   clock: TimerSettings;
   brackets: Bracket[];
-  activeBracket: number = 0;
+
 
   constructor(
     display: string,
@@ -30,11 +27,7 @@ export class Session {
   }
 
   sessionSwitch() {
-    loadTimer("session", this.clock);
     eventhandler.emit("switch:session");
-    schedule(() => {
-      getTimer("session")?.start();
-    });
   }
 
   addBracket(bracket: Bracket) {
@@ -47,23 +40,10 @@ export class Session {
   }
 
   deleteBracket(index: number) {
-    if (
-      this.activeBracket === index &&
-      this.activeBracket === this.brackets.length - 1
-    )
-      this.activeBracket--;
     this.brackets.splice(index, 1);
   }
-
-  setActive(index: number, restart: boolean) {
-    if (this.activeBracket !== index || restart) {
-      this.activeBracket = index;
-      this.brackets[this.activeBracket].bracketSwitch();
-    }
-  }
-
-  isActive(bracket: Bracket) {
-    return this.activeBracket === this.brackets.indexOf(bracket);
+  getBracket(index:number) {
+    return this.brackets[index];
   }
 }
 

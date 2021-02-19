@@ -17,3 +17,5 @@ export const registerMessageHandler = (
 ) => {
   messageHandlers.set(type, handler);
 };
+
+import "./messages/text";

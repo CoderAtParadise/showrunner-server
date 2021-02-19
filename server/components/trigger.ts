@@ -20,3 +20,4 @@ export const registerTriggerHandler = (
 };
 
 import "./triggers/item_switch";
+import "./triggers/manual";

@@ -2,61 +2,27 @@ import { Router, Request, Response } from "express";
 const router = Router();
 import { eventhandler, schedule } from "../components/eventhandler";
 import updgradeSSE from "../components/upgradeSSE";
+import { getActiveRunsheet, ListRunsheets, LoadRunsheet } from "../components/runsheet";
 
-router.get("/current", (req: Request, res: Response) => {
+router.get("/direction", async (req: Request, res: Response) => {
   updgradeSSE(res);
-  res.write(`event: current\ndata:{}\n\n`);
-  eventhandler.on("switch:item", () => {
-    res.write(`event: current\ndata:{}\n\n`);
+  let targets: string[];
+  if (req.query.target) targets = (req.query.target as string).split(",");
+
+  eventhandler.on("direction", (target, message) => {
+    if (targets.length === 0 || targets.includes(target))
+      res.write(
+        `event: direction\ntarget: ${target}\ndata: ${JSON.stringify(
+          message
+        )}\n\n`
+      );
   });
 });
 
-const checkSessionExists = (res: Response, sessionIndex: number) => {
-  /*if (sessions.length <= sessionIndex) {
-    res
-      .status(404)
-      .json({ error: true, message: `Invalid Session Index: ${sessionIndex}` });
-    return null;
-  }
-  return sessions[sessionIndex];*/
-};
-
-const checkBracketExists = (
-  res: Response,
-  sessionIndex: number,
-  bracketIndex: number
-) => {
-  const session = checkSessionExists(res, sessionIndex);
-  if (session) {
-    if (session.brackets.length <= bracketIndex) {
-      res.status(404).json({
-        error: true,
-        message: `Invalid Bracket Index: ${bracketIndex} for session: ${session.display}`,
-      });
-      return null;
-    }
-    return session?.brackets[bracketIndex];
-  }
-  return null;
-};
-
-const checkItemExists = (
-  res: Response,
-  sessionIndex: number,
-  bracketIndex: number,
-  itemIndex: number
-) => {
-  const bracket = checkBracketExists(res, sessionIndex, bracketIndex);
-  if (bracket) {
-    if (bracket.items.length <= itemIndex) {
-      res.status(404).json({
-        error: true,
-        message: `Invalid Item Index: ${itemIndex} in bracket: ${bracket.display}`,
-      });
-      return false;
-    }
-  }
-  return true;
+const invalidIndex = (res: Response, index: number, type: string) => {
+  res
+    .status(404)
+    .json({ error: true, message: `Invalid index ${index} for ${type}` });
 };
 
 router.get("/goto", (req: Request, res: Response) => {
@@ -68,19 +34,21 @@ router.get("/goto", (req: Request, res: Response) => {
     return;
   }
 
-  const sessionIndex = parseInt(req.query.session as string);
-  const bracketIndex = parseInt(req.query.bracket as string);
-  const itemIndex = parseInt(req.query.item as string);
-
-  if (!checkItemExists(res, sessionIndex, bracketIndex, itemIndex)) return;
-  schedule(() => {
-    setActiveSession(sessionIndex);
-    const session = sessions[sessionIndex];
-    session.setActive(bracketIndex);
-    const bracket = session.brackets[bracketIndex];
-    bracket.setActive(itemIndex);
-  });
+  const sessionIndex: number = parseInt(req.query.session as string);
+  const bracketIndex: number = parseInt(req.query.bracket as string);
+  const itemIndex: number = parseInt(req.query.item as string);
+  const restart: string = req.query.restart as string;
   res.sendStatus(200); //better message
+});
+
+router.get("/runsheets", (req: Request, res: Response) => {
+  res.status(200).json(ListRunsheets());
+});
+
+router.get("/load", (req: Request, res: Response) => {
+  const runsheetF = req.query.runsheet as string;
+  LoadRunsheet(runsheetF);
+  res.sendStatus(200);
 });
 
 router.get("/enabledstate", (req: Request, res: Response) => {
@@ -95,12 +63,6 @@ router.get("/enabledstate", (req: Request, res: Response) => {
   const sessionIndex = parseInt(req.query.session as string);
   const bracketIndex = parseInt(req.query.bracket as string);
   const itemIndex = parseInt(req.query.item as string);
-  if (!checkItemExists(res, sessionIndex, bracketIndex, itemIndex)) return;
-  const session = sessions[sessionIndex];
-  const bracket = session.brackets[bracketIndex];
-  schedule(() => {
-    bracket.items[itemIndex].changeEnabledState();
-  });
   res.sendStatus(200); //better message
 });
 
@@ -114,19 +76,21 @@ router.get("/delete", (req: Request, res: Response) => {
   }
   const sessionIndex = parseInt(req.query.session as string);
   if (!req.query.bracket) {
-    deleteSession(sessionIndex);
+    getActiveRunsheet().deleteSession(sessionIndex);
   } else {
-    const session = checkSessionExists(res, sessionIndex);
-    if (session) {
-      const bracketIndex = parseInt(req.query.bracket as string);
-      if (!req.query.item) {
-        session.deleteBracket(bracketIndex);
-      } else {
-        const bracket = checkBracketExists(res, sessionIndex, bracketIndex);
-        if (bracket) {
-          const itemIndex = parseInt(req.query.item as string);
-          bracket.deleteItem(itemIndex);
-        }
+    const runsheet = getActiveRunsheet();
+    const session = runsheet.getSession(sessionIndex);
+    if (!session) return invalidIndex(res, sessionIndex, "Session");
+    const bracketIndex = parseInt(req.query.bracket as string);
+    const bracket = session.getBracket(bracketIndex);
+    if (!bracket)
+      return invalidIndex(res, bracketIndex, `Bracket in ${session.display}`);
+    if (!req.query.item) {
+      session.deleteBracket(bracketIndex);
+    } else {
+      if (bracket) {
+        const itemIndex = parseInt(req.query.item as string);
+        bracket.deleteItem(itemIndex);
       }
     }
   }

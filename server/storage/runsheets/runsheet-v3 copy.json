@@ -1,0 +1,77 @@
+{
+  "version":1,
+  "display": "",
+  "team": [
+    {
+      "key": "wl1",
+      "role": "Worship Leader",
+      "display": "Mark Dean"
+    }
+  ],
+  "sessions": [
+    {
+      "display": "service",
+      "startTimes": ["08:00:00", "10:00:00"],
+      "clock": {
+        "type": "countdown",
+        "overrun": "stop",
+        "showTime":false,
+        "time": "+01:20:00"
+      },
+      "brackets": [
+        {
+          "display": "Pre-Roll",
+          "clock": {
+            "type": "countdown",
+            "overrun": "stop",
+            "showTime":false,
+            "time": "+00:05:00"
+          },
+          "items": [
+            {
+              "display": "Jan PreRoll Video",
+              "clock": {
+                "type": "countdown",
+                "overrun": "stop",
+                "time": "+00:04:30",
+                "showTime": true
+              },
+              "directions": [
+                {
+                  "targets": ["audio"],
+                  "trigger": { "type": "switch:item" },
+                  "message": {
+                    "type": "text",
+                    "message": "Audio from video Computer"
+                  }
+                },
+                {
+                  "targets": ["stage"],
+                  "trigger": {
+                    "type": "switch:item"
+                  },
+                  "message": { "type": "text", "message": "message" }
+                },
+                {
+                  "targets": ["producer"],
+                  "trigger": { "type": "switch:item" },
+                  "message": { "type": "text", "message": "message" }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "display": "worship",
+          "clock": {
+            "type": "elapsed",
+            "overrun": "overrun",
+            "showTime":false,
+            "time": "+00:20:00"
+          },
+          "items": []
+        }
+      ]
+    }
+  ]
+}

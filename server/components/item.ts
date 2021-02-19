@@ -1,9 +1,6 @@
 import {
-  loadTimer,
   TimerSettings,
   TimerSettingsJson,
-  getTimer,
-  TimerType,
 } from "./timer";
 import { Direction, DirectionJson } from "./direction";
 import { eventhandler, schedule } from "./eventhandler";
@@ -15,7 +12,6 @@ export class Item {
   display: string;
   clock: TimerSettings;
   directions: Direction[];
-  disabled: boolean = false;
 
   constructor(display: string, clock: TimerSettings, directions: Direction[]) {
     this.display = display;
@@ -23,13 +19,9 @@ export class Item {
     this.directions = directions;
   }
 
-  changeEnabledState() {
-    this.disabled = !this.disabled;
-  }
-
   addDirection(direction: Direction): void {
     direction.item = this;
-    direction.shouldNotify(); //setup any listeners needed
+    direction.shouldNotify();
     this.directions.push(direction);
   }
 
@@ -38,15 +30,7 @@ export class Item {
   }
 
   itemSwitch() {
-    loadTimer("item", this.clock);
     eventhandler.emit("switch:item");
-    schedule(() => {
-      getTimer("item")?.start();
-    });
-  }
-
-  isActive() {
-    return this.bracket?.isActive(this);
   }
 }
 
