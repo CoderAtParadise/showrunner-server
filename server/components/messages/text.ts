@@ -1,9 +1,9 @@
-import {IMessage,IMessageHandler, registerMessageHandler} from "../message";
+import Message from "../message";
 import { eventhandler } from "../eventhandler";
 
 const text_type = "text";
 
-class text implements IMessage {
+class text implements Message.IMessage {
     type:string = text_type;
     message:string;
     constructor(message:string) {
@@ -11,7 +11,7 @@ class text implements IMessage {
     }
 }
 
-const text_handler: IMessageHandler<text> = {
+const text_handler: Message.IHandler<text> = {
     handleMessage(target:string,message:text): void {
         eventhandler.emit("direction",target,message);
     },
@@ -27,4 +27,4 @@ const text_handler: IMessageHandler<text> = {
     }
 }
 
-registerMessageHandler(text_type,text_handler);
+Message.registerHandler(text_type,text_handler);

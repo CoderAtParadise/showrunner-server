@@ -1,34 +1,29 @@
-import { ITrigger, ITriggerHandler, registerTriggerHandler } from "../trigger";
+import Trigger from "../trigger";
 import { eventhandler } from "../eventhandler";
 
 const switch_item_trigger: string = "switch:item";
 
-class switch_item implements ITrigger {
-  type: string = switch_item_trigger;
-  run: boolean = false;
-
-  check() {
-    eventhandler.on("switch:item", () => {
-      this.run = true;
-    });
-    return this.run;
-  }
-
-  reset() {
-    this.run = false;
-  }
-}
-
-const itemTriggerHandler: ITriggerHandler<switch_item> = {
+const itemTriggerHandler: Trigger.IHandler = {
   json: {
-    serialize(value: switch_item): object {
+    serialize(value: Trigger.ITrigger): object {
       return {
         type: switch_item_trigger,
       };
     },
-    deserialize(json: object): switch_item {
-      return new switch_item();
+    deserialize(json: object): Trigger.ITrigger {
+      const obj = {
+        type: switch_item_trigger,
+        state: Trigger.State.WAITING,
+        listener: {
+          key: "switch:item",
+          func: () => {},
+        },
+      };
+      obj.listener.func = () => {
+        obj.state = Trigger.State.SCHEDULED;
+      }
+      return obj;
     },
   },
 };
-registerTriggerHandler(switch_item_trigger, itemTriggerHandler);
+Trigger.registerHandler(switch_item_trigger, itemTriggerHandler);

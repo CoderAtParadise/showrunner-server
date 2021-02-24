@@ -1,29 +1,27 @@
-import {ITrigger,ITriggerHandler,registerTriggerHandler} from "../trigger";
+import Trigger from "../trigger";
 
-const manual_trigger:string = "control:manual";
+const manual_trigger: string = "control:manual";
 
-class manual implements ITrigger {
-    type: string = manual_trigger;
-    
-    check() {
-        return false;
-    }
+const manual: Trigger.ITrigger = {
+  type: manual_trigger,
+  state: Trigger.State.WAITING,
+  listener: {
+    key: "manual",
+    func: () => {},
+  },
+};
 
-    reset() {
-        //NOOP
-    }
-}
+const manualTriggerHandler: Trigger.IHandler = {
+  json: {
+    serialize(value: Trigger.ITrigger): object {
+      return {
+        type: manual_trigger,
+      };
+    },
+    deserialize(json: object): Trigger.ITrigger {
+      return manual;
+    },
+  },
+};
 
-const manualTriggerHandler : ITriggerHandler<manual> = {
-    json: {
-        serialize(value:manual): object {
-            return {
-                type: manual_trigger,
-            };
-        },
-        deserialize(json:object): manual {
-            return new manual();
-        }
-    }
-}
-registerTriggerHandler(manual_trigger,manualTriggerHandler);
+Trigger.registerHandler(manual_trigger, manualTriggerHandler);

@@ -19,11 +19,12 @@ namespace Tracking {
         Time.now(),
         this.reference.timer.duration
       );
-      this.reference.switch();
+      this.reference.startTracking(this.reference);
     }
 
     endTracking() {
       this.timer[this.trackingIndex].end = Time.now();
+      this.reference.endTracking(this.reference);
     }
   }
 
@@ -41,7 +42,7 @@ namespace Tracking {
     startTracking() {
       super.startTracking();
       this.goto(this.getNextIndex(), false);
-      this.reference.switch();
+      this.active?.startTracking();
     }
 
     endTracking() {

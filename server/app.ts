@@ -4,6 +4,7 @@ import Debug from "debug";
 import controlRouter from "./routes/control";
 import trackingRouter from "./routes/tracking";
 import { schedule } from "./components/eventhandler";
+import Structure from "./components/structure";
 
 const normalizePort = (val: any) => {
   const port = parseInt(val, 10);
@@ -18,7 +19,7 @@ const port = normalizePort(process.env.PORT || "3001");
 app.use(
   morgan("dev", { stream: { write: (msg) => Debug("showrunner:http")(msg) } })
 );
-app.use("/tracking",trackingRouter)
+app.use("/tracking", trackingRouter);
 //app.use(timerRouter);
 //app.use("/control",controlRouter);
 
@@ -26,4 +27,10 @@ app.listen(port, () => {
   debug(`Running at http://localhost:${port}`);
 });
 
-//schedule(() => {LoadRunsheet("temp",(runsheet:Runsheet) => debug(runsheet))});
+schedule(() => {
+  Structure.Runsheet.LoadRunsheet(
+    "temp",
+    (runsheet: Structure.Runsheet.RunsheetStorage) =>
+      Structure.Runsheet.SaveRunsheet("temp2", runsheet)
+  );
+});

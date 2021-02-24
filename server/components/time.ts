@@ -106,7 +106,7 @@ namespace Time {
       return {
         hours: Number.parseInt(v[0]),
         minutes: Number.parseInt(v[1]),
-        seconds: Number.parseInt(v[3]),
+        seconds: Number.parseInt(v[2]),
         format: format,
       };
     } else {
@@ -114,7 +114,7 @@ namespace Time {
       return {
         hours: Number.parseInt(v[0]),
         minutes: Number.parseInt(v[1]),
-        seconds: Number.parseInt(v[3]),
+        seconds: Number.parseInt(v[2]),
       };
     }
   };

@@ -1,21 +1,25 @@
 import IJson from "./IJson";
 
-export interface IMessage {
-  type: string;
+namespace Message {
+  export interface IMessage {
+    type: string;
+  }
+
+  export interface IHandler<T extends IMessage> {
+    handleMessage: (target: string, message: T) => void;
+    json: IJson<T>;
+  }
+
+  export const handlers = new Map<string, IHandler<any>>();
+
+  export const registerHandler = (
+    type: string,
+    handler: IHandler<any>
+  ) => {
+    handlers.set(type, handler);
+  };
 }
 
-export interface IMessageHandler<T extends IMessage> {
-  handleMessage: (target: string, message: T) => void;
-  json: IJson<T>;
-}
-
-export const messageHandlers = new Map<string, IMessageHandler<any>>();
-
-export const registerMessageHandler = (
-  type: string,
-  handler: IMessageHandler<any>
-) => {
-  messageHandlers.set(type, handler);
-};
+export default Message;
 
 import "./messages/text";

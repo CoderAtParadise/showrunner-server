@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "nodemon app.ts",
+    "start": "nodemon --ignore storage/ app.ts ",
     "start:dev": "cross-env DEBUG=showrunner:* yarn start",
     "build": "tsc --project ./"
   },
