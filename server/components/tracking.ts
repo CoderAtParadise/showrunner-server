@@ -1,76 +1,91 @@
-import { Timepoint, TimerSettings } from "./timer";
+import Structure from "./structure";
+import Time from "./time";
+import Timer from "./timer";
 
-export interface ITrackable {
-  clock: TimerSettings;
-  disabled: boolean;
-}
+namespace Tracking {
+  class Tracking {
+    reference: Structure.Storage;
+    timer: Timer.Tracking[] = [];
+    trackingIndex: number = -1;
 
-interface Tracking<T> {
-  reference: T;
-  disabled: boolean;
-  start: Timepoint;
-  end: Timepoint;
-  startTracking: () => void;
-  endTracking: () => void;
-}
-
-class TrackingNested<T extends ITrackable, U extends ITrackable>
-  implements Tracking<T> {
-  reference: T;
-  start: Timepoint;
-  end: Timepoint;
-  disabled: boolean = false;
-  active?: Tracking<U>;
-  nested: Tracking<U>[] = [];
-
-  constructor(reference: T, start: Timepoint) {
-    this.reference = reference;
-    this.start = start.copy();
-    start = start._add(reference.clock.time || Timepoint.ZEROTIME);
-    this.end = start.copy();
-  }
-
-  startTracking() {
-    this.start = Timepoint.now();
-  }
-
-  endTracking() {
-    this.end = Timepoint.now();
-  }
-
-  activeIndex() {
-    if (this.active) return this.nested.indexOf(this.active);
-    return -1;
-  }
-
-  validIndex(index: number) {
-    return index < this.nested.length;
-  }
-
-  goto(index: number) {
-    if (!this.validIndex(index)) return;
-    if (this.active) {
-      this.active.endTracking();
+    constructor(reference: Structure.Storage) {
+      this.reference = reference;
     }
-    if (!this.nested[index].disabled) this.active = this.nested[index];
-    this.active?.startTracking();
+
+    startTracking() {
+      this.trackingIndex++;
+      this.timer[this.trackingIndex].start = Time.now();
+      this.timer[this.trackingIndex].end = Time.add(
+        Time.now(),
+        this.reference.timer.duration
+      );
+      this.reference.switch();
+    }
+
+    endTracking() {
+      this.timer[this.trackingIndex].end = Time.now();
+    }
   }
 
-  changeDisabledState(index: number) {
-    this.nested[index].start = Timepoint.INVALID;
-    this.nested[index].end = Timepoint.INVALID;
-    this.nested[index].disabled = !this.nested[index].disabled;
-    this.setupTracking();
-  }
+  class Nested<T extends Structure.Storage & Structure.Nested> extends Tracking {
+    active?: Tracking;
+    nested: Tracking[] = [];
 
-  setupTracking() {
-    let next: Timepoint = this.start;
-    this.nested.forEach((tracking: Tracking<U>) => {
-      if (!tracking.disabled) {
-        tracking.start = next.copy();
-        next = next._add(tracking.reference.clock.time || Timepoint.ZEROTIME);
-        tracking.end = next.copy();
+    constructor(reference: T, start: Time.Point) {
+      super(reference);
+      reference.nested.forEach((value: Structure.Storage) => {
+        this.nested.push(new Tracking(value));
+      });
+    }
+
+    startTracking() {
+      super.startTracking();
+      this.goto(this.getNextIndex(), false);
+      this.reference.switch();
+    }
+
+    endTracking() {
+      super.endTracking();
+      this.active?.endTracking();
+    }
+
+    getNextIndex() {
+      let index = this.activeIndex() + 1;
+      while (this.validIndex(index)) {
+        if (this.nested[index].reference.disabled) {
+          index++;
+          continue;
+        }
+        return index;
       }
-    });
+      return -1;
+    }
+
+    activeIndex() {
+      if (this.active) return this.nested.indexOf(this.active);
+      return -1;
+    }
+
+    validIndex(index: number) {
+      return index < this.nested.length;
+    }
+
+    goto(index: number, force: boolean) {
+      if (!this.validIndex(index)) return false;
+      if (this.active) {
+        this.active.endTracking();
+      }
+      if (force || !this.nested[index].reference.disabled)
+        this.active = this.nested[index];
+      this.active?.startTracking();
+      return true;
+    }
+
+    changeDisabledState(index: number) {
+      this.nested[index].reference.disabled = !this.nested[index].reference
+        .disabled;
+    }
   }
 }
+
+export default Tracking;

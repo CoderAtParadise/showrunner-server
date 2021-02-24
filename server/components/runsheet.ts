@@ -2,21 +2,17 @@ import { Session, SessionJson } from "./session";
 import IJson from "./IJson";
 import fs from "fs";
 import path from "path";
-import {eventhandler} from "./eventhandler";
+import { eventhandler } from "./eventhandler";
 
 interface Role {
   role: string;
   display: string;
 }
 
-interface Date {
-  day: number;
-  month: number;
-  year: number;
-}
-
-class Runsheet {
+export class Runsheet {
   display: string;
+  //clock: TimerSettings;
+  disabled: boolean = false;
   sessions: Session[];
   team: Map<string, Role>;
 
@@ -26,7 +22,7 @@ class Runsheet {
     this.sessions = sessions;
   }
 
-  getSession(index:number) {
+  getSession(index: number) {
     return this.sessions[index];
   }
 
@@ -64,7 +60,7 @@ export const RunsheetJson: IJson<Runsheet> = {
     );
     return obj;
   },
-  
+
   deserialize(json: object): Runsheet {
     const value = json as {
       display: string;
@@ -76,7 +72,6 @@ export const RunsheetJson: IJson<Runsheet> = {
     value.team.forEach((json: { key: string; role: string; display: string }) =>
       team.set(json.key, { role: json.role, display: json.display })
     );
-    //replace @team() with it's actual value
     value.sessions.forEach((json: object) =>
       sessions.push(SessionJson.deserialize(json))
     );
@@ -99,24 +94,26 @@ export const getActiveRunsheet = (): Runsheet => {
 
 export const ListRunsheets = (): string[] => {
   return Array.from(knownRunsheets.keys());
-}
+};
 
-export const LoadRunsheet = (filename: string): void => {
+export const LoadRunsheet = (filename: string,cb: (runsheet:Runsheet) => void): void => {
   const runsheet = knownRunsheets.get(filename);
-  if(runsheet) {
-   fs.readFile(runsheet,(err,jsonString:Buffer) => {if(err) throw err;
+  if (runsheet)
+  {
+    fs.readFile(runsheet, (err, jsonString: Buffer) => {
+      if (err) throw err;
       const jsonObj = JSON.parse(jsonString.toString());
-      ActiveRunsheet = RunsheetJson.deserialize(jsonObj);
-      eventhandler.emit("switch:runsheet");
-      eventhandler.emit('switch:item');
+      cb(RunsheetJson.deserialize(jsonObj));
     });
   }
 };
 
-export const saveRunsheet = (filename:fs.PathLike | number): void => {
+export const saveRunsheet = (filename: fs.PathLike | number): void => {
   const json = JSON.stringify(RunsheetJson.serialize(ActiveRunsheet));
-  fs.writeFile(filename,json, (err:Error | null) => {if(err) throw err;})
-} 
+  fs.writeFile(`${runsheetDir}/${filename}.json`, json, (err: Error | null) => {
+    if (err) throw err;
+  });
+};
 
 const LoadDir = (
   dirPath: string,

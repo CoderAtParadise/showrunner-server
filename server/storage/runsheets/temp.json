@@ -1,39 +1,36 @@
 {
-  "version":1,
+  "version": 1,
   "display": "",
-  "team": [
-    {
-      "key": "wl1",
-      "role": "Worship Leader",
-      "display": "Mark Dean"
-    }
-  ],
+  "team": [{ "key": "wl1", "role": "Worship Leader", "display": "Mark Dean" }],
   "sessions": [
     {
       "display": "service",
+      "disabled": false,
       "startTimes": ["08:00:00", "10:00:00"],
       "clock": {
-        "type": "countdown",
+        "display": "countdown",
         "behaviour": "stop",
-        "showTime":false,
-        "duration": "01:20:00"
+        "duration": "+01:20:00",
+        "show": false
       },
       "brackets": [
         {
           "display": "Pre-Roll",
+          "disabled": false,
           "clock": {
-            "type": "countdown",
+            "display": "countdown",
             "behaviour": "stop",
-            "showTime":false,
-            "duration": "00:05:00"
+            "duration": "+00:05:00",
+            "showTime": false
           },
           "items": [
             {
               "display": "Jan PreRoll Video",
+              "disabled": false,
               "clock": {
-                "type": "countdown",
+                "display": "countdown",
                 "behaviour": "stop",
-                "duration": "00:04:30",
+                "duration": "+00:04:30",
                 "showTime": true
               },
               "directions": [
@@ -47,9 +44,7 @@
                 },
                 {
                   "targets": ["stage"],
-                  "trigger": {
-                    "type": "switch:item"
-                  },
+                  "trigger": { "type": "switch:item" },
                   "message": { "type": "text", "message": "message" }
                 },
                 {
@@ -63,19 +58,21 @@
         },
         {
           "display": "worship",
+          "disabled": false,
           "clock": {
-            "type": "elapsed",
-            "behaviour": "behaviour",
-            "showTime":false,
-            "duration": "00:20:00"
+            "display": "elapsed",
+            "behaviour": "overrun",
+            "duration": "+00:20:00",
+            "showTime": false
           },
           "items": [
             {
               "display": "Song 1",
+              "disabled": false,
               "clock": {
-                "type": "countdown",
+                "display": "countdown",
                 "behaviour": "stop",
-                "duration": "--:--:--",
+                "duration": "+00:04:30",
                 "showTime": false
               },
               "directions": []

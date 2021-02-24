@@ -18,7 +18,7 @@ export class Direction {
   }
 
   shouldNotify() {
-    return !this.hasRun && this.item?.isActive() ? this.trigger.check() : false;
+    return !this.hasRun ? this.trigger.check() : false;
   }
 
   notify() {

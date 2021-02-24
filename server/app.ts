@@ -1,8 +1,9 @@
 import express from "express";
 import morgan from "morgan";
 import Debug from "debug";
-import timerRouter from "./routes/timer"
 import controlRouter from "./routes/control";
+import trackingRouter from "./routes/tracking";
+import { schedule } from "./components/eventhandler";
 
 const normalizePort = (val: any) => {
   const port = parseInt(val, 10);
@@ -14,12 +15,15 @@ const normalizePort = (val: any) => {
 const app = express();
 const debug = Debug("showrunner:server");
 const port = normalizePort(process.env.PORT || "3001");
-app.use(morgan("dev",{stream: {write: msg => Debug("showrunner:http")(msg)}}));
-app.use(timerRouter);
-app.use("/control",controlRouter);
-
-
+app.use(
+  morgan("dev", { stream: { write: (msg) => Debug("showrunner:http")(msg) } })
+);
+app.use("/tracking",trackingRouter)
+//app.use(timerRouter);
+//app.use("/control",controlRouter);
 
 app.listen(port, () => {
   debug(`Running at http://localhost:${port}`);
 });
+
+//schedule(() => {LoadRunsheet("temp",(runsheet:Runsheet) => debug(runsheet))});

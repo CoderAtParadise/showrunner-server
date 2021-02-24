@@ -3,7 +3,6 @@ const router = Router();
 import { eventhandler, schedule } from "../components/eventhandler";
 import updgradeSSE from "../components/upgradeSSE";
 import { getActiveRunsheet, ListRunsheets, LoadRunsheet } from "../components/runsheet";
-
 router.get("/direction", async (req: Request, res: Response) => {
   updgradeSSE(res);
   let targets: string[];
@@ -18,12 +17,6 @@ router.get("/direction", async (req: Request, res: Response) => {
       );
   });
 });
-
-const invalidIndex = (res: Response, index: number, type: string) => {
-  res
-    .status(404)
-    .json({ error: true, message: `Invalid index ${index} for ${type}` });
-};
 
 router.get("/goto", (req: Request, res: Response) => {
   if (!req.query.session || !req.query.bracket || !req.query.item) {
@@ -73,26 +66,6 @@ router.get("/delete", (req: Request, res: Response) => {
       message: "Missing session query parameter",
     });
     return;
-  }
-  const sessionIndex = parseInt(req.query.session as string);
-  if (!req.query.bracket) {
-    getActiveRunsheet().deleteSession(sessionIndex);
-  } else {
-    const runsheet = getActiveRunsheet();
-    const session = runsheet.getSession(sessionIndex);
-    if (!session) return invalidIndex(res, sessionIndex, "Session");
-    const bracketIndex = parseInt(req.query.bracket as string);
-    const bracket = session.getBracket(bracketIndex);
-    if (!bracket)
-      return invalidIndex(res, bracketIndex, `Bracket in ${session.display}`);
-    if (!req.query.item) {
-      session.deleteBracket(bracketIndex);
-    } else {
-      if (bracket) {
-        const itemIndex = parseInt(req.query.item as string);
-        bracket.deleteItem(itemIndex);
-      }
-    }
   }
 });
 

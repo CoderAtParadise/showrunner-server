@@ -10,6 +10,7 @@ export const schedule = (cb: () =>void) => nextTick.push(cb);
 
 setInterval(() => {
   thisTick.forEach((cb) => cb());
-  nextTick.forEach(cb => cb());
+  const temp = Array.from(nextTick);
   nextTick.length = 0;
+  temp.forEach(cb => cb());
 },1000);

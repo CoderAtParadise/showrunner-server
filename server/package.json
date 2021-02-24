@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "start": "nodemon app.ts",
-    "debug": "cross-env DEBUG=showrunner:* nodemon app.ts",
+    "start:dev": "cross-env DEBUG=showrunner:* yarn start",
     "build": "tsc --project ./"
   },
   "dependencies": {
