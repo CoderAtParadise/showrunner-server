@@ -2,7 +2,8 @@ import { Router, Request, Response } from "express";
 const router = Router();
 import { eventhandler, schedule } from "../components/eventhandler";
 import updgradeSSE from "../components/upgradeSSE";
-import { getActiveRunsheet, ListRunsheets, LoadRunsheet } from "../components/runsheet";
+import Structure from "../components/structure";
+
 router.get("/direction", async (req: Request, res: Response) => {
   updgradeSSE(res);
   let targets: string[];
@@ -35,13 +36,25 @@ router.get("/goto", (req: Request, res: Response) => {
 });
 
 router.get("/runsheets", (req: Request, res: Response) => {
-  res.status(200).json(ListRunsheets());
+  //res.status(200).json(ListRunsheets());
 });
 
 router.get("/load", (req: Request, res: Response) => {
   const runsheetF = req.query.runsheet as string;
-  LoadRunsheet(runsheetF);
-  res.sendStatus(200);
+  let mode = req.query.mode as string;
+  if (!mode) mode = "show";
+  Structure.Runsheet.LoadRunsheet(
+    runsheetF,
+    (runsheet) => {
+      if (runsheet.err)
+        res
+          .status(404)
+          .json({ error: true, message: `Failed to load ${runsheetF}` });
+      else {
+        res.status(200).json(runsheet);
+      }
+    }
+  );
 });
 
 router.get("/enabledstate", (req: Request, res: Response) => {

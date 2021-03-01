@@ -8,6 +8,7 @@ import path from "path";
 
 namespace Structure {
   export interface Storage {
+    tracking: string;
     type: string;
     display: string;
     disabled: boolean;
@@ -81,25 +82,25 @@ namespace Structure {
 
     export const LoadRunsheet = (
       file: string,
-      cb: (runsheet: RunsheetStorage) => void
+      cb: (runsheet: any) => void
     ) => Load(file, knownRunsheets, cb);
     export const LoadTemplate = (
       file: string,
-      cb: (runsheet: RunsheetStorage) => void
+      cb: (runsheet:any) => void
     ) => Load(file, knownTemplates, cb);
 
     const Load = (
       file: string,
       storage: Map<string, string>,
-      cb: (runsheet: RunsheetStorage) => void
+      cb: (runsheet:any) => void
     ) => {
       const runsheet = storage.get(file);
       if (runsheet) {
         fs.readFile(runsheet, (err, buffer: Buffer) => {
-          if (err) throw err;
-          cb(json.deserialize(JSON.parse(buffer.toString())));
+          cb(JSON.parse(buffer.toString()));
         });
       }
+      else cb({error:true,message:`Failed to load ${file}`});
     };
 
     export const SaveRunsheet = (
@@ -224,11 +225,13 @@ namespace Structure {
     export const JSON: IJson<SessionStorage> = {
       serialize(value: SessionStorage): object {
         const obj: {
+          tracking: string;
           display: string;
           disabled: boolean;
           timer: {};
           brackets: object[];
         } = {
+          tracking: value.tracking,
           display: value.display,
           disabled: value.disabled || false,
           timer: Timer.JSON.serialize(value.timer),
@@ -244,6 +247,7 @@ namespace Structure {
 
       deserialize(json: object): SessionStorage {
         const value = json as {
+          tracking: string;
           display: string;
           disabled: boolean;
           timer: {};
@@ -254,6 +258,7 @@ namespace Structure {
           brackets.push(Bracket.JSON.deserialize(json))
         );
         return {
+          tracking: value.tracking,
           type: "session",
           display: value.display,
           disabled: value.disabled,
@@ -278,11 +283,13 @@ namespace Structure {
     export const JSON: IJson<BracketStorage> = {
       serialize(value: BracketStorage): object {
         const obj: {
+          tracking: string;
           display: string;
           disabled: boolean;
           timer: {};
           items: object[];
         } = {
+          tracking: value.tracking,
           display: value.display,
           disabled: value.disabled || false,
           timer: Timer.JSON.serialize(value.timer),
@@ -296,6 +303,7 @@ namespace Structure {
 
       deserialize(json: object): BracketStorage {
         const value = json as {
+          tracking: string;
           display: string;
           disabled: boolean;
           timer: {};
@@ -306,6 +314,7 @@ namespace Structure {
           items.push(Item.JSON.deserialize(json))
         );
         return {
+          tracking: value.tracking,
           type: "bracket",
           display: value.display,
           disabled: value.disabled,
@@ -341,11 +350,13 @@ namespace Structure {
       export const JSON: IJson<ItemStorage> = {
         serialize(value: ItemStorage): object {
           const obj: {
+            tracking: string;
             display: string;
             disabled: boolean;
             timer: {};
             directions: object[];
           } = {
+            tracking: value.tracking,
             display: value.display,
             disabled: value.disabled || false,
             timer: Timer.JSON.serialize(value.timer),
@@ -359,6 +370,7 @@ namespace Structure {
 
         deserialize(json: object): ItemStorage {
           const value = json as {
+            tracking: string;
             display: string;
             disabled: boolean;
             timer: {};
@@ -369,6 +381,7 @@ namespace Structure {
             directions.push(Direction.JSON.deserialize(json))
           );
           return {
+            tracking: value.tracking,
             type: "item",
             display: value.display,
             disabled: value.disabled,
@@ -383,6 +396,7 @@ namespace Structure {
 
     namespace Direction {
       export interface DirectionStorage {
+        disabled: boolean;
         targets: string[];
         trigger: Trigger.ITrigger;
         message: Message.IMessage;
@@ -416,6 +430,7 @@ namespace Structure {
       export const JSON: IJson<DirectionStorage> = {
         serialize(value: DirectionStorage): object {
           return {
+            disabled: value.disabled,
             targets: value.targets,
             trigger: Trigger.handlers
               .get(value.trigger.type)
@@ -428,6 +443,7 @@ namespace Structure {
 
         deserialize(json: object): DirectionStorage {
           const value = json as {
+            disabled: boolean;
             targets: string[];
             trigger: { type: string };
             message: { type: string };
@@ -439,6 +455,7 @@ namespace Structure {
             .get(value.message.type)
             ?.json.deserialize(value.message);
           return {
+            disabled: value.disabled,
             targets: value.targets,
             trigger: trigger || invalid_trigger,
             message: message,

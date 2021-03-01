@@ -5,7 +5,6 @@
     {
       "display": "service",
       "disabled": false,
-      "startTimes": ["08:00:00", "10:00:00"],
       "timer": {
         "display": "countdown",
         "behaviour": "stop",
@@ -34,6 +33,7 @@
               },
               "directions": [
                 {
+                  "disabled": false,
                   "targets": ["audio"],
                   "trigger": { "type": "switch:item" },
                   "message": {
@@ -42,11 +42,13 @@
                   }
                 },
                 {
+                  "disabled": false,
                   "targets": ["stage"],
                   "trigger": { "type": "switch:item" },
                   "message": { "type": "text", "message": "message" }
                 },
                 {
+                  "disabled": false,
                   "targets": ["producer"],
                   "trigger": { "type": "switch:item" },
                   "message": { "type": "text", "message": "message" }

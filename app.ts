@@ -21,7 +21,7 @@ app.use(
 );
 app.use("/tracking", trackingRouter);
 //app.use(timerRouter);
-//app.use("/control",controlRouter);
+app.use("/control",controlRouter);
 
 app.listen(port, () => {
   debug(`Running at http://localhost:${port}`);
@@ -30,7 +30,7 @@ app.listen(port, () => {
 schedule(() => {
   Structure.Runsheet.LoadRunsheet(
     "temp",
-    (runsheet: Structure.Runsheet.RunsheetStorage) =>
-      Structure.Runsheet.SaveRunsheet("temp2", runsheet)
-  );
+    (runsheet:any) =>
+      Structure.Runsheet.SaveRunsheet("temp2", Structure.Runsheet.json.deserialize((runsheet))));
+  ;
 });

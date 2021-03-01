@@ -1,43 +1,40 @@
 {
-  "version":1,
-  "display": "",
-  "team": [
-    {
-      "key": "wl1",
-      "role": "Worship Leader",
-      "display": "Mark Dean"
-    }
-  ],
+  "version": 1,
+  "team": [{ "key": "wl1", "role": "Worship Leader", "display": "Mark Dean" }],
   "sessions": [
     {
       "display": "service",
+      "disabled": false,
       "startTimes": ["08:00:00", "10:00:00"],
-      "clock": {
-        "type": "countdown",
+      "timer": {
+        "display": "countdown",
         "behaviour": "stop",
-        "showTime":false,
-        "duration": "01:20:00"
+        "duration": "01:20:00",
+        "show": false
       },
       "brackets": [
         {
           "display": "Pre-Roll",
-          "clock": {
-            "type": "countdown",
+          "disabled": false,
+          "timer": {
+            "display": "countdown",
             "behaviour": "stop",
-            "showTime":false,
-            "duration": "00:05:00"
+            "duration": "00:05:00",
+            "show": false
           },
           "items": [
             {
               "display": "Jan PreRoll Video",
-              "clock": {
-                "type": "countdown",
+              "disabled": false,
+              "timer": {
+                "display": "countdown",
                 "behaviour": "stop",
                 "duration": "00:04:30",
-                "showTime": true
+                "show": true
               },
               "directions": [
                 {
+                  "disabled": false,
                   "targets": ["audio"],
                   "trigger": { "type": "switch:item" },
                   "message": {
@@ -46,13 +43,13 @@
                   }
                 },
                 {
+                  "disabled": false,
                   "targets": ["stage"],
-                  "trigger": {
-                    "type": "switch:item"
-                  },
+                  "trigger": { "type": "switch:item" },
                   "message": { "type": "text", "message": "message" }
                 },
                 {
+                  "disabled": false,
                   "targets": ["producer"],
                   "trigger": { "type": "switch:item" },
                   "message": { "type": "text", "message": "message" }
@@ -63,20 +60,22 @@
         },
         {
           "display": "worship",
-          "clock": {
-            "type": "elapsed",
-            "behaviour": "behaviour",
-            "showTime":false,
-            "duration": "00:20:00"
+          "disabled": false,
+          "timer": {
+            "display": "elapsed",
+            "behaviour": "overrun",
+            "duration": "00:20:00",
+            "show": false
           },
           "items": [
             {
               "display": "Song 1",
-              "clock": {
-                "type": "countdown",
+              "disabled": false,
+              "timer": {
+                "display": "countdown",
                 "behaviour": "stop",
-                "duration": "--:--:--",
-                "showTime": false
+                "duration": "00:04:30",
+                "show": false
               },
               "directions": []
             }

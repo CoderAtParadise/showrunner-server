@@ -28,8 +28,8 @@ namespace Timer {
   }
 
   interface JFormat {
-    display: Display;
-    behaviour: Behaviour;
+    display: string;
+    behaviour: string;
     duration: string;
     show: boolean;
   }
@@ -37,8 +37,8 @@ namespace Timer {
   export const JSON: IJson<Settings> = {
     serialize(value: Settings): object {
       const obj: JFormat = {
-        display: value.display,
-        behaviour: value.behaviour,
+        display: value.display as string,
+        behaviour: value.behaviour as string,
         duration: Time.stringify(value.duration),
         show: value.show,
       };
