@@ -3,19 +3,28 @@ import Timer from "./timer";
 import Structure from "./structure";
 
 namespace Tracking {
-  interface SessionID {
+  interface Session {
     id: string;
+    session: NestedTracker;
+  }
+
+  const sessionManager: {sessions: Session[]} = {
+    sessions: [],
+  };
+
+  export const populateSessionManager = (runsheet:Structure.Runsheet.RunsheetStorage): void => {
+    sessionManager.sessions.length = 0;
   }
 
   export interface Tracker {
-    session: SessionID;
     tracking: Structure.Storage;
     timers: Timer.Tracking[];
     trackingIndex: number;
   }
 
   export interface NestedTracker extends Tracker {
-    nested: Structure.Storage[];
+    nested: Tracker[];
+    nestedType: string;
   }
 
   export const startTracking = (tracker: Tracker) => {
@@ -28,86 +37,52 @@ namespace Tracking {
     tracker.tracking.startTracking(tracker.tracking);
     if("nested" in tracker) {
       const subtracker = getNext(tracker as NestedTracker);
+      startTracking(subtracker);
     }
     setTracking(tracker.tracking.type,tracker);
   };
 
-  export const endTracking = (tracker: Tracker) => {
+  export const endTracking = (tracker: Tracker) : void => {
     tracker.timers[tracker.trackingIndex].end = Time.now();
     tracker.tracking.startTracking(tracker.tracking);
     setTracking(tracker.tracking.type,invalid_tracking);
   }
 
-  const getNext = (nested:NestedTracker): Tracker => {
-    nested.nested
+  export const getByIndex = (nested:NestedTracker,index:number): Tracker => {
+    if(validIndex(nested,index)) {
+      return nested.nested[index];
+    }
+    return invalid_tracking;
   }
 
-  class Nested<
-    T extends Structure.Storage & Structure.Nested
-  > extends Tracking {
-    active?: Tracking;
-    nested: Tracking[] = [];
-
-    constructor(reference: T, start: Time.Point) {
-      super(reference);
-      reference.nested.forEach((value: Structure.Storage) => {
-        this.nested.push(new Tracking(value));
-      });
-    }
-
-    startTracking() {
-      super.startTracking();
-      this.goto(this.getNextIndex(), false);
-      this.active?.startTracking();
-    }
-
-    endTracking() {
-      super.endTracking();
-      this.active?.endTracking();
-    }
-
-    getNextIndex() {
-      let index = this.activeIndex() + 1;
-      while (this.validIndex(index)) {
-        if (this.nested[index].reference.disabled) {
-          index++;
-          continue;
-        }
-        return index;
+  export const getNext = (nested:NestedTracker): Tracker => {
+    const active = getTracking(nested.nestedType);
+    let index = 0;
+    if(!isInvalid(active)) index = getIndex(nested,active);
+    while(validIndex(nested,index)) 
+    {
+      if (nested.nested[index].tracking.disabled) {
+        index++;
+        continue;
       }
-      return -1;
+      return getByIndex(nested,index);
     }
+    return invalid_tracking;
+  }
 
-    activeIndex() {
-      if (this.active) return this.nested.indexOf(this.active);
-      return -1;
-    }
+  export const getIndex = (nested:NestedTracker,active:Tracker): number => {
+    return nested.nested.indexOf(active);
+  }
 
-    validIndex(index: number) {
-      return index < this.nested.length;
-    }
+  export const validIndex = (nested:NestedTracker,index: number) : boolean => {
+    return nested.nested.length > index;
+  }
 
-    goto(index: number, force: boolean) {
-      if (!this.validIndex(index)) return false;
-      if (this.active) {
-        this.active.endTracking();
-      }
-      if (force || !this.nested[index].reference.disabled)
-        this.active = this.nested[index];
-      this.active?.startTracking();
-      return true;
-    }
-
-    changeDisabledState(index: number) {
-      this.nested[index].reference.disabled = !this.nested[index].reference
-        .disabled;
-    }
+  const isInvalid = (tracker:Tracker) : boolean => {
+    return tracker.session.id === "INVALID";
   }
 
   const invalid_tracking: Tracker = {
-    session: {
-      id: "",
-    },
     tracking: {
       tracking: "",
       type: "invalid",
