@@ -79,13 +79,13 @@ namespace Tracking {
   }
 
   const isInvalid = (tracker:Tracker) : boolean => {
-    return tracker.session.id === "INVALID";
+    return tracker.tracking.type === "INVALID";
   }
 
   const invalid_tracking: Tracker = {
     tracking: {
       tracking: "",
-      type: "invalid",
+      type: "INVALID",
       display: "INVALID",
       disabled: true,
       timer: {
