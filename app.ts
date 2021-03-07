@@ -5,6 +5,8 @@ import controlRouter from "./routes/control";
 import trackingRouter from "./routes/tracking";
 import { schedule } from "./components/eventhandler";
 import Structure from "./components/structure";
+import Control from "./components/control";
+import Tracking from "./components/tracking";
 
 const normalizePort = (val: any) => {
   const port = parseInt(val, 10);
@@ -28,9 +30,8 @@ app.listen(port, () => {
 });
 
 schedule(() => {
-  Structure.Runsheet.LoadRunsheet(
-    "temp",
-    (runsheet:any) =>
-      Structure.Runsheet.SaveRunsheet("temp2", Structure.Runsheet.json.deserialize((runsheet))));
-  ;
+  Tracking.setupTracking("temp");
+  schedule(() => {
+  debug(JSON.stringify(Tracking.sessionManager));
+  });
 });

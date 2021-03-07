@@ -5,7 +5,8 @@
     {
       "display": "service",
       "disabled": false,
-      "startTimes": ["08:00:00", "10:00:00"],
+      "start": ["08:00:00", "10:00:00"],
+      "save": true,
       "timer": {
         "display": "countdown",
         "behaviour": "stop",

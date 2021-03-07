@@ -3,6 +3,7 @@ const router = Router();
 import { eventhandler, schedule } from "../components/eventhandler";
 import updgradeSSE from "../components/upgradeSSE";
 import Structure from "../components/structure";
+import Control from "../components/control"
 
 router.get("/direction", async (req: Request, res: Response) => {
   updgradeSSE(res);
@@ -19,19 +20,14 @@ router.get("/direction", async (req: Request, res: Response) => {
   });
 });
 
-router.get("/goto", (req: Request, res: Response) => {
-  if (!req.query.session || !req.query.bracket || !req.query.item) {
-    res.status(400).json({
-      error: true,
-      message: "goto requires session, bracket and item query parameters",
-    });
-    return;
-  }
+router.post("/", (req: Request, res: Response) => {
 
-  const sessionIndex: number = parseInt(req.query.session as string);
-  const bracketIndex: number = parseInt(req.query.bracket as string);
-  const itemIndex: number = parseInt(req.query.item as string);
-  const restart: string = req.query.restart as string;
+  const command = {} as Control.Command;
+  switch(command.command) {
+    case "goto":
+      Control.goto(command);
+      break;
+  }
   res.sendStatus(200); //better message
 });
 

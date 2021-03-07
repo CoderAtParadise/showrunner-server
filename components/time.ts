@@ -24,6 +24,10 @@ namespace Time {
     };
   };
 
+  export const copy = (time: Point): Point => {
+    return {hours: time.hours,minutes:time.minutes,seconds:time.seconds};
+  }
+
   export const add = (lhs: Point, rhs: Point): Point => {
     if (lhs === INVALID || rhs === INVALID) return INVALID;
     const tis = (lhs.hours * 60 + lhs.minutes) * 60 + lhs.seconds;

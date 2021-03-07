@@ -5,6 +5,7 @@ import Trigger from "./trigger";
 import Message from "./message";
 import fs from "fs";
 import path from "path";
+import Time from "./time";
 
 namespace Structure {
   export interface Storage {
@@ -143,7 +144,6 @@ namespace Structure {
     export interface RunsheetStorage extends Nested {
       version: number;
       team: Map<string, Role>;
-      nested: Storage[];
       switch: () => void;
     }
 
@@ -213,30 +213,40 @@ namespace Structure {
     };
   }
 
-  namespace Session {
+  export namespace Session {
     const startTracking = (): void => {
       eventhandler.emit("switch:session");
     };
 
     const endTracking = (): void => {};
 
-    export interface SessionStorage extends Storage, Nested {}
+    export interface SessionStart {
+      start: Time.Point[];
+      save: boolean;
+    }
+
+    export interface SessionStorage extends Storage, Nested,SessionStart {}
 
     export const JSON: IJson<SessionStorage> = {
       serialize(value: SessionStorage): object {
         const obj: {
           tracking: string;
+          start: string[];
+          save: boolean;
           display: string;
           disabled: boolean;
           timer: {};
           brackets: object[];
         } = {
           tracking: value.tracking,
+          start: [],
+          save: value.save,
           display: value.display,
           disabled: value.disabled || false,
           timer: Timer.JSON.serialize(value.timer),
           brackets: [],
         };
+        value.start.forEach((value: Time.Point) => obj.start.push(Time.stringify(value)));
         value.nested.forEach((value: Storage) =>
           obj.brackets.push(
             Bracket.JSON.serialize(value as Bracket.BracketStorage)
@@ -248,17 +258,23 @@ namespace Structure {
       deserialize(json: object): SessionStorage {
         const value = json as {
           tracking: string;
+          start: string[];
+          save: boolean;
           display: string;
           disabled: boolean;
           timer: {};
           brackets: object[];
         };
+        const start: Time.Point[] = [];
         const brackets: Storage[] = [];
         value.brackets.forEach((json: object) =>
           brackets.push(Bracket.JSON.deserialize(json))
         );
+        value.start.forEach((json:string) => start.push(Time.parse(json)))
         return {
           tracking: value.tracking,
+          start: start,
+          save: value.save,
           type: "session",
           display: value.display,
           disabled: value.disabled,
