@@ -13,15 +13,7 @@ const itemTriggerHandler: Trigger.IHandler = {
     deserialize(json: object): Trigger.ITrigger {
       const obj = {
         type: switch_item_trigger,
-        state: Trigger.State.WAITING,
-        listener: {
-          key: "switch:item",
-          func: () => {},
-        },
       };
-      obj.listener.func = () => {
-        obj.state = Trigger.State.SCHEDULED;
-      }
       return obj;
     },
   },

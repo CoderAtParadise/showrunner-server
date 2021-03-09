@@ -3,12 +3,7 @@ import Trigger from "../trigger";
 const manual_trigger: string = "control:manual";
 
 const manual: Trigger.ITrigger = {
-  type: manual_trigger,
-  state: Trigger.State.WAITING,
-  listener: {
-    key: "manual",
-    func: () => {},
-  },
+  type: manual_trigger
 };
 
 const manualTriggerHandler: Trigger.IHandler = {

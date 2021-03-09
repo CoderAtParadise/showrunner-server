@@ -12,10 +12,6 @@ class text implements Message.IMessage {
 }
 
 const text_handler: Message.IHandler<text> = {
-    handleMessage(target:string,message:text): void {
-        eventhandler.emit("direction",target,message);
-    },
-
     json: {
         serialize(value:text): object {
             return value;

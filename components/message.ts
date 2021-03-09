@@ -6,7 +6,6 @@ namespace Message {
   }
 
   export interface IHandler<T extends IMessage> {
-    handleMessage: (target: string, message: T) => void;
     json: IJson<T>;
   }
 

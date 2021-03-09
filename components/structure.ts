@@ -348,21 +348,6 @@ namespace Structure {
         directions: Direction.DirectionStorage[];
       }
 
-      export const startTracking = (reference: Storage) => {
-        eventhandler.emit(`switch:item`);
-        (reference as ItemStorage).directions.forEach(
-          (direction: Direction.DirectionStorage) =>
-            Trigger.startListening(direction.trigger)
-        );
-      };
-
-      const endTracking = (reference: Storage): void => {
-        (reference as ItemStorage).directions.forEach(
-          (direction: Direction.DirectionStorage) =>
-            Trigger.stopListening(direction.trigger)
-        );
-      };
-
       export const JSON: IJson<ItemStorage> = {
         serialize(value: ItemStorage): object {
           const obj: {
@@ -418,29 +403,8 @@ namespace Structure {
         message: Message.IMessage;
       }
 
-      export const notify = (
-        direction: DirectionStorage,
-        force: boolean
-      ): void => {
-        if (direction.trigger.state === Trigger.State.SCHEDULED || force) {
-          direction.targets.forEach((target: string) => {
-            const messageHandler = Message.handlers.get(direction.message.type);
-            if (!Message.handlers)
-              console.log(`Unknown message type: ${direction.message.type}`);
-            else messageHandler?.handleMessage(target, direction.message);
-          });
-          direction.trigger.state = Trigger.State.RUN;
-          Trigger.stopListening(direction.trigger);
-        }
-      };
-
       const invalid_trigger: Trigger.ITrigger = {
         type: "invalid",
-        state: Trigger.State.WAITING,
-        listener: {
-          key: "invalid",
-          func: () => {},
-        },
       };
 
       export const JSON: IJson<DirectionStorage> = {
