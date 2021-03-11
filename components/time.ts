@@ -127,4 +127,10 @@ namespace Time {
   export const INVALID: Point = { hours: -1, minutes: -1, seconds: -1 };
 }
 
+import { eventhandler, addThisTickHandler } from "./eventhandler";
+
+addThisTickHandler(() => {
+  eventhandler.emit("clock");
+});
+
 export default Time;

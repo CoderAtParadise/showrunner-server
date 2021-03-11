@@ -2,6 +2,7 @@ import Time from "./time";
 import Timer from "./timer";
 import Structure from "./structure";
 import Control from "./control";
+import { eventhandler, schedule } from "./eventhandler";
 
 namespace Tracking {
   export interface Tracker {
@@ -16,9 +17,14 @@ namespace Tracking {
     nestedType: string;
   }
 
-  export const sessionManager: Nested = {
+  interface Dirty {
+    dirty: boolean;
+  }
+
+  export const sessionManager: Nested & Dirty = {
     nested: [],
     nestedType: "session",
+    dirty: false,
   };
 
   export const setupTracking = (file: string): void => {
@@ -39,9 +45,7 @@ namespace Tracking {
     });
   };
 
-  const rebuildTracking = (location:Control.Location,end:boolean) => {
-
-  }
+  const rebuildTracking = (location: Control.Location, end: boolean) => {};
 
   const createTracking = (
     sessionId: string,
@@ -49,8 +53,7 @@ namespace Tracking {
     storage: Structure.Storage
   ): Tracker => {
     if ("nested" in storage) {
-      interface local extends Tracker, Nested {}
-      let tracking: local = {
+      let tracking: Tracker & Nested = {
         sessionId: sessionId,
         tracking: storage,
         trackingIndex: -1,
@@ -173,7 +176,38 @@ namespace Tracking {
 
   const setTracking = (key: string, tracker: Tracker): void => {
     tracker_map.set(key, tracker);
+    if (!sessionManager.dirty) {
+      sessionManager.dirty = true;
+      schedule(() => {
+        sessionManager.dirty = false;
+        eventhandler.emit("sync", "switch", getActiveLocation());
+      });
+    }
   };
+
+  export const getActiveLocation = (): Control.Location => {
+    const loc: Control.Location = { session: -1, bracket: -1, item: -1 };
+    const session = tracker_map.get("session");
+    if (session) {
+      loc.session = getIndex(sessionManager, session);
+      const bracket = tracker_map.get("bracket");
+      if (bracket && "nested" in session) {
+        loc.bracket = getIndex(session as Nested, bracket);
+        const item = tracker_map.get("item");
+        if (item && "nested" in bracket)
+          loc.item = getIndex(bracket as Nested, item);
+      }
+    }
+    return loc;
+  };
+
+  interface Change {
+    location: Control.Location;
+    end: boolean;
+    value: Time.Point;
+  };
+
+  export const tracking_changes: Change[] = [];
 }
 
 export default Tracking;

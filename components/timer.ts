@@ -69,10 +69,4 @@ namespace Timer {
   };
 }
 
-import { eventhandler, addThisTickHandler } from "./eventhandler";
-
-addThisTickHandler(() => {
-  eventhandler.emit("timer");
-});
-
 export default Timer;

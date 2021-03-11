@@ -29,6 +29,6 @@ app.listen(port, () => {
 schedule(() => {
   Tracking.setupTracking("temp");
   schedule(() => {
-  debug(JSON.stringify(Tracking.sessionManager));
+  Tracking.startTracking(Tracking.getNext(Tracking.sessionManager));
   });
 });

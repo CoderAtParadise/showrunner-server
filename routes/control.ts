@@ -1,77 +1,37 @@
 import { Router, Request, Response } from "express";
 const router = Router();
-import { eventhandler, schedule } from "../components/eventhandler";
+import { eventhandler } from "../components/eventhandler";
 import updgradeSSE from "../components/upgradeSSE";
 import Structure from "../components/structure";
-import Control from "../components/control"
+import Control from "../components/control";
+import Time from "../components/time";
+import Tracking from "../components/tracking";
 
-router.get("/direction", async (req: Request, res: Response) => {
+router.get("/sync", async (req: Request, res: Response) => {
   updgradeSSE(res);
-  let targets: string[];
-  if (req.query.target) targets = (req.query.target as string).split(",");
+  res.write(
+    `event: switch\ndata: ${JSON.stringify(Tracking.getActiveLocation())}\n\n`
+  );
+  eventhandler.on("sync", (event: string, data: object) => {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  });
+});
 
-  eventhandler.on("direction", (target, message) => {
-    if (targets.length === 0 || targets.includes(target))
-      res.write(
-        `event: direction\ntarget: ${target}\ndata: ${JSON.stringify(
-          message
-        )}\n\n`
-      );
+router.get("/clock", async (req: Request, res: Response) => {
+  updgradeSSE(res);
+  eventhandler.on("clock", () => {
+    res.write(`event: clock\ndata: ${Time.stringify(Time.now())}\n\n`);
   });
 });
 
 router.post("/", (req: Request, res: Response) => {
-
   const command = {} as Control.Command;
-  switch(command.command) {
+  switch (command.command) {
     case "goto":
       Control.goto(command);
       break;
   }
   res.sendStatus(200); //better message
-});
-
-router.get("/runsheets", (req: Request, res: Response) => {
-  //res.status(200).json(ListRunsheets());
-});
-
-router.get("/load", (req: Request, res: Response) => {
-  const runsheetF = req.query.runsheet as string;
-  let mode = req.query.mode as string;
-  if (!mode) mode = "show";
-  Structure.Runsheet.LoadRunsheet(
-    runsheetF,
-    (runsheet) => {
-      if (runsheet.err)
-        res
-          .status(404)
-          .json({ error: true, message: `Failed to load ${runsheetF}` });
-      else {
-        res.status(200).json(runsheet);
-      }
-    }
-  );
-});
-
-router.post("/comand", (req: Request, res: Response) => {
-  if (!req.body.session || !req.query.bracket || !req.query.item) {
-    res.status(400).json({
-      error: true,
-      message: "goto requires session, bracket and item query parameters",
-    });
-    return;
-  }
-  res.sendStatus(200); //better message
-});
-
-router.get("/delete", (req: Request, res: Response) => {
-  if (!req.query.session) {
-    res.status(400).json({
-      error: true,
-      message: "Missing session query parameter",
-    });
-    return;
-  }
 });
 
 export default router;
