@@ -4,8 +4,6 @@ import Debug from "debug";
 import controlRouter from "./routes/control";
 import trackingRouter from "./routes/tracking";
 import { schedule } from "./components/eventhandler";
-import Structure from "./components/structure";
-import Control from "./components/control";
 import Tracking from "./components/tracking";
 
 const normalizePort = (val: any) => {
@@ -22,7 +20,6 @@ app.use(
   morgan("dev", { stream: { write: (msg) => Debug("showrunner:http")(msg) } })
 );
 app.use("/tracking", trackingRouter);
-//app.use(timerRouter);
 app.use("/control",controlRouter);
 
 app.listen(port, () => {

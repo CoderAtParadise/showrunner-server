@@ -5,15 +5,15 @@ import Timer from "../components/timer";
 import Time from "../components/time";
 import upgradeSSE from "../components/upgradeSSE";
 
-router.get("/timers", (req: Request, res: Response) => {
+router.get("/clock", (req: Request, res: Response) => {
   upgradeSSE(res);
   const buildTracking = () => {
       const obj = {clock:Time.stringify(Time.now()),tracking:[]};
       return obj;
   }
   Timer.current({start:Time.now(),end:Time.now(),show:false});
-  eventhandler.on("timer",() => {
-    res.write(`event: timer\ndata: ${JSON.stringify(buildTracking())}\n\n`);
+  eventhandler.on("clock",() => {
+    res.write(`event: timer\ndata: ${Time.stringify(Time.now())}\n\n`);
   });
 });
 
