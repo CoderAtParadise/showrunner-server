@@ -27,21 +27,20 @@ namespace Tracking {
     dirty: false,
   };
 
-  export const setupTracking = (file: string): void => {
+  export const setupTracking = (
+    runsheet: Structure.Runsheet.RunsheetStorage
+  ): void => {
     sessionManager.nested.length = 0;
-    Structure.Runsheet.LoadRunsheet(file, (runsheet: any) => {
-      const rd = Structure.Runsheet.json.deserialize(runsheet);
-      rd.nested.forEach((storage: Structure.Storage) => {
-        if ("start" in storage) {
-          (storage as Structure.Session.SessionStart).start.forEach(
-            (time: Time.Point) => {
-              sessionManager.nested.push(
-                createTracking("", Time.copy(time), storage)
-              );
-            }
-          );
-        }
-      });
+    runsheet.nested.forEach((storage: Structure.Storage) => {
+      if ("start" in storage) {
+        (storage as Structure.Session.SessionStart).start.forEach(
+          (time: Time.Point) => {
+            sessionManager.nested.push(
+              createTracking("", Time.copy(time), storage)
+            );
+          }
+        );
+      }
     });
   };
 
@@ -97,7 +96,6 @@ namespace Tracking {
       Time.now(),
       tracker.tracking.timer.duration
     );
-    tracker.tracking.startTracking(tracker.tracking);
     if ("nested" in tracker) {
       const subtracker = getNext(tracker as Nested);
       startTracking(subtracker);
@@ -107,7 +105,6 @@ namespace Tracking {
 
   export const endTracking = (tracker: Tracker): void => {
     tracker.timers[tracker.trackingIndex].end = Time.now();
-    tracker.tracking.startTracking(tracker.tracking);
     setTracking(tracker.tracking.type, invalid_tracking);
   };
 
@@ -156,9 +153,7 @@ namespace Tracking {
         behaviour: Timer.Behaviour.HIDE,
         display: Timer.Display.COUNTDOWN,
         show: false,
-      },
-      startTracking: () => {},
-      endTracking: () => {},
+      }
     },
     timers: [],
     trackingIndex: -1,
@@ -180,7 +175,7 @@ namespace Tracking {
       sessionManager.dirty = true;
       schedule(() => {
         sessionManager.dirty = false;
-        eventhandler.emit("sync", "switch", getActiveLocation());
+        eventhandler.emit("sync", "current", getActiveLocation());
       });
     }
   };
@@ -205,7 +200,7 @@ namespace Tracking {
     location: Control.Location;
     end: boolean;
     value: Time.Point;
-  };
+  }
 
   export const tracking_changes: Change[] = [];
 }

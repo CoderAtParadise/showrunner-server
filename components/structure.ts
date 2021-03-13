@@ -14,8 +14,6 @@ namespace Structure {
     display: string;
     disabled: boolean;
     timer: Timer.Settings;
-    startTracking: (reference: Storage) => void;
-    endTracking: (reference: Storage) => void;
   }
   export const typeEqualTo = (storage: Storage, type: string) =>
     type === storage.type;
@@ -214,12 +212,6 @@ namespace Structure {
   }
 
   export namespace Session {
-    const startTracking = (): void => {
-      eventhandler.emit("switch:session");
-    };
-
-    const endTracking = (): void => {};
-
     export interface SessionStart {
       start: Time.Point[];
       save: boolean;
@@ -232,7 +224,7 @@ namespace Structure {
         const obj: {
           tracking: string;
           start: string[];
-          save: boolean;
+          save_tracking: boolean;
           display: string;
           disabled: boolean;
           timer: {};
@@ -240,7 +232,7 @@ namespace Structure {
         } = {
           tracking: value.tracking,
           start: [],
-          save: value.save,
+          save_tracking: value.save,
           display: value.display,
           disabled: value.disabled || false,
           timer: Timer.JSON.serialize(value.timer),
@@ -259,7 +251,7 @@ namespace Structure {
         const value = json as {
           tracking: string;
           start: string[];
-          save: boolean;
+          save_tracking: boolean;
           display: string;
           disabled: boolean;
           timer: {};
@@ -274,26 +266,19 @@ namespace Structure {
         return {
           tracking: value.tracking,
           start: start,
-          save: value.save,
+          save: value.save_tracking,
           type: "session",
           display: value.display,
           disabled: value.disabled,
           timer: Timer.JSON.deserialize(value.timer),
           nestedType: "bracket",
           nested: brackets,
-          startTracking: startTracking,
-          endTracking: endTracking,
         };
       },
     };
   }
 
   namespace Bracket {
-    const startTracking = (): void => {
-      eventhandler.emit("switch:bracket");
-    };
-    const endTracking = (): void => {};
-
     export interface BracketStorage extends Storage, Nested {}
 
     export const JSON: IJson<BracketStorage> = {
@@ -336,9 +321,7 @@ namespace Structure {
           disabled: value.disabled,
           timer: Timer.JSON.deserialize(value.timer),
           nestedType: "item",
-          nested: items,
-          startTracking: startTracking,
-          endTracking: endTracking,
+          nested: items
         };
       },
     };
@@ -388,8 +371,6 @@ namespace Structure {
             disabled: value.disabled,
             timer: Timer.JSON.deserialize(value.timer),
             directions: directions,
-            startTracking: startTracking,
-            endTracking: endTracking,
           };
         },
       };

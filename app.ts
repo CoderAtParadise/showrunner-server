@@ -2,9 +2,9 @@ import express from "express";
 import morgan from "morgan";
 import Debug from "debug";
 import controlRouter from "./routes/control";
-import trackingRouter from "./routes/tracking";
 import { schedule } from "./components/eventhandler";
 import Tracking from "./components/tracking";
+import Control from "./components/control";
 
 const normalizePort = (val: any) => {
   const port = parseInt(val, 10);
@@ -19,7 +19,6 @@ const port = normalizePort(process.env.PORT || "3001");
 app.use(
   morgan("dev", { stream: { write: (msg) => Debug("showrunner:http")(msg) } })
 );
-app.use("/tracking", trackingRouter);
 app.use("/control",controlRouter);
 
 app.listen(port, () => {
@@ -27,7 +26,7 @@ app.listen(port, () => {
 });
 
 schedule(() => {
-  Tracking.setupTracking("temp");
+  Control.load_runsheet({command: "load_tracking",location: Control.invalid_location,data: "temp"});
   schedule(() => {
   Tracking.startTracking(Tracking.getNext(Tracking.sessionManager));
   });
