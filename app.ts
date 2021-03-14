@@ -26,8 +26,11 @@ app.listen(port, () => {
 });
 
 schedule(() => {
-  Control.load_runsheet({command: "load_tracking",location: Control.invalid_location,data: "temp"});
+  Control.loadRunsheet({command: "loadRunsheet",data: "temp"});
   schedule(() => {
-  Tracking.startTracking(Tracking.getNext(Tracking.sessionManager));
+    Control.goto({command:"goto",location:{session:0,bracket:0,item:0}});
+    schedule(() => {
+      Control.goto({command:"goto",location:{session:0,bracket:1,item:0}});
+    })
   });
 });

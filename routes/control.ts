@@ -8,9 +8,16 @@ import Tracking from "../components/tracking";
 
 router.get("/sync", async (req: Request, res: Response) => {
   updgradeSSE(res);
+  if(Control.isRunsheetLoaded()) 
+    res.write(
+      `event:runsheet\ndata:${JSON.stringify(Control.rawRunsheet())}\n\n`
+    )
+    const t = Tracking.activeLocation;
   res.write(
-    `event: current\ndata: ${JSON.stringify(Tracking.getActiveLocation())}\n\n`
+    `event: current\ndata: ${JSON.stringify({active:Tracking.activeLocation,next: Tracking.next()})}\n\n`
   );
+  res.write(
+    `event: tracking\n data: ${JSON.stringify(Tracking.syncTracking())}\n\n`);
   eventhandler.on("sync", (event: string, data: object) => {
     res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
   });

@@ -8,6 +8,13 @@ import path from "path";
 import Time from "./time";
 
 namespace Structure {
+
+  export enum Type {
+    SESSION = "session",
+    BRACKET = "bracket",
+    ITEM = "item",
+  }
+
   export interface Storage {
     tracking: string;
     type: string;
@@ -15,33 +22,50 @@ namespace Structure {
     disabled: boolean;
     timer: Timer.Settings;
   }
-  export const typeEqualTo = (storage: Storage, type: string) =>
-    type === storage.type;
+
+  export const canStore = (storage: Nested, value: Storage) =>
+    storage.nestedType === value.type;
+
+  export const add = (
+    to: Nested,
+    value: Storage,
+    index: number = to.nested.length
+  ): boolean => {
+    if (index > to.nested.length) index = to.nested.length;
+    if (canStore(to, value)) {
+      to.nested.splice(index, 0, value);
+      return true;
+    }
+    return false;
+  };
 
   export interface Nested {
-    nestedType: string;
+    nestedType: Type;
     nested: Storage[];
   }
 
-  export const addAtIndex = (
-    nested: Nested,
-    index: number,
-    storage: Storage
-  ): void => {
-    if (typeEqualTo(storage, nested.nestedType))
-      nested.nested.splice(index, 0, storage);
+  export const move = (
+    source: Nested,
+    source_index: number,
+    target: Nested,
+    target_index: number
+  ): boolean => {
+    const value = get(source, source_index);
+    if (value && canStore(target, value)) {
+      add(target, value, target_index);
+      remove(source, source_index);
+    }
+    return false;
   };
 
-  export const add = (nested: Nested, storage: Storage): void => {
-    addAtIndex(nested, nested.nested.length, storage);
+  export const get = (list: Nested, index: number): Storage => {
+    return list.nested[index];
   };
 
-  export const getAtIndex = (nested: Nested, index: number): Storage => {
-    return nested.nested[index];
-  };
-
-  export const deleteIndex = (nested: Nested, index: number): void => {
-    nested.nested.splice(index, 1);
+  export const remove = (list: Nested, index: number): boolean => {
+    if (index >= list.nested.length) return false;
+    list.nested.splice(index, 1);
+    return true;
   };
 
   export namespace Runsheet {
@@ -79,27 +103,22 @@ namespace Structure {
       filter(dir, storage);
     };
 
-    export const LoadRunsheet = (
-      file: string,
-      cb: (runsheet: any) => void
-    ) => Load(file, knownRunsheets, cb);
-    export const LoadTemplate = (
-      file: string,
-      cb: (runsheet:any) => void
-    ) => Load(file, knownTemplates, cb);
+    export const LoadRunsheet = (file: string, cb: (runsheet: any) => void) =>
+      Load(file, knownRunsheets, cb);
+    export const LoadTemplate = (file: string, cb: (runsheet: any) => void) =>
+      Load(file, knownTemplates, cb);
 
     const Load = (
       file: string,
       storage: Map<string, string>,
-      cb: (runsheet:any) => void
+      cb: (runsheet: any) => void
     ) => {
       const runsheet = storage.get(file);
       if (runsheet) {
         fs.readFile(runsheet, (err, buffer: Buffer) => {
           cb(JSON.parse(buffer.toString()));
         });
-      }
-      else cb({error:true,message:`Failed to load ${file}`});
+      } else cb({ error: true, message: `Failed to load ${file}` });
     };
 
     export const SaveRunsheet = (
@@ -132,12 +151,8 @@ namespace Structure {
 
     Discover(runsheetDir, knownRunsheets);
     Discover(templateDir, knownRunsheets);
-    fs.watch(runsheetDir, (): void =>
-      Discover(runsheetDir, knownRunsheets)
-    );
-    fs.watch(runsheetDir, (): void =>
-      Discover(templateDir, knownTemplates)
-    );
+    fs.watch(runsheetDir, (): void => Discover(runsheetDir, knownRunsheets));
+    fs.watch(runsheetDir, (): void => Discover(templateDir, knownTemplates));
 
     export interface RunsheetStorage extends Nested {
       version: number;
@@ -203,7 +218,7 @@ namespace Structure {
         return {
           version: value.version,
           team: team,
-          nestedType: "session",
+          nestedType: Type.SESSION,
           nested: sessions,
           switch: startTracking,
         };
@@ -212,12 +227,12 @@ namespace Structure {
   }
 
   export namespace Session {
-    export interface SessionStart {
+    export interface SessionData {
       start: Time.Point[];
       save: boolean;
     }
 
-    export interface SessionStorage extends Storage, Nested,SessionStart {}
+    export interface SessionStorage extends Storage, Nested, SessionData {}
 
     export const JSON: IJson<SessionStorage> = {
       serialize(value: SessionStorage): object {
@@ -238,7 +253,9 @@ namespace Structure {
           timer: Timer.JSON.serialize(value.timer),
           brackets: [],
         };
-        value.start.forEach((value: Time.Point) => obj.start.push(Time.stringify(value)));
+        value.start.forEach((value: Time.Point) =>
+          obj.start.push(Time.stringify(value))
+        );
         value.nested.forEach((value: Storage) =>
           obj.brackets.push(
             Bracket.JSON.serialize(value as Bracket.BracketStorage)
@@ -262,16 +279,16 @@ namespace Structure {
         value.brackets.forEach((json: object) =>
           brackets.push(Bracket.JSON.deserialize(json))
         );
-        value.start.forEach((json:string) => start.push(Time.parse(json)))
+        value.start.forEach((json: string) => start.push(Time.parse(json)));
         return {
           tracking: value.tracking,
           start: start,
           save: value.save_tracking,
-          type: "session",
+          type: Type.SESSION,
           display: value.display,
           disabled: value.disabled,
           timer: Timer.JSON.deserialize(value.timer),
-          nestedType: "bracket",
+          nestedType: Type.BRACKET,
           nested: brackets,
         };
       },
@@ -316,12 +333,12 @@ namespace Structure {
         );
         return {
           tracking: value.tracking,
-          type: "bracket",
+          type: Type.BRACKET,
           display: value.display,
           disabled: value.disabled,
           timer: Timer.JSON.deserialize(value.timer),
-          nestedType: "item",
-          nested: items
+          nestedType: Type.ITEM,
+          nested: items,
         };
       },
     };
@@ -366,7 +383,7 @@ namespace Structure {
           );
           return {
             tracking: value.tracking,
-            type: "item",
+            type: Type.ITEM,
             display: value.display,
             disabled: value.disabled,
             timer: Timer.JSON.deserialize(value.timer),

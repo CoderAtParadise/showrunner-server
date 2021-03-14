@@ -1,42 +1,180 @@
-import Time from "./time";
-import Timer from "./timer";
-import Structure from "./structure";
-import Control from "./control";
-import { eventhandler, schedule } from "./eventhandler";
+import Control from "../components/control";
+import Structure from "../components/structure";
+import Timer from "../components/timer";
+import Time from "../components/time";
+import { eventhandler } from "../components/eventhandler";
 
-namespace Tracking {
+export namespace Tracking {
+  export interface Location {
+    session: number;
+    bracket: number;
+    item: number;
+  }
+
   export interface Tracker {
-    sessionId: string;
+    tracker_list: TrackerList;
     tracking: Structure.Storage;
     timers: Timer.Tracking[];
-    trackingIndex: number;
+    index: number;
   }
 
-  export interface Nested {
-    nested: Tracker[];
-    nestedType: string;
+  export interface TrackerList {
+    trackers: Tracker[];
+    trackerType: Structure.Type;
   }
 
-  interface Dirty {
-    dirty: boolean;
-  }
+  const invalid_tracking: Tracker = {
+    tracker_list: {
+      trackers: [],
+      trackerType: Structure.Type.SESSION,
+    },
+    tracking: {
+      tracking: "INVALID",
+      type: "INVALID",
+      display: "INVALID",
+      disabled: true,
+      timer: {
+        duration: Time.INVALID,
+        behaviour: Timer.Behaviour.HIDE,
+        display: Timer.Display.COUNTDOWN,
+        show: false,
+      },
+    },
+    timers: [],
+    index: -1,
+  };
+  export const invalid_location = { session: -1, bracket: -1, item: -1 };
+  export let activeLocation: Location = invalid_location;
 
-  export const sessionManager: Nested & Dirty = {
-    nested: [],
-    nestedType: "session",
+  export const sessionManager: TrackerList & { dirty: boolean } = {
+    trackers: [],
+    trackerType: Structure.Type.SESSION,
     dirty: false,
+  };
+
+  const validIndex = (list: TrackerList, index: number): boolean => {
+    return index !== -1 && list.trackers.length > index;
+  };
+
+  const getByIndex = (list: TrackerList, index: number): Tracker => {
+    if (validIndex(list, index)) return list.trackers[index];
+    return invalid_tracking;
+  };
+
+  export const validLocation = (location: Location): boolean => {
+    return location.session !== -1;
+  };
+
+  export const get = (location: Location): Tracker => {
+    if (validIndex(sessionManager, location.session)) {
+      const session: Tracker = getByIndex(sessionManager, location.session);
+      if ("trackers" in session) {
+        if (!validIndex(session as TrackerList, location.bracket))
+          return session;
+        const bracket: Tracker = getByIndex(session, location.bracket);
+        if ("trackers" in bracket) {
+          if (!validIndex(bracket as TrackerList, location.item))
+            return bracket;
+          return getByIndex(bracket, location.item);
+        }
+      }
+    }
+    return invalid_tracking;
+  };
+
+  const locator = (
+    tracker: Tracker,
+    location: Location = { session: -1, bracket: -1, item: -1 }
+  ): Location => {
+    location[
+      tracker.tracker_list.trackerType
+    ] = tracker.tracker_list.trackers.indexOf(tracker);
+    if ("tracker_list" in tracker.tracker_list)
+      return locator(tracker.tracker_list as Tracker, location);
+    return location;
+  };
+
+  const validNext = (tracker: Tracker): boolean => {
+    return !tracker.tracking.disabled;
+  };
+
+  export const startTracking = (tracker: Tracker, location: Location): void => {
+    tracker.index++;
+    if(tracker.index >= tracker.timers.length) {
+      tracker.timers.push(
+        {
+          start: Time.INVALID,
+          end: Time.INVALID,
+          show: tracker.tracking.timer.show,
+        }
+      )
+    }
+    const timer: Timer.Tracking = tracker.timers[tracker.index];
+    timer.start = Time.now();
+    timer.end = Time.add(Time.now(), tracker.tracking.timer.duration);
+  };
+
+  export const endTracking = (tracker: Tracker, location: Location): void => {
+    tracker.timers[tracker.index].end = Time.now();
+  };
+
+  export const next = (): Location => {
+    let location: Location;
+    if (Control.isRunsheetLoaded())
+      if (validLocation(activeLocation))
+        location = {
+          session: activeLocation.session,
+          bracket: activeLocation.bracket,
+          item: activeLocation.bracket + 1,
+        };
+      else location = { session: 0, bracket: 0, item: 0 };
+    else {
+      return invalid_location;
+    }
+    for (let s = location.session; s < sessionManager.trackers.length; s++) {
+      const session = sessionManager.trackers[s];
+      if (session && !validNext(session)) {
+        continue;
+      }
+
+      if ("trackers" in session) {
+        for (
+          let b = location.bracket;
+          b < (session as TrackerList).trackers.length;
+          b++
+        ) {
+          const bracket = (session as TrackerList).trackers[b];
+          if (bracket && !validNext(bracket))
+            continue;
+          if ("trackers" in bracket) {
+            for (
+              let i = location.item;
+              i < (bracket as TrackerList).trackers.length;
+              i++
+            ) {
+              const item = (bracket as TrackerList).trackers[i];
+              if (item && validNext(item))
+                return { session: s, bracket: b, item: i };
+            }
+            location.item = 0;
+          }
+        }
+        location.bracket = 0;
+      }
+    }
+    return invalid_location;
   };
 
   export const setupTracking = (
     runsheet: Structure.Runsheet.RunsheetStorage
   ): void => {
-    sessionManager.nested.length = 0;
+    sessionManager.trackers.length = 0;
     runsheet.nested.forEach((storage: Structure.Storage) => {
       if ("start" in storage) {
-        (storage as Structure.Session.SessionStart).start.forEach(
+        (storage as Structure.Session.SessionData).start.forEach(
           (time: Time.Point) => {
-            sessionManager.nested.push(
-              createTracking("", Time.copy(time), storage)
+            sessionManager.trackers.push(
+              createTracking(sessionManager, Time.copy(time), storage)
             );
           }
         );
@@ -44,18 +182,16 @@ namespace Tracking {
     });
   };
 
-  const rebuildTracking = (location: Control.Location, end: boolean) => {};
-
   const createTracking = (
-    sessionId: string,
+    list: TrackerList,
     time: Time.Point,
     storage: Structure.Storage
   ): Tracker => {
     if ("nested" in storage) {
-      let tracking: Tracker & Nested = {
-        sessionId: sessionId,
+      let tracking: Tracker & TrackerList = {
+        tracker_list: list,
         tracking: storage,
-        trackingIndex: -1,
+        index: -1,
         timers: [
           {
             start: Time.copy(time),
@@ -63,21 +199,23 @@ namespace Tracking {
             show: (storage as Structure.Storage).timer.show,
           },
         ],
-        nestedType: (storage as Structure.Nested).nestedType,
-        nested: [],
+        trackerType: (storage as Structure.Nested).nestedType,
+        trackers: [],
       };
       (storage as Structure.Nested).nested.forEach(
         (value: Structure.Storage) => {
-          tracking.nested.push(createTracking(sessionId, time, value));
+          tracking.trackers.push(
+            createTracking(tracking, Time.copy(time), value)
+          );
           time = Time.add(time, value.timer.duration);
         }
       );
       return tracking;
     } else {
       return {
-        sessionId: sessionId,
+        tracker_list: list,
         tracking: storage,
-        trackingIndex: -1,
+        index: -1,
         timers: [
           {
             start: Time.copy(time),
@@ -89,120 +227,43 @@ namespace Tracking {
     }
   };
 
-  export const startTracking = (tracker: Tracker) => {
-    tracker.trackingIndex++;
-    tracker.timers[tracker.trackingIndex].start = Time.now();
-    tracker.timers[tracker.trackingIndex].end = Time.add(
-      Time.now(),
-      tracker.tracking.timer.duration
-    );
-    if ("nested" in tracker) {
-      const subtracker = getNext(tracker as Nested);
-      startTracking(subtracker);
-    }
-    setTracking(tracker.tracking.type, tracker);
+  export const rebuildTracking = (from: Location): void => {
+    for (let s = from.session; s < sessionManager.trackers.length; s++) {}
   };
-
-  export const endTracking = (tracker: Tracker): void => {
-    tracker.timers[tracker.trackingIndex].end = Time.now();
-    setTracking(tracker.tracking.type, invalid_tracking);
-  };
-
-  export const getByIndex = (nested: Nested, index: number): Tracker => {
-    if (validIndex(nested, index)) {
-      return nested.nested[index];
-    }
-    return invalid_tracking;
-  };
-
-  export const getNext = (nested: Nested): Tracker => {
-    const active = getTracking(nested.nestedType);
-    let index = 0;
-    if (!isInvalid(active)) index = getIndex(nested, active);
-    while (validIndex(nested, index)) {
-      if (nested.nested[index].tracking.disabled) {
-        index++;
-        continue;
-      }
-      return getByIndex(nested, index);
-    }
-    return invalid_tracking;
-  };
-
-  export const getIndex = (nested: Nested, active: Tracker): number => {
-    return nested.nested.indexOf(active);
-  };
-
-  export const validIndex = (nested: Nested, index: number): boolean => {
-    return nested.nested.length > index;
-  };
-
-  const isInvalid = (tracker: Tracker): boolean => {
-    return tracker.sessionId === "INVALID";
-  };
-
-  const invalid_tracking: Tracker = {
-    sessionId: "INVALID",
-    tracking: {
-      tracking: "",
-      type: "INVALID",
-      display: "INVALID",
-      disabled: true,
-      timer: {
-        duration: Time.INVALID,
-        behaviour: Timer.Behaviour.HIDE,
-        display: Timer.Display.COUNTDOWN,
-        show: false,
-      }
-    },
-    timers: [],
-    trackingIndex: -1,
-  };
-
-  const tracker_map: Map<string, Tracker> = new Map<string, Tracker>();
-
-  export const getTracking = (key: string): Tracker => {
-    if (tracker_map.has(key)) {
-      const tracking = tracker_map.get(key);
-      if (tracking) return tracking;
-    }
-    return invalid_tracking;
-  };
-
-  const setTracking = (key: string, tracker: Tracker): void => {
-    tracker_map.set(key, tracker);
-    if (!sessionManager.dirty) {
-      sessionManager.dirty = true;
-      schedule(() => {
-        sessionManager.dirty = false;
-        eventhandler.emit("sync", "current", getActiveLocation());
-      });
-    }
-  };
-
-  export const getActiveLocation = (): Control.Location => {
-    const loc: Control.Location = { session: -1, bracket: -1, item: -1 };
-    const session = tracker_map.get("session");
-    if (session) {
-      loc.session = getIndex(sessionManager, session);
-      const bracket = tracker_map.get("bracket");
-      if (bracket && "nested" in session) {
-        loc.bracket = getIndex(session as Nested, bracket);
-        const item = tracker_map.get("item");
-        if (item && "nested" in bracket)
-          loc.item = getIndex(bracket as Nested, item);
-      }
-    }
-    return loc;
-  };
-
-  interface Change {
-    location: Control.Location;
-    end: boolean;
-    value: Time.Point;
+  
+  interface Sync {
+    location: Location;
+    timers: {start: string,end:string,show:boolean}[];
   }
-
-  export const tracking_changes: Change[] = [];
+ 
+  const writeSync = (tracker:Tracker): Sync => {
+    const timers: {start:string,end:string,show:boolean}[] = [];
+    tracker.timers.forEach((timer:Timer.Tracking) => {
+      timers.push({start:Time.stringify(timer.start),end:Time.stringify(timer.end),show:timer.show});
+    });
+    return {location:locator(tracker),timers: timers};
+  }
+  
+  export const syncTracking =(): Sync[] => {
+    const syncArray: Sync[] = [];
+    sessionManager.trackers.forEach((tracker:Tracker) => {
+      syncArray.push(writeSync(tracker));
+      if("trackers" in tracker) {
+        const session = tracker as TrackerList;
+        session.trackers.forEach((tracker:Tracker) => {
+          syncArray.push(writeSync(tracker));
+          if("trackers" in tracker)
+          {
+            const bracket = tracker as TrackerList;
+            bracket.trackers.forEach((tracker:Tracker)=> {
+              syncArray.push(writeSync(tracker));
+            })
+          }
+        });
+      }
+    });
+    return syncArray;
+  }
 }
 
 export default Tracking;
