@@ -82,11 +82,10 @@ namespace Time {
     return false;
   };
 
-  const zeroPad = (num: number, places: number): string => {
-    return String(num).padStart(places, "0");
-  };
-
   export const stringify = (point: Point | Relative): string => {
+    const zeroPad = (num: number, places: number): string => {
+      return String(num).padStart(places, "0");
+    };
     if (equals(point, INVALID)) return "--:--:--";
     if ("format" in point) {
       const p = point as Relative;

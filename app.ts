@@ -19,7 +19,7 @@ const port = normalizePort(process.env.PORT || "3001");
 app.use(
   morgan("dev", { stream: { write: (msg) => Debug("showrunner:http")(msg) } })
 );
-app.use("/control",controlRouter);
+app.use("/",controlRouter);
 
 app.listen(port, () => {
   debug(`Running at http://localhost:${port}`);

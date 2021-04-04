@@ -3,9 +3,10 @@ import {Response} from "express";
 const updgradeSSE = (res: Response) => {
   //prettier-ignore
   res.set({
+    "Connection": "keep-alive",
     "Cache-Control": "no-cache",
     "Content-Type": "text/event-stream",
-    "Connection": "keep-alive",
+    "Access-Control-Allow-Origin": "*"
   });
   res.flushHeaders();
 };
