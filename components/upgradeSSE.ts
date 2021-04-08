@@ -6,7 +6,8 @@ const updgradeSSE = (res: Response) => {
     "Connection": "keep-alive",
     "Cache-Control": "no-cache",
     "Content-Type": "text/event-stream",
-    "Access-Control-Allow-Origin": "*"
+    "Access-Control-Allow-Origin": "*",
+    "retry":10000
   });
   res.flushHeaders();
 };
