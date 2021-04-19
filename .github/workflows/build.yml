@@ -33,5 +33,5 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: coderatpardise/showrunner-server:1.0.0
+          tags: showrunner-server:latest
         
