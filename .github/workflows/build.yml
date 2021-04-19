@@ -23,7 +23,7 @@ jobs:
       - name: Check Out Repo
         uses: actions/checkout@v2
       - name: Docker Login
-        uses: docker/login-action@v1.8.0
+        uses: docker/login-action@v1
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
@@ -33,6 +33,5 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: showrunner-server:latest
-          github-token: ${{secrets.GITHUB_TOKEN}}
+          tags: coderatparadise/showrunner-server:latest
         
