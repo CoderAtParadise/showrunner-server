@@ -34,4 +34,5 @@ jobs:
         with:
           push: true
           tags: showrunner-server:latest
+          github-token: ${{secrets.GITHUB_TOKEN}}
         
