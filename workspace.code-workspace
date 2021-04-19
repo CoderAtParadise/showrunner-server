@@ -2,6 +2,12 @@
 	"folders": [
 		{
 			"path": "."
+		},
+		{
+			"path": "..\\showrunner-client"
+		},
+		{
+			"path": "..\\showrunner-common"
 		}
 	],
 	"settings": {
