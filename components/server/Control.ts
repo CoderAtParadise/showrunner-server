@@ -1,4 +1,3 @@
-import { eventhandler } from "./eventHandler";
 import { RunsheetStorage, JSON as RJSON } from "../common/Runsheet";
 import { Storage, Nested } from "../common/Storage";
 import "./Messages";
@@ -7,6 +6,8 @@ import fs from "fs";
 import path from "path";
 import { Tracker } from "../common/Tracking";
 import Debug from "debug";
+import EventEmitter from "events";
+import { addThisTickHandler } from "./Eventhandler";
 
 export const ControlHandler: {
   loaded: RunsheetStorage | undefined;
@@ -15,6 +16,7 @@ export const ControlHandler: {
     Tracker
   > /*,runsheet_map: Map<string,{parent:string,}>*/;
   active: string;
+  eventhandler?: EventEmitter
 } = {
   loaded: undefined,
   tracking: new Map<string, Tracker>(),
@@ -22,9 +24,14 @@ export const ControlHandler: {
   active: "",
 };
 
-export function init()
+export function init(eventhandler:EventEmitter)
 {
-  console.log(eventhandler);
+  ControlHandler.eventhandler = eventhandler;
+  addThisTickHandler(() => {eventhandler.emit("clock");});
+  Discover(runsheetDir, knownRunsheets);
+  Discover(templateDir, knownTemplates);
+  fs.watch(runsheetDir, (): void => Discover(runsheetDir, knownRunsheets));
+  fs.watch(templateDir, (): void => Discover(templateDir, knownTemplates));
 }
 
 export interface Command {
@@ -42,23 +49,24 @@ export function Goto(command: Command): void {
 
 export function LoadRunsheet(command: Command): void {
   const file = command.data as string;
-  console.log(eventhandler);
   loadRunsheet(file, (runsheet: any) => {
     if (runsheet.error) Debug("shorunner:io")(runsheet.message);
     else {
-      console.log(eventhandler);
-      eventhandler.emit("sync", "runsheet", runsheet);
+      if(ControlHandler.eventhandler) {
+      ControlHandler.eventhandler.emit("sync", "runsheet", runsheet);
       ControlHandler.loaded = RJSON.deserialize(runsheet);
+
+      }
     }
   });
 }
 
-export const runsheetDir = "storage/runsheets";
-export const templateDir = "storage/templates";
-export const knownRunsheets: Map<string, string> = new Map<string, string>();
-export const knownTemplates: Map<string, string> = new Map<string, string>();
+const runsheetDir = "storage/runsheets";
+const templateDir = "storage/templates";
+const knownRunsheets: Map<string, string> = new Map<string, string>();
+const knownTemplates: Map<string, string> = new Map<string, string>();
 
-export function Discover(dir: string, storage: Map<string, string>): void {
+function Discover(dir: string, storage: Map<string, string>): void {
   fs.mkdir(dir, () => {});
   const LoadDir = (
     dirPath: string,

@@ -6,7 +6,7 @@ import {stringify,now} from "../components/common/time";
 import {ControlHandler,Command,Goto,LoadRunsheet} from "../components/server/Control";
 import {JSON as RJSON} from "../components/common/Runsheet";
 
-router.get("/sync", async (req: Request, res: Response) => {
+router.get("/sync", async (req: Request, res: Response,next: Function) => {
   updgradeSSE(res);
   if (ControlHandler.loaded) {
     res.write(
@@ -22,17 +22,26 @@ router.get("/sync", async (req: Request, res: Response) => {
       `event: tracking\ndata: ${JSON.stringify(Tracking.syncTracking())}\n\n`
     );*/
   }
-  eventhandler.on("sync", (event: string, data: object) => {
-    console.log("derp");
+  const cb = (event: string, data: object) => {
     res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  };
+  res.on('close',() => {
+    eventhandler.removeListener("sync",cb);
+    res.end();
   });
+  eventhandler.on("sync", cb);
 });
-
-router.get("/clock", async (req: Request, res: Response) => {
+const clockCallback = 
+router.get("/clock", async (req: Request, res: Response,next:Function) => {
   updgradeSSE(res);
-  eventhandler.on("clock", () => {
+  const cb = () => {
     res.write(`event: clock\ndata: ${stringify(now())}\n\n`);
+  };
+  res.on('close',() => {
+    eventhandler.removeListener("clock",cb);
+    res.end();
   });
+  eventhandler.on("clock",cb );
 });
 
 router.post("/", (req: Request, res: Response) => {
