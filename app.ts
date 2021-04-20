@@ -2,9 +2,9 @@ import express from "express";
 import morgan from "morgan";
 import Debug from "debug";
 import controlRouter from "./routes/control";
-import { schedule } from "./components/eventhandler";
-import Tracking from "./components/tracking";
-import Control from "./components/control";
+import {LoadRunsheet,Goto,Discover,runsheetDir,templateDir,knownRunsheets,knownTemplates, init} from "./components/server/Control";
+import { eventhandler, schedule,addThisTickHandler} from "./components/server/Eventhandler";
+import fs from "fs";
 
 const normalizePort = (val: any) => {
   const port = parseInt(val, 10);
@@ -24,13 +24,22 @@ app.use("/",controlRouter);
 app.listen(port, () => {
   debug(`Running at http://localhost:${port}`);
 });
-
+eventhandler.on("sync",() => {
+  console.log("Hello");
+})
 schedule(() => {
-  Control.loadRunsheet({command: "loadRunsheet",data: "temp"});
-  schedule(() => {
-    Control.goto({command:"goto",location:{session:0,bracket:0,item:0}});
+  LoadRunsheet({command: "loadRunsheet",data: "temp"});
+  /*schedule(() => {
+   Goto({command:"goto",tracking_id:"a91b219b-f292-4dfa-aae9-8a5e80ece795"});
     schedule(() => {
-      Control.goto({command:"goto",location:{session:0,bracket:1,item:0}});
+     Goto({command:"goto",tracking_id:"1d7db0a7-7787-444a-bbd7-6efbeb7041cf"});
     })
-  });
+  });*/
 });
+console.log(eventhandler);
+init();
+addThisTickHandler(() => {eventhandler.emit("clock");});
+Discover(runsheetDir, knownRunsheets);
+Discover(templateDir, knownTemplates);
+fs.watch(runsheetDir, (): void => Discover(runsheetDir, knownRunsheets));
+fs.watch(templateDir, (): void => Discover(templateDir, knownTemplates));

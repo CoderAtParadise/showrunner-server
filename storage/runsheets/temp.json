@@ -7,6 +7,7 @@
       "disabled": false,
       "start": ["08:00:00", "10:00:00"],
       "save_tracking": true,
+      "tracking" : "a91b219b-f292-4dfa-aae9-8a5e80ece795",
       "timer": {
         "display": "countdown",
         "behaviour": "stop",
@@ -17,6 +18,7 @@
         {
           "display": "Pre-Roll",
           "disabled": false,
+          "tracking": "1d7db0a7-7787-444a-bbd7-6efbeb7041cf",
           "timer": {
             "display": "countdown",
             "behaviour": "stop",
@@ -27,6 +29,7 @@
             {
               "display": "Jan PreRoll Video",
               "disabled": false,
+              "tracking": "e213a399-a633-47cd-bcbf-6f39bc1d5014",
               "timer": {
                 "display": "countdown",
                 "behaviour": "stop",
@@ -62,6 +65,7 @@
         {
           "display": "worship",
           "disabled": false,
+          "tracking": "4ad398b7-e3e1-4dd7-94b6-02a943cc3c8f",
           "timer": {
             "display": "elapsed",
             "behaviour": "overrun",
@@ -72,6 +76,7 @@
             {
               "display": "Song 1",
               "disabled": false,
+              "tracking": "38bf26cd-2e41-442a-81bf-4dc8406dafd0",
               "timer": {
                 "display": "countdown",
                 "behaviour": "stop",
