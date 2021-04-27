@@ -28,10 +28,10 @@ init(eventhandler); //Pass into ControlHandler becuase for some reason eventhand
 
 schedule(() => {
   LoadRunsheet({command: "loadRunsheet",data: "temp"});
-  /*schedule(() => {
-   Goto({command:"goto",tracking_id:"a91b219b-f292-4dfa-aae9-8a5e80ece795"});
+  schedule(() => {
+   Goto({command:"goto",tracking_id:"e213a399-a633-47cd-bcbf-6f39bc1d5014"});
     schedule(() => {
      Goto({command:"goto",tracking_id:"1d7db0a7-7787-444a-bbd7-6efbeb7041cf"});
     })
-  });*/
+  });
 });

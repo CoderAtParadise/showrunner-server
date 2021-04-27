@@ -5,22 +5,22 @@ import updgradeSSE from "../components/server/UpgradeSSE";
 import {stringify,now} from "../components/common/time";
 import {ControlHandler,Command,Goto,LoadRunsheet} from "../components/server/Control";
 import {JSON as RJSON} from "../components/common/Runsheet";
+import {TrackingSession,SESSION_JSON as TJSON} from "../components/common/Tracking";
 
-router.get("/sync", async (req: Request, res: Response,next: Function) => {
+router.get("/sync", async (req: Request, res: Response) => {
   updgradeSSE(res);
   if (ControlHandler.loaded) {
     res.write(
       `event: runsheet\ndata: ${JSON.stringify(RJSON.serialize(ControlHandler.loaded))}\n\n`
     );
-   /* res.write(
-      `event: current\ndata: ${JSON.stringify({
-        active: Tracking.activeLocation,
-        next: Tracking.next(),
-      })}\n\n`
+    const tracking_list: object[] = [];
+        ControlHandler.tracking.forEach((value:TrackingSession) => tracking_list.push(TJSON.serialize(value)));
+    res.write(
+      `event: tracking\ndata: ${JSON.stringify(tracking_list)}\n\n`
     );
     res.write(
-      `event: tracking\ndata: ${JSON.stringify(Tracking.syncTracking())}\n\n`
-    );*/
+      `event: current\ndata: ${JSON.stringify(ControlHandler.current)}\n\n`
+    );
   }
   const cb = (event: string, data: object) => {
     res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
@@ -31,8 +31,8 @@ router.get("/sync", async (req: Request, res: Response,next: Function) => {
   });
   eventhandler.on("sync", cb);
 });
-const clockCallback = 
-router.get("/clock", async (req: Request, res: Response,next:Function) => {
+
+router.get("/clock", async (req: Request, res: Response) => {
   updgradeSSE(res);
   const cb = () => {
     res.write(`event: clock\ndata: ${stringify(now())}\n\n`);
@@ -50,6 +50,12 @@ router.post("/", (req: Request, res: Response) => {
     switch (command.command) {
       case "goto":
         Goto(command);
+        break;
+      case "load":
+        LoadRunsheet(command);
+        break;
+      case "update":
+        
         break;
     }
   });
