@@ -16,7 +16,7 @@ router.get("/sync", async (req: Request, res: Response) => {
     const tracking_list: object[] = [];
         ControlHandler.tracking.forEach((value:TrackingSession) => tracking_list.push(TJSON.serialize(value)));
     res.write(
-      `event: tracking\ndata: ${JSON.stringify(tracking_list)}\n\n`
+      `event: tracking_list\ndata: ${JSON.stringify(tracking_list)}\n\n`
     );
     res.write(
       `event: current\ndata: ${JSON.stringify(ControlHandler.current)}\n\n`

@@ -3,7 +3,7 @@
   "team": [{ "key": "wl1", "role": "Worship Leader", "display": "Mark Dean" }],
   "sessions": [
     {
-      "display": "service",
+      "display": "Example Service",
       "disabled": false,
       "start": [
         {
@@ -34,7 +34,7 @@
             "display": "countdown",
             "behaviour": "stop",
             "duration": "00:05:00",
-            "show": false
+            "show": true
           },
           "items": [
             {
@@ -81,7 +81,7 @@
           "index": 1,
           "timer": {
             "display": "elapsed",
-            "behaviour": "overrun",
+            "behaviour": "hide",
             "duration": "00:20:00",
             "show": false
           },

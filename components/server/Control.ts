@@ -9,13 +9,15 @@ import {
   TrackingSession,
   start,
   end,
-  SESSION_JSON as TJSON,
+  SESSION_JSON as TSJSON,
+  TRACKER_JSON as TJSON,
 } from "../common/Tracking";
 import Debug from "debug";
 import EventEmitter from "events";
 import { addThisTickHandler } from "./Eventhandler";
 import { SessionStorage } from "../common/Session";
-import { Point } from "../common/Time";
+import { now, add, Point, subtract, greaterThan, equals } from "../common/Time";
+import { Behaviour } from "../common/Timer";
 
 export const ControlHandler: {
   loaded: RunsheetStorage | undefined;
@@ -41,6 +43,37 @@ export function init(eventhandler: EventEmitter) {
   addThisTickHandler(() => {
     eventhandler.emit("clock");
   });
+  eventhandler.addListener("clock", () => {
+    if (ControlHandler.loaded) {
+      const session = ControlHandler.tracking.get(
+        ControlHandler.current.session
+      );
+      if (session) {
+        const tracker = session.trackers.get(ControlHandler.current.active);
+        if (tracker) {
+          const time = subtract(tracker.timers[tracker.index].start, now());
+          if (greaterThan(time, tracker.settings.duration)) {
+            switch (tracker.settings.behaviour) {
+              case Behaviour.OVERRUN:
+                tracker.timers[tracker.index].overrun = true;
+                break;
+              case Behaviour.HIDE:
+                end(tracker);
+                tracker.timers[tracker.index].show = false;
+                break;
+              case Behaviour.STOP:
+                end(tracker);
+                break;
+            }
+            ControlHandler.eventhandler?.emit("sync", "tracking", {
+              session: ControlHandler.current.session,
+              tracker: TJSON.serialize(tracker),
+            });
+          }
+        }
+      }
+    }
+  });
   Discover(runsheetDir, knownRunsheets);
   Discover(templateDir, knownTemplates);
   fs.watch(runsheetDir, (): void => Discover(runsheetDir, knownRunsheets));
@@ -49,16 +82,153 @@ export function init(eventhandler: EventEmitter) {
 
 export interface Command {
   command: string;
-  tracking_id?: string;
+  session: string;
+  tracking_id: string;
   data?: any;
+}
+
+export function StartSession(session: string): void {
+  if (ControlHandler.loaded) {
+    if (ControlHandler.tracking.has(session)) {
+      ControlHandler.current.session = session;
+      const tracker = ControlHandler.tracking.get(session);
+      if (tracker) {
+        tracker.timer.start = now();
+        tracker.timer.end = add(now(), tracker.settings.duration);
+        ControlHandler.eventhandler?.emit("sync","tracking_session",TSJSON.serialize(tracker));
+      }
+    } else ControlHandler.current.session = "";
+  }
+}
+
+export function EndSession(session: string): void {
+  if (ControlHandler.loaded) {
+    const tracker = ControlHandler.tracking.get(session);
+    if (tracker) {
+      tracker.timer.end = now();
+      ControlHandler.eventhandler?.emit("sync","tracking_session",TSJSON.serialize(tracker));
+    }
+    ControlHandler.current.session = "";
+    ControlHandler.current.active = "";
+    ControlHandler.current.next = "";
+  }
 }
 
 export function Goto(command: Command): void {
   if (ControlHandler.loaded) {
-    if (command.tracking_id) {
-      const session = ControlHandler.tracking.get(
-        ControlHandler.current.session
-      );
+    if (command.tracking_id !== "") {
+      if (ControlHandler.current.session !== command.session) {
+        const session = ControlHandler.tracking.get(
+          ControlHandler.current.session
+        );
+        if (session) {
+          const item = session.trackers.get(ControlHandler.current.active);
+          if (item) {
+            end(item);
+            ControlHandler.eventhandler?.emit("sync", "tracking", {
+              session: ControlHandler.current.session,
+              tracker: TJSON.serialize(item),
+            });
+            const bracket = session.trackers.get(item.parent);
+            if (bracket) {
+              end(bracket);
+              ControlHandler.eventhandler?.emit("sync", "tracking", {
+                session: ControlHandler.current.session,
+                tracker: TJSON.serialize(bracket),
+              });
+            }
+          }
+        }
+        EndSession(ControlHandler.current.session);
+        StartSession(command.session);
+      }
+      const session = ControlHandler.tracking.get(command.session);
+      if (session) {
+        let goto = session.trackers.get(command.tracking_id);
+        if (goto) {
+          const active = session.trackers.get(ControlHandler.current.active);
+          if (active) {
+            end(active);
+            ControlHandler.eventhandler?.emit("sync", "tracking", {
+              session: command.session,
+              tracker: TJSON.serialize(active),
+            });
+            if (goto.parent !== active.parent) {
+              const parent = session.trackers.get(active.parent);
+              if (parent) {
+                end(parent);
+                ControlHandler.eventhandler?.emit("sync", "tracking", {
+                  session: command.session,
+                  tracker: TJSON.serialize(parent),
+                });
+              }
+            }
+          }
+          if (goto.parent === session.tracking_id) {
+            const ss = get(ControlHandler.loaded, session.tracking_id);
+            const bs = get((ss as unknown) as Nested, goto.tracking_id);
+            const next = getNextEnabled((bs as unknown) as Nested, -1);
+            if (next) {
+              const tracker = session.trackers.get(next.tracking);
+              if (tracker) {
+                ControlHandler.current.active = tracker.tracking_id;
+                start(tracker);
+                ControlHandler.eventhandler?.emit("sync", "tracking", {
+                  session: command.session,
+                  tracker: TJSON.serialize(tracker),
+                });
+              }
+              const btracker = session.trackers.get(bs.tracking);
+              if (btracker) {
+                start(btracker);
+                ControlHandler.eventhandler?.emit("sync", "tracking", {
+                  session: command.session,
+                  tracker: TJSON.serialize(btracker),
+                });
+              }
+            }
+          } else {
+            const ss = get(ControlHandler.loaded, session.tracking_id);
+            const bs = get((ss as unknown) as Nested, goto.parent);
+            const next = get((bs as unknown) as Nested, goto.tracking_id);
+            if (next) {
+              const tracker = session.trackers.get(next.tracking);
+              if (tracker) {
+                ControlHandler.current.active = tracker.tracking_id;
+                start(tracker);
+                ControlHandler.eventhandler?.emit("sync", "tracking", {
+                  session: command.session,
+                  tracker: TJSON.serialize(tracker),
+                });
+              }
+              if (goto.parent !== active?.parent) {
+                const btracker = session.trackers.get(goto.parent);
+                if (btracker) {
+                  start(btracker);
+                  ControlHandler.eventhandler?.emit("sync", "tracking", {
+                    session: command.session,
+                    tracker: TJSON.serialize(btracker),
+                  });
+                }
+              }
+            }
+          }
+          ControlHandler.current.next = getNext();
+          ControlHandler.eventhandler?.emit(
+            "sync",
+            "current",
+            ControlHandler.current
+          );
+        }
+      }
+    }
+  }
+}
+
+/*export function Goto(command: Command): void {
+  if (ControlHandler.loaded) {
+    if (command.tracking_id !== "") {
+      const session = ControlHandler.tracking.get(command.session);
       if (session) {
         if (ControlHandler.current.active !== "") {
           const tracker = session.trackers.get(ControlHandler.current.active);
@@ -79,11 +249,10 @@ export function Goto(command: Command): void {
             ) as unknown) as Nested;
             const bracket = (get(s, command.tracking_id) as unknown) as Nested;
             const item = getNextEnabled(bracket, -1);
-            if(item) {
+            if (item) {
               ControlHandler.current.active = item.tracking;
               const t = session.trackers.get(item.tracking);
-              if(t)
-                start(t);
+              if (t) start(t);
             }
           } else {
             ControlHandler.current.active = command.tracking_id;
@@ -104,7 +273,7 @@ export function Goto(command: Command): void {
       }
     }
   }
-}
+}*/
 
 function getNextEnabled(list: Nested, startIndex: number): Storage | null {
   const index = startIndex + 1;
@@ -118,10 +287,7 @@ function getNextEnabled(list: Nested, startIndex: number): Storage | null {
 
 function getNext(): string {
   if (ControlHandler.loaded) {
-    if (ControlHandler.current.session === "")
-      ControlHandler.current.session = ControlHandler.tracking
-        .keys()
-        .next().value;
+    if (ControlHandler.current.session === "") return "";
     const trackingSession = ControlHandler.tracking.get(
       ControlHandler.current.session
     );
@@ -192,7 +358,7 @@ export function LoadRunsheet(command: Command): void {
         });
         const tracking_list: object[] = [];
         ControlHandler.tracking.forEach((value: TrackingSession) =>
-          tracking_list.push(TJSON.serialize(value))
+          tracking_list.push(TSJSON.serialize(value))
         );
         ControlHandler.eventhandler.emit(
           "sync",
