@@ -88,7 +88,7 @@
           "items": [
             {
               "display": "Song 1",
-              "disabled": true,
+              "disabled": false,
               "tracking": "38bf26cd-2e41-442a-81bf-4dc8406dafd0",
               "index": 0,
               "timer": {

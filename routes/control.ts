@@ -46,7 +46,6 @@ router.get("/clock", async (req: Request, res: Response) => {
 
 router.post("/command", (req: Request, res: Response) => {
   const command = req.body as Command;
-  console.log(command);
    schedule(() => {
     switch (command.command) {
       case "goto":

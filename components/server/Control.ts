@@ -95,7 +95,7 @@ export function StartSession(session: string): void {
       if (tracker) {
         tracker.timer.start = now();
         tracker.timer.end = add(now(), tracker.settings.duration);
-        ControlHandler.eventhandler?.emit("sync","tracking_session",TSJSON.serialize(tracker));
+        ControlHandler.eventhandler?.emit("sync", "tracking_session", TSJSON.serialize(tracker));
       }
     } else ControlHandler.current.session = "";
   }
@@ -106,7 +106,7 @@ export function EndSession(session: string): void {
     const tracker = ControlHandler.tracking.get(session);
     if (tracker) {
       tracker.timer.end = now();
-      ControlHandler.eventhandler?.emit("sync","tracking_session",TSJSON.serialize(tracker));
+      ControlHandler.eventhandler?.emit("sync", "tracking_session", TSJSON.serialize(tracker));
     }
     ControlHandler.current.session = "";
     ControlHandler.current.active = "";
@@ -116,54 +116,54 @@ export function EndSession(session: string): void {
 
 export function Goto(command: Command): void {
   if (ControlHandler.loaded) {
-    if (command.tracking_id !== "") {
-      if (ControlHandler.current.session !== command.session) {
-        const session = ControlHandler.tracking.get(
-          ControlHandler.current.session
-        );
-        if (session) {
-          const item = session.trackers.get(ControlHandler.current.active);
-          if (item) {
-            end(item);
+    if (ControlHandler.current.session !== command.session) {
+      const session = ControlHandler.tracking.get(
+        ControlHandler.current.session
+      );
+      if (session) {
+        const item = session.trackers.get(ControlHandler.current.active);
+        if (item) {
+          end(item);
+          ControlHandler.eventhandler?.emit("sync", "tracking", {
+            session: ControlHandler.current.session,
+            tracker: TJSON.serialize(item),
+          });
+          const bracket = session.trackers.get(item.parent);
+          if (bracket) {
+            end(bracket);
             ControlHandler.eventhandler?.emit("sync", "tracking", {
               session: ControlHandler.current.session,
-              tracker: TJSON.serialize(item),
+              tracker: TJSON.serialize(bracket),
             });
-            const bracket = session.trackers.get(item.parent);
-            if (bracket) {
-              end(bracket);
+          }
+        }
+      }
+      EndSession(ControlHandler.current.session);
+      StartSession(command.session);
+    }
+    const session = ControlHandler.tracking.get(command.session);
+    if (session) {
+      let goto = session.trackers.get(command.tracking_id);
+      if (goto) {
+        const active = session.trackers.get(ControlHandler.current.active);
+        if (active) {
+          end(active);
+          ControlHandler.eventhandler?.emit("sync", "tracking", {
+            session: command.session,
+            tracker: TJSON.serialize(active),
+          });
+          if (goto.parent !== active.parent) {
+            const parent = session.trackers.get(active.parent);
+            if (parent) {
+              end(parent);
               ControlHandler.eventhandler?.emit("sync", "tracking", {
-                session: ControlHandler.current.session,
-                tracker: TJSON.serialize(bracket),
+                session: command.session,
+                tracker: TJSON.serialize(parent),
               });
             }
           }
         }
-        EndSession(ControlHandler.current.session);
-        StartSession(command.session);
-      }
-      const session = ControlHandler.tracking.get(command.session);
-      if (session) {
-        let goto = session.trackers.get(command.tracking_id);
-        if (goto) {
-          const active = session.trackers.get(ControlHandler.current.active);
-          if (active) {
-            end(active);
-            ControlHandler.eventhandler?.emit("sync", "tracking", {
-              session: command.session,
-              tracker: TJSON.serialize(active),
-            });
-            if (goto.parent !== active.parent) {
-              const parent = session.trackers.get(active.parent);
-              if (parent) {
-                end(parent);
-                ControlHandler.eventhandler?.emit("sync", "tracking", {
-                  session: command.session,
-                  tracker: TJSON.serialize(parent),
-                });
-              }
-            }
-          }
+        if (command.tracking_id !== "") {
           if (goto.parent === session.tracking_id) {
             const ss = get(ControlHandler.loaded, session.tracking_id);
             const bs = get((ss as unknown) as Nested, goto.tracking_id);
@@ -213,14 +213,17 @@ export function Goto(command: Command): void {
               }
             }
           }
-          ControlHandler.current.next = getNext();
-          ControlHandler.eventhandler?.emit(
-            "sync",
-            "current",
-            ControlHandler.current
-          );
         }
       }
+      else {
+        ControlHandler.current.active = "";
+      }
+      ControlHandler.current.next = getNext();
+      ControlHandler.eventhandler?.emit(
+        "sync",
+        "current",
+        ControlHandler.current
+      );
     }
   }
 }
@@ -338,7 +341,7 @@ const knownRunsheets: Map<string, string> = new Map<string, string>();
 const knownTemplates: Map<string, string> = new Map<string, string>();
 
 function Discover(dir: string, storage: Map<string, string>): void {
-  fs.mkdir(dir, () => {});
+  fs.mkdir(dir, () => { });
   const LoadDir = (
     dirPath: string,
     extension: string,
