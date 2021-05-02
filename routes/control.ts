@@ -44,9 +44,10 @@ router.get("/clock", async (req: Request, res: Response) => {
   eventhandler.on("clock",cb );
 });
 
-router.post("/", (req: Request, res: Response) => {
-  const command = {} as Command;
-  schedule(() => {
+router.post("/command", (req: Request, res: Response) => {
+  const command = req.body as Command;
+  console.log(command);
+   schedule(() => {
     switch (command.command) {
       case "goto":
         Goto(command);

@@ -225,62 +225,13 @@ export function Goto(command: Command): void {
   }
 }
 
-/*export function Goto(command: Command): void {
-  if (ControlHandler.loaded) {
-    if (command.tracking_id !== "") {
-      const session = ControlHandler.tracking.get(command.session);
-      if (session) {
-        if (ControlHandler.current.active !== "") {
-          const tracker = session.trackers.get(ControlHandler.current.active);
-          if (tracker) {
-            end(tracker);
-            ControlHandler.eventhandler?.emit("sync", "tracking", {
-              id: ControlHandler.current.active,
-              tracker: tracker,
-            });
-          }
-        }
-        if (session.trackers.has(command.tracking_id)) {
-          const tracker = session.trackers.get(command.tracking_id);
-          if (tracker?.parent === session.tracking_id) {
-            const s = (get(
-              ControlHandler.loaded,
-              session.tracking_id
-            ) as unknown) as Nested;
-            const bracket = (get(s, command.tracking_id) as unknown) as Nested;
-            const item = getNextEnabled(bracket, -1);
-            if (item) {
-              ControlHandler.current.active = item.tracking;
-              const t = session.trackers.get(item.tracking);
-              if (t) start(t);
-            }
-          } else {
-            ControlHandler.current.active = command.tracking_id;
-            const tracker = session.trackers.get(ControlHandler.current.active);
-            if (tracker) start(tracker);
-          }
-          ControlHandler.current.next = getNext();
-          ControlHandler.eventhandler?.emit(
-            "sync",
-            "current",
-            ControlHandler.current
-          );
-          ControlHandler.eventhandler?.emit("sync", "tracking", {
-            id: ControlHandler.current.active,
-            tracker: session.trackers.get(ControlHandler.current.active),
-          });
-        }
-      }
-    }
-  }
-}*/
-
 function getNextEnabled(list: Nested, startIndex: number): Storage | null {
-  const index = startIndex + 1;
+  let index = startIndex + 1;
   while (index < list.index.length) {
     const s = list.index[index];
     const a = get(list, s);
     if (!a.disabled) return a;
+    index++;
   }
   return null;
 }
@@ -328,6 +279,7 @@ function getNext(): string {
                 item = getNextEnabled(bracket, index);
                 if (item) return item.tracking;
               }
+              bindex++;
             }
           }
         }

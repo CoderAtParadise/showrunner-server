@@ -83,19 +83,19 @@
             "display": "elapsed",
             "behaviour": "hide",
             "duration": "00:20:00",
-            "show": false
+            "show": true
           },
           "items": [
             {
               "display": "Song 1",
-              "disabled": false,
+              "disabled": true,
               "tracking": "38bf26cd-2e41-442a-81bf-4dc8406dafd0",
               "index": 0,
               "timer": {
                 "display": "countdown",
                 "behaviour": "stop",
                 "duration": "00:04:30",
-                "show": false
+                "show": true
               },
               "directions": []
             }
