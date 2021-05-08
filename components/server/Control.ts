@@ -17,7 +17,7 @@ import EventEmitter from "events";
 import { addThisTickHandler } from "./Eventhandler";
 import { SessionStorage } from "../common/Session";
 import { now, add, Point, subtract, greaterThan, equals } from "../common/Time";
-import { Behaviour } from "../common/Timer";
+import { Behaviour, TimerState } from "../common/Timer";
 
 export const ControlHandler: {
   loaded: RunsheetStorage | undefined;
@@ -51,18 +51,19 @@ export function init(eventhandler: EventEmitter) {
       if (session) {
         const tracker = session.trackers.get(ControlHandler.current.active);
         if (tracker) {
-          const time = subtract(tracker.timers[tracker.index].start, now());
-          if (greaterThan(time, tracker.settings.duration)) {
+          const time = subtract(now(),tracker.timers[tracker.index].start);
+          if (equals(time, tracker.settings.duration) && tracker.timers[tracker.index].state === TimerState.RUNNING) {
             switch (tracker.settings.behaviour) {
               case Behaviour.OVERRUN:
-                tracker.timers[tracker.index].overrun = true;
+                tracker.timers[tracker.index].state = TimerState.OVERRUN;
                 break;
               case Behaviour.HIDE:
                 end(tracker);
-                tracker.timers[tracker.index].show = false;
+                tracker.timers[tracker.index].state = TimerState.HIDDEN;
                 break;
               case Behaviour.STOP:
                 end(tracker);
+                tracker.timers[tracker.index].state = TimerState.STOPPED;
                 break;
             }
             ControlHandler.eventhandler?.emit("sync", "tracking", {
@@ -114,6 +115,13 @@ export function EndSession(session: string): void {
   }
 }
 
+export function Disable(command:Command) :void {
+  if (ControlHandler.loaded)
+  {
+    
+  }
+}
+
 export function Goto(command: Command): void {
   if (ControlHandler.loaded) {
     if (ControlHandler.current.session !== command.session) {
@@ -122,14 +130,14 @@ export function Goto(command: Command): void {
       );
       if (session) {
         const item = session.trackers.get(ControlHandler.current.active);
-        if (item) {
+        if (item && (item.timers[item.index].state === TimerState.RUNNING || item.timers[item.index].state == TimerState.OVERRUN)) {
           end(item);
           ControlHandler.eventhandler?.emit("sync", "tracking", {
             session: ControlHandler.current.session,
             tracker: TJSON.serialize(item),
           });
           const bracket = session.trackers.get(item.parent);
-          if (bracket) {
+          if (bracket && (bracket.timers[bracket.index].state === TimerState.RUNNING || bracket.timers[bracket.index].state == TimerState.OVERRUN)) {
             end(bracket);
             ControlHandler.eventhandler?.emit("sync", "tracking", {
               session: ControlHandler.current.session,
@@ -146,7 +154,7 @@ export function Goto(command: Command): void {
       let goto = session.trackers.get(command.tracking_id);
       if (goto) {
         const active = session.trackers.get(ControlHandler.current.active);
-        if (active) {
+        if (active && (active.timers[active.index].state === TimerState.RUNNING || active.timers[active.index].state == TimerState.OVERRUN)) {
           end(active);
           ControlHandler.eventhandler?.emit("sync", "tracking", {
             session: command.session,
@@ -154,7 +162,7 @@ export function Goto(command: Command): void {
           });
           if (goto.parent !== active.parent) {
             const parent = session.trackers.get(active.parent);
-            if (parent) {
+            if (parent && (parent.timers[parent.index].state === TimerState.RUNNING || parent.timers[parent.index].state == TimerState.OVERRUN)) {
               end(parent);
               ControlHandler.eventhandler?.emit("sync", "tracking", {
                 session: command.session,

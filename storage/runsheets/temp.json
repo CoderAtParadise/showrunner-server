@@ -98,6 +98,19 @@
                 "show": true
               },
               "directions": []
+            },
+            {
+              "display": "Song 2",
+              "disabled": false,
+              "tracking": "d5c2758f-67ba-4615-afb6-c3581dca5133",
+              "index": 1,
+              "timer": {
+                "display": "countdown",
+                "behaviour": "stop",
+                "duration": "00:04:30",
+                "show": true
+              },
+              "directions": []
             }
           ]
         }
