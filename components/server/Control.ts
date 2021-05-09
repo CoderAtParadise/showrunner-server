@@ -124,7 +124,7 @@ export function Disable(command:Command) :void {
 
 export function Goto(command: Command): void {
   if (ControlHandler.loaded) {
-    if (ControlHandler.current.session !== command.session) {
+    if (ControlHandler.current.session !== command.session || command.tracking_id === "start") {
       const session = ControlHandler.tracking.get(
         ControlHandler.current.session
       );
