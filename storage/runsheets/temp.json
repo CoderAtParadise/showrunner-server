@@ -17,6 +17,7 @@
       ],
       "save_tracking": true,
       "tracking": "a91b219b-f292-4dfa-aae9-8a5e80ece795",
+      "directions": [],
       "index": 0,
       "timer": {
         "display": "countdown",
@@ -29,6 +30,7 @@
           "display": "Pre-Roll",
           "disabled": false,
           "tracking": "1d7db0a7-7787-444a-bbd7-6efbeb7041cf",
+          "directions": [],
           "index": 0,
           "timer": {
             "display": "countdown",
@@ -78,6 +80,7 @@
           "display": "worship",
           "disabled": false,
           "tracking": "4ad398b7-e3e1-4dd7-94b6-02a943cc3c8f",
+          "directions": [],
           "index": 1,
           "timer": {
             "display": "elapsed",

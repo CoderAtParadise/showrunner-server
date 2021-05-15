@@ -50,7 +50,7 @@ export function init(eventhandler: EventEmitter) {
       );
       if (session) {
         const tracker = session.trackers.get(ControlHandler.current.active);
-        if (tracker) {
+        if (tracker && tracker.index !== -1) {
           const time = subtract(now(),tracker.timers[tracker.index].start);
           if (equals(time, tracker.settings.duration) && tracker.timers[tracker.index].state === TimerState.RUNNING) {
             switch (tracker.settings.behaviour) {
@@ -347,6 +347,14 @@ const runsheetDir = "storage/runsheets";
 const templateDir = "storage/templates";
 const knownRunsheets: Map<string, string> = new Map<string, string>();
 const knownTemplates: Map<string, string> = new Map<string, string>();
+
+export function RunsheetList() : string[] {
+  return Array.from(knownRunsheets.keys());
+}
+
+export function TemplateList() : string[] {
+  return Array.from(knownTemplates.keys());
+}
 
 function Discover(dir: string, storage: Map<string, string>): void {
   fs.mkdir(dir, () => { });

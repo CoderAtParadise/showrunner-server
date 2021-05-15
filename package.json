@@ -3,8 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node dist/app.js ",
-    "start:dev": "cross-env DEBUG=showrunner:* nodemon app.ts",
+    "start": "cross-env DEBUG=showrunner:* nodemon app.ts",
     "build": "tsc"
   },
   "dependencies": {

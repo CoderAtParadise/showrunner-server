@@ -3,7 +3,7 @@ const router = Router();
 import { eventhandler, schedule } from "../components/server/Eventhandler";
 import updgradeSSE from "../components/server/UpgradeSSE";
 import {stringify,now} from "../components/common/time";
-import {ControlHandler,Command,Goto,LoadRunsheet} from "../components/server/Control";
+import {ControlHandler,Command,Goto,LoadRunsheet,RunsheetList, TemplateList} from "../components/server/Control";
 import {JSON as RJSON} from "../components/common/Runsheet";
 import {TrackingSession,SESSION_JSON as TJSON} from "../components/common/Tracking";
 
@@ -44,6 +44,14 @@ router.get("/clock", async (req: Request, res: Response) => {
   eventhandler.on("clock",cb );
 });
 
+router.get("/runsheets",(req:Request,res:Response) => {
+  res.json(RunsheetList());
+});
+
+router.get("/templates",(req:Request,res:Response) => {
+  res.json(TemplateList());
+});
+
 router.post("/command", (req: Request, res: Response) => {
   const command = req.body as Command;
    schedule(() => {
@@ -56,6 +64,9 @@ router.post("/command", (req: Request, res: Response) => {
         break;
       case "update":
         
+        break;
+      case "delete":
+
         break;
     }
   });
