@@ -3,7 +3,7 @@ const router = Router();
 import { eventhandler, schedule } from "../components/server/Eventhandler";
 import updgradeSSE from "../components/server/UpgradeSSE";
 import {stringify,now} from "../components/common/time";
-import {ControlHandler,Command,Goto,LoadRunsheet,RunsheetList, TemplateList, DeleteRunsheet, Delete,Update} from "../components/server/Control";
+import {ControlHandler,Command,Goto,LoadRunsheet,RunsheetList, TemplateList, DeleteRunsheet, Delete,Update,NewRunsheet} from "../components/server/Control";
 import {JSON as RJSON} from "../components/common/Runsheet";
 import {TrackingSession,SESSION_JSON as TJSON} from "../components/common/Tracking";
 
@@ -73,6 +73,9 @@ router.post("/command", (req: Request, res: Response) => {
         break;
       case "deleterunsheet":
         DeleteRunsheet(command);
+        break;
+      case "newrunsheet":
+        NewRunsheet(command);
         break;
     }
   });

@@ -1,6 +1,7 @@
 import {
   RunsheetStorage,
   JSON as RJSON,
+  Role,
   INVALID as INVALID_RUNSHEET,
 } from "../common/Runsheet";
 import {
@@ -26,12 +27,13 @@ import {
 } from "../common/Tracking";
 import Debug from "debug";
 import EventEmitter from "events";
-import { addThisTickHandler } from "./Eventhandler";
+import { addThisTickHandler, schedule } from "./Eventhandler";
 import { SessionStorage, JSON as SJSON } from "../common/Session";
 import { now, add, Point, subtract, equals } from "../common/Time";
 import { Behaviour, TimerState } from "../common/Timer";
 import { BracketStorage, JSON as BJSON } from "../common/Bracket";
 import { JSON as IJSON } from "../common/Item";
+import {v4} from "uuid";
 
 export const ControlHandler: {
   loaded: RunsheetStorage | undefined;
@@ -164,6 +166,20 @@ export function DeleteRunsheet(command: Command): void {
   if (path) fs.unlink(path, () => {});
 }
 
+export function NewRunsheet(command: Command): void {
+  const file = `${runsheetDir}/${command.data}.json`;
+  const storage: RunsheetStorage = {
+    version: 1,
+    team: new Map<string, Role>(),
+    nestedType: Type.SESSION,
+    nested: new Map<string, SessionStorage>(),
+    index: [],
+  };
+  //set(storage,);
+  saveRunsheet(file,storage);
+  schedule(() => LoadRunsheet({command:"load",session:"",tracking_id:"",data:command.data}));
+}
+
 export function Update(command: Command): void {
   if (ControlHandler.loaded) {
     const tsession = ControlHandler.tracking.get(command.session);
@@ -173,46 +189,52 @@ export function Update(command: Command): void {
           ControlHandler.loaded,
           command.tracking_id
         ) as SessionStorage;
-        set(ControlHandler.loaded, SJSON.deserialize(command.data.storage),ControlHandler.loaded.index.indexOf(command.tracking_id));
+        set(
+          ControlHandler.loaded,
+          SJSON.deserialize(command.data.storage),
+          ControlHandler.loaded.index.indexOf(command.tracking_id)
+        );
         session.start.forEach((v: { session_id: string }) => {
           const ts = ControlHandler.tracking.get(v.session_id);
           if (ts) ts.settings = session.timer;
         });
       } else {
-        if(tsession.tracking_id === command.data.parent)
-        {
+        if (tsession.tracking_id === command.data.parent) {
           const session = get(
             ControlHandler.loaded,
             command.data.parent
           ) as SessionStorage;
-          set(session,BJSON.deserialize(command.data.storage),session.index.indexOf(command.tracking_id));
+          set(
+            session,
+            BJSON.deserialize(command.data.storage),
+            session.index.indexOf(command.tracking_id)
+          );
           session.start.forEach((v: { session_id: string }) => {
             const ts = ControlHandler.tracking.get(v.session_id);
-            if (ts)
-            {
+            if (ts) {
               const b = ts.trackers.get(command.tracking_id);
-              if(b)
-                b.settings = get(session,command.tracking_id).timer;
+              if (b) b.settings = get(session, command.tracking_id).timer;
             }
           });
-        }
-        else if(tsession.trackers.has(command.data.parent)){
+        } else if (tsession.trackers.has(command.data.parent)) {
           const session = get(
             ControlHandler.loaded,
             tsession.tracking_id
           ) as SessionStorage;
-          const bracket = get(session,command.data.parent) as BracketStorage;
-          set(bracket,IJSON.deserialize(command.data.storage),bracket.index.indexOf(command.tracking_id));
+          const bracket = get(session, command.data.parent) as BracketStorage;
+          set(
+            bracket,
+            IJSON.deserialize(command.data.storage),
+            bracket.index.indexOf(command.tracking_id)
+          );
           session.start.forEach((v: { session_id: string }) => {
             const ts = ControlHandler.tracking.get(v.session_id);
-            if (ts)
-            {
+            if (ts) {
               const b = ts.trackers.get(command.tracking_id);
-              if(b)
-                b.settings = get(bracket,command.tracking_id).timer;
+              if (b) b.settings = get(bracket, command.tracking_id).timer;
             }
           });
-         }
+        }
       }
       saveRunsheet(
         knownRunsheets.get(ControlHandler.file) || "temp",
@@ -434,9 +456,10 @@ function getNextEnabled(list: Nested, startIndex: number): Storage | null {
   let index = startIndex + 1;
   while (index < list.index.length) {
     const s = list.index[index];
+    console.log(s);
     const a = get(list, s);
-    if (!a.disabled) return a;
-    index++;
+    return a;
+    //index++;
   }
   return null;
 }
