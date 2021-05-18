@@ -3,7 +3,14 @@ import {
   JSON as RJSON,
   INVALID as INVALID_RUNSHEET,
 } from "../common/Runsheet";
-import { Storage, Nested, get, Type, remove } from "../common/Storage";
+import {
+  Storage,
+  Nested,
+  get,
+  Type,
+  remove,
+  add as set,
+} from "../common/Storage";
 import "./Messages";
 import "./Triggers";
 import fs from "fs";
@@ -15,17 +22,21 @@ import {
   end,
   SESSION_JSON as TSJSON,
   TRACKER_JSON as TJSON,
+  SESSION_JSON,
 } from "../common/Tracking";
 import Debug from "debug";
 import EventEmitter from "events";
 import { addThisTickHandler } from "./Eventhandler";
-import { SessionStorage } from "../common/Session";
+import { SessionStorage, JSON as SJSON } from "../common/Session";
 import { now, add, Point, subtract, equals } from "../common/Time";
 import { Behaviour, TimerState } from "../common/Timer";
+import { BracketStorage, JSON as BJSON } from "../common/Bracket";
+import { JSON as IJSON } from "../common/Item";
 
 export const ControlHandler: {
   loaded: RunsheetStorage | undefined;
   tracking: Map<string, TrackingSession>;
+  file: string;
   current: {
     session: string;
     active: string;
@@ -34,6 +45,7 @@ export const ControlHandler: {
   eventhandler?: EventEmitter;
 } = {
   loaded: undefined,
+  file: "",
   tracking: new Map<string, TrackingSession>(),
   current: {
     session: "",
@@ -132,11 +144,9 @@ export function EndSession(session: string): void {
 
 export function Disable(command: Command): void {
   if (ControlHandler.loaded) {
-    console.log(command.session);
     const tsession = ControlHandler.tracking.get(command.session);
     if (tsession) {
       if (command.tracking_id === "") {
-        console.log("Hello");
         tsession.disabled = !tsession.disabled;
         ControlHandler.eventhandler?.emit(
           "sync",
@@ -145,6 +155,79 @@ export function Disable(command: Command): void {
         );
       }
     } else {
+    }
+  }
+}
+
+export function DeleteRunsheet(command: Command): void {
+  const path = knownRunsheets.get(command.data);
+  if (path) fs.unlink(path, () => {});
+}
+
+export function Update(command: Command): void {
+  if (ControlHandler.loaded) {
+    const tsession = ControlHandler.tracking.get(command.session);
+    if (tsession) {
+      if (tsession.tracking_id === command.tracking_id) {
+        const session = get(
+          ControlHandler.loaded,
+          command.tracking_id
+        ) as SessionStorage;
+        set(ControlHandler.loaded, SJSON.deserialize(command.data.storage),ControlHandler.loaded.index.indexOf(command.tracking_id));
+        session.start.forEach((v: { session_id: string }) => {
+          const ts = ControlHandler.tracking.get(v.session_id);
+          if (ts) ts.settings = session.timer;
+        });
+      } else {
+        if(tsession.tracking_id === command.data.parent)
+        {
+          const session = get(
+            ControlHandler.loaded,
+            command.data.parent
+          ) as SessionStorage;
+          set(session,BJSON.deserialize(command.data.storage),session.index.indexOf(command.tracking_id));
+          session.start.forEach((v: { session_id: string }) => {
+            const ts = ControlHandler.tracking.get(v.session_id);
+            if (ts)
+            {
+              const b = ts.trackers.get(command.tracking_id);
+              if(b)
+                b.settings = get(session,command.tracking_id).timer;
+            }
+          });
+        }
+        else if(tsession.trackers.has(command.data.parent)){
+          const session = get(
+            ControlHandler.loaded,
+            tsession.tracking_id
+          ) as SessionStorage;
+          const bracket = get(session,command.data.parent) as BracketStorage;
+          set(bracket,IJSON.deserialize(command.data.storage),bracket.index.indexOf(command.tracking_id));
+          session.start.forEach((v: { session_id: string }) => {
+            const ts = ControlHandler.tracking.get(v.session_id);
+            if (ts)
+            {
+              const b = ts.trackers.get(command.tracking_id);
+              if(b)
+                b.settings = get(bracket,command.tracking_id).timer;
+            }
+          });
+         }
+      }
+      saveRunsheet(
+        knownRunsheets.get(ControlHandler.file) || "temp",
+        ControlHandler.loaded
+      );
+      ControlHandler.eventhandler?.emit(
+        "sync",
+        "runsheet",
+        RJSON.serialize(ControlHandler.loaded)
+      );
+      const tracking_list: object[] = [];
+      ControlHandler.tracking.forEach((value: TrackingSession) =>
+        tracking_list.push(TSJSON.serialize(value))
+      );
+      ControlHandler.eventhandler?.emit("sync", "tracking_list", tracking_list);
     }
   }
 }
@@ -181,7 +264,6 @@ export function Delete(command: Command): void {
         ) as SessionStorage;
 
         const t = tsession.trackers.get(command.tracking_id);
-        console.log(t?.parent);
         if (t && t.parent === session.tracking) {
           const bracket = get(session, command.tracking_id) as Storage & Nested;
           session.start.forEach((v: { session_id: string }) => {
@@ -420,6 +502,7 @@ export function LoadRunsheet(command: Command): void {
     else {
       if (ControlHandler.eventhandler) {
         ControlHandler.eventhandler.emit("sync", "runsheet", runsheet);
+        ControlHandler.file = command.data;
         ControlHandler.loaded = RJSON.deserialize(runsheet);
         ControlHandler.loaded.nested.forEach((value: Storage) => {
           const session = value as SessionStorage;
@@ -450,10 +533,6 @@ export function LoadRunsheet(command: Command): void {
       }
     }
   });
-}
-
-export function SaveRunsheet(command: Command) {
-  const file = command.data as string;
 }
 
 const runsheetDir = "storage/runsheets";
@@ -511,7 +590,7 @@ function Load(
 
 function Save(file: fs.PathLike, dir: string, runsheet: RunsheetStorage): void {
   const json = JSON.stringify(RJSON.serialize(runsheet));
-  fs.writeFile(`${dir}/${file}.json`, json, (err: Error | null) => {
+  fs.writeFile(`${file}`, json, (err: Error | null) => {
     if (err) throw err;
   });
 }

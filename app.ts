@@ -30,3 +30,7 @@ app.listen(port, () => {
   debug(`Running at http://localhost:${port}`);
 });
 init(eventhandler); //Pass into ControlHandler becuase for some reason eventhandler is losing data
+
+schedule(() => {
+  LoadRunsheet({command:"load",session:"",tracking_id:"",data:"temp"});
+});
