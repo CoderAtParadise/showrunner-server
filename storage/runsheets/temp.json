@@ -1,1 +1,103 @@
-{"version":1,"team":[{"key":"wl1","role":"Worship Leader","display":"Mark Dean"}],"sessions":[{"tracking":"a91b219b-f292-4dfa-aae9-8a5e80ece795","start":[{"session_id":"3c8735e6-b536-419c-8950-9284116e50a2","time":"08:00:00","disabled":false},{"session_id":"37866082-4296-4cb2-a602-a56e5fb319e8","time":"10:00:00","disabled":true}],"save_tracking":true,"display":"Example","disabled":false,"timer":{"display":"elapsed","behaviour":"overrun","duration":"01:40:00","show":false},"brackets":[{"tracking":"1d7db0a7-7787-444a-bbd7-6efbeb7041cf","display":"Nope","disabled":false,"directions":[],"timer":{"display":"countdown","behaviour":"stop","duration":"00:05:00","show":true},"items":[{"tracking":"e213a399-a633-47cd-bcbf-6f39bc1d5014","display":"Jan PreRoll Video","disabled":false,"timer":{"display":"countdown","behaviour":"stop","duration":"00:11:30","show":true},"directions":[],"index":0}],"index":0},{"tracking":"4ad398b7-e3e1-4dd7-94b6-02a943cc3c8f","display":"worship","disabled":false,"directions":[],"timer":{"display":"elapsed","behaviour":"overrun","duration":"00:20:00","show":true},"items":[{"tracking":"38bf26cd-2e41-442a-81bf-4dc8406dafd0","display":"Praise","disabled":false,"timer":{"display":"countdown","behaviour":"stop","duration":"00:05:30","show":true},"directions":[],"index":0},{"tracking":"d5c2758f-67ba-4615-afb6-c3581dca5133","display":"No Longer Slaves","disabled":false,"timer":{"display":"countdown","behaviour":"stop","duration":"00:05:30","show":true},"directions":[],"index":1}],"index":1}],"directions":[],"index":0}]}
+{
+  "version": 1,
+  "team": [{ "key": "wl1", "role": "Worship Leader", "display": "Mark Dean" }],
+  "sessions": [
+    {
+      "tracking": "a91b219b-f292-4dfa-aae9-8a5e80ece795",
+      "start": [
+        {
+          "session_id": "3c8735e6-b536-419c-8950-9284116e50a2",
+          "time": "08:00:00",
+          "disabled": false
+        },
+        {
+          "session_id": "37866082-4296-4cb2-a602-a56e5fb319e8",
+          "time": "10:00:00",
+          "disabled": true
+        }
+      ],
+      "save_tracking": true,
+      "display": "Example",
+      "disabled": false,
+      "timer": {
+        "display": "elapsed",
+        "behaviour": "overrun",
+        "duration": "01:40:00",
+        "show": false
+      },
+      "brackets": [
+        {
+          "tracking": "1d7db0a7-7787-444a-bbd7-6efbeb7041cf",
+          "display": "Nope",
+          "disabled": false,
+          "directions": [],
+          "timer": {
+            "display": "countdown",
+            "behaviour": "stop",
+            "duration": "00:05:00",
+            "show": true
+          },
+          "items": [
+            {
+              "tracking": "e213a399-a633-47cd-bcbf-6f39bc1d5014",
+              "display": "Jan PreRoll Video",
+              "disabled": false,
+              "timer": {
+                "display": "countdown",
+                "behaviour": "stop",
+                "duration": "00:11:30",
+                "show": true
+              },
+              "directions": [],
+              "index": 0
+            }
+          ],
+          "index": 0
+        },
+        {
+          "tracking": "4ad398b7-e3e1-4dd7-94b6-02a943cc3c8f",
+          "display": "worship",
+          "disabled": false,
+          "directions": [],
+          "timer": {
+            "display": "elapsed",
+            "behaviour": "overrun",
+            "duration": "00:20:00",
+            "show": true
+          },
+          "items": [
+            {
+              "tracking": "38bf26cd-2e41-442a-81bf-4dc8406dafd0",
+              "display": "Praise",
+              "disabled": false,
+              "timer": {
+                "display": "countdown",
+                "behaviour": "stop",
+                "duration": "00:05:30",
+                "show": true
+              },
+              "directions": [],
+              "index": 0
+            },
+            {
+              "tracking": "d5c2758f-67ba-4615-afb6-c3581dca5133",
+              "display": "No Longer Slaves",
+              "disabled": false,
+              "timer": {
+                "display": "countdown",
+                "behaviour": "stop",
+                "duration": "00:05:30",
+                "show": true
+              },
+              "directions": [],
+              "index": 1
+            }
+          ],
+          "index": 1
+        }
+      ],
+      "directions": [],
+      "index": 0
+    }
+  ]
+}
