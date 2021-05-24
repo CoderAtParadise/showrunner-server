@@ -7,8 +7,6 @@ import { getProperty, hasProperty, Type, Storage } from "../../common/Storage";
 import { ParentProperty } from "../../common/property/Parent";
 import { TimerProperty } from "../../common/property/Timer";
 import { eventhandler } from "../Eventhandler";
-import { gatherChildren } from "../../common/Runsheet";
-import Show from "../../common/Show";
 
 interface GotoData {
   show: string;
@@ -37,7 +35,7 @@ function startTracking(trackingShow: TrackingShow, id: string) {
       }
       const parent = getProperty(storage, show, "parent") as ParentProperty;
       if (parent) {
-        startTracking(trackingShow, parent.value.id);
+        startTracking(trackingShow, parent.value);
       }
     }
   }
@@ -63,8 +61,8 @@ function endTracking(trackingShow: TrackingShow, id: string, next: string) {
         "parent"
       ) as ParentProperty;
       if (parent && nextParent) {
-        if (parent.value.id !== nextParent.value.id)
-          endTracking(trackingShow, parent.value.id, nextParent.value.id);
+        if (parent.value !== nextParent.value)
+          endTracking(trackingShow, parent.value, nextParent.value);
       }
     }
   }
@@ -77,7 +75,11 @@ function getNext(trackingShow: TrackingShow): string {
     if (show && active) {
       const parent = getProperty(active, show, "parent") as ParentProperty;
       if (parent) {
-        const next = getNextEnabled(show, parent.value.id, trackingShow.active);
+        const next = getNextEnabled(
+          trackingShow,
+          parent.value,
+          trackingShow.active
+        );
         if (next) return next.id;
       }
     }
@@ -86,34 +88,42 @@ function getNext(trackingShow: TrackingShow): string {
 }
 
 function getNextEnabled(
-  show: Show,
+  trackingShow: TrackingShow,
   id: string,
   after: string
 ): Storage<any> | undefined {
   if (ControlHandler.loaded) {
-    const children = gatherChildren(ControlHandler.loaded, show.id, id);
-    const aindex = children.indexOf(after);
-    const next = children.find((cid: string, index: number) => {
-      const storage = ControlHandler.loaded?.defaults.get(cid);
-      if (storage) {
-        if (hasProperty(storage, "disabled")) {
-          if (index > aindex && !getProperty(storage, show, "disabled")?.value)
-            return cid;
-        }
-      }
-    });
-    if (next) {
-      const ns = ControlHandler.loaded.defaults.get(next);
-      if (ns) {
-        if (ns.type !== Type.SESSION && ns.type !== Type.BRACKET) return ns;
-        else return getNextEnabled(show, next, id);
-      }
-    } else {
-      const storage = ControlHandler.loaded.defaults.get(id);
-      if (storage) {
-        const parent = getProperty(storage, show, "parent") as ParentProperty;
-        if (parent) {
-          return getNextEnabled(show, parent.value.id, id);
+    const show = ControlHandler.loaded.shows.get(trackingShow.id);
+    const storage = ControlHandler.loaded.defaults.get(id);
+    if (show && storage) {
+      const children = getProperty(storage, show, "index_list");
+      if (children) {
+        const aindex = children.value.indexOf(after);
+        const next = children.value.find((cid: string, index: number) => {
+          const cstorage = ControlHandler.loaded?.defaults.get(cid);
+          if (show && cstorage) {
+            const disabled = getProperty(cstorage, show, "disabled");
+            if (disabled) {
+                if (
+                  index > aindex &&
+                  !disabled.value &&
+                  trackingShow.trackers.get(cid)
+                )
+                  return cid;
+              }
+          }
+        });
+        if (next) {
+          const ns = ControlHandler.loaded.defaults.get(next);
+          if (ns) {
+            if (ns.type !== Type.SESSION && ns.type !== Type.BRACKET) return ns;
+            else return getNextEnabled(trackingShow, next, id);
+          }
+        } else {
+          const parent = getProperty(storage, show, "parent") as ParentProperty;
+          if (parent) {
+            return getNextEnabled(trackingShow, parent.value, id);
+          }
         }
       }
     }
@@ -140,11 +150,9 @@ const GotoCommand: ICommand<GotoData> = {
               storage.type === Type.SESSION ||
               storage.type === Type.BRACKET
             ) {
-              const ds = ControlHandler.loaded.shows.get(show.id);
-              if (ds) {
-                const next = getNextEnabled(ds, data.tracking, "");
-                if (next) id = next.id;
-              }
+              const next = getNextEnabled(show, data.tracking, "");
+              if (next) id = next.id;
+              else id = "";
             }
           }
           endTracking(show, show.active, id);

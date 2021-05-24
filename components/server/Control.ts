@@ -5,6 +5,8 @@ import { TrackingShow } from "../common/Tracking";
 import initProperties from "../common/Init";
 import Goto from "./command/Goto";
 import LoadRunsheet from "./command/LoadRunsheet";
+import Update from "./command/Update";
+import Create from "./command/Create";
 import { addThisTickHandler, eventhandler } from "./Eventhandler";
 
 export const ControlHandler: {
@@ -21,6 +23,8 @@ export function init() {
   initProperties();
   Goto;
   LoadRunsheet;
+  Create;
+  Update;
   addThisTickHandler(() => {
     eventhandler.emit("clock");
   });
