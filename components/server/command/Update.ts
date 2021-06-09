@@ -1,13 +1,14 @@
 import ICommand, { registerCommand } from "./ICommand";
-import { ControlHandler } from "../Control";
-import IProperty, { getPropertyJSON } from "../../common/property/IProperty";
-import { eventhandler } from "../Eventhandler";
-import { JSON as RJSON } from "../../common/Runsheet";
+import ServerRunsheet, { syncRunsheet } from "../ServerRunsheetHandler";
+import { getPropertyJSON } from "../../common/property/IProperty";
+import { deleteOverrideProperty, setOverrideProperty } from "../../common/Show";
+import { setDefaultProperty } from "../../common/Storage";
+import {SaveRunsheet} from "../FileManager";
 
 interface UpdateData {
   show: string;
   tracking: string;
-  properties: { override: boolean; property: any }[];
+  properties: { reset: boolean; override: boolean; property: any }[];
 }
 
 function isUpdateData(obj: any): obj is UpdateData {
@@ -24,37 +25,27 @@ const UpdateCommand: ICommand<UpdateData> = {
     return isUpdateData(data);
   },
   run: (data: UpdateData) => {
-    if (ControlHandler.loaded) {
-      const storage = ControlHandler.loaded.defaults.get(data.tracking);
+    if (ServerRunsheet.hasLoadedRunsheet()) {
+      const storage = ServerRunsheet.getStorage(data.tracking);
       if (storage) {
         data.properties.forEach((update) => {
           const property = getPropertyJSON(update.property.key).deserialize(
-            update.property
+            update.property.value
           );
-          if (update.override) {
-            const show = ControlHandler.loaded?.shows.get(data.show);
-            if (show) {
-              const overrides = show.overrides.get(data.tracking);
-              if (overrides) {
-                const op = overrides.find(
-                  (value: IProperty<any>) => value.key === property.key
-                );
-                if (op) op.value = property.value;
-                else overrides.push(property);
-              }
+          const show = ServerRunsheet.getShow(data.show);
+          if (show) {
+            if (update.reset) {
+              deleteOverrideProperty(show, data.tracking, update.property.key);
+            } else if (update.override) {
+              setOverrideProperty(show, data.tracking, property);
+            } else {
+              setDefaultProperty(storage, property);
             }
-          } else {
-            const ps = storage.properties.find(
-              (value: IProperty<any>) => value.key === property.key
-            );
-            ps.value = property.value;
           }
         });
-        eventhandler.emit(
-          "sync",
-          "runsheet",
-          RJSON.serialize(ControlHandler.loaded)
-        );
+        syncRunsheet();
+        if(ServerRunsheet.runsheet)
+        SaveRunsheet(ServerRunsheet.runsheet.id,ServerRunsheet.runsheet);
       }
     }
   },

@@ -1,4 +1,4 @@
 {
     "delay" : "5000",
-    "ignore": ["storage/"]
+    "ignore": ["storage/","components/common/spec.json"]
 } 

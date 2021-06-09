@@ -1,6 +1,6 @@
-import EventEmitter from "events";
+import EventEmitter2 from "eventemitter2";
 
-export const eventhandler: EventEmitter = new EventEmitter();
+export const EventHandler: EventEmitter2.EventEmitter2 = new EventEmitter2.EventEmitter2({maxListeners:20});
 
 const thisTick: (() => void)[] = [];
 const nextTick: (() => void)[] = [];
@@ -14,3 +14,5 @@ setInterval(() => {
   nextTick.length = 0;
   temp.forEach(cb => cb());
 },1000);
+
+export default EventHandler;

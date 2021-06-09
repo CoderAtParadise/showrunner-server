@@ -1,15 +1,15 @@
 import ClockSource from "../common/ClockSource";
-import { Point, Relative } from "../common/Time";
+import { TimePoint, Offset } from "../common/TimePoint";
 
 const InternalClockSource: ClockSource = {
   id: "internal",
-  clock: (): Point => {
+  clock: (): TimePoint => {
     const now = new Date();
     return {
       hours: now.getHours(),
       minutes: now.getMinutes(),
       seconds: now.getSeconds(),
-      relative: Relative.NONE,
+      offset: Offset.NONE,
     };
   },
 };
