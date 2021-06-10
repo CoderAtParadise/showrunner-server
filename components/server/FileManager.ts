@@ -2,6 +2,7 @@ import fs from "fs";
 import Debug from "debug";
 import path from "path";
 import Runsheet, { JSON as RJSON } from "../common/Runsheet";
+import ServerRunsheet from "./ServerRunsheetHandler";
 
 export type StorageKey = { display: string; id: string };
 
@@ -22,6 +23,11 @@ export function InitIO() {
   Watch(RunsheetDir, KnownRunsheets);
   Watch(TemplateDir, KnownTemplates);
   Watch(StagePlotDir, KnownStagePlots);
+  setInterval(() => {
+    if(ServerRunsheet.runsheet && ServerRunsheet.dirty())
+      SaveRunsheet(ServerRunsheet.runsheet.id,ServerRunsheet.runsheet);
+      ServerRunsheet.dirtyV = false;
+  },3000);
 }
 
 export function LoadRunsheet(
@@ -35,7 +41,7 @@ export function LoadRunsheet(
     });
 }
 
-export function SaveRunsheet(id:string,runsheet:Runsheet) {
+function SaveRunsheet(id:string,runsheet:Runsheet) {
   const key = RunsheetList().find((key:StorageKey) => key.id === id);
   if(key) {
     const file = KnownRunsheets.get(key);

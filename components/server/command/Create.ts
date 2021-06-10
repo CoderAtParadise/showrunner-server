@@ -14,7 +14,6 @@ import {
 } from "../../common/StorageTypes";
 import { buildTracker } from "../../common/Tracker";
 import { ParentProperty } from "../../common/property/Parent";
-import {SaveRunsheet} from "../FileManager";
 
 interface CreateData {
   type: string;
@@ -101,8 +100,7 @@ const CreateCommand: ICommand<CreateData> = {
         }
       }
       syncRunsheet();
-      if(ServerRunsheet.runsheet)
-        SaveRunsheet(ServerRunsheet.runsheet.id,ServerRunsheet.runsheet);
+      ServerRunsheet.markDirty();
     }
   },
 };

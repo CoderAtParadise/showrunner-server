@@ -5,21 +5,28 @@ import ClockSource from "../common/ClockSource";
 import Show from "../common/Show";
 import Storage from "../common/Storage";
 import EventHandler from "./EventHandler";
-import { SaveRunsheet } from "./FileManager";
 
 interface ServerRunsheetData {
   runsheet: Runsheet | undefined;
   tracking: Map<string, TrackingShow>;
   clocks: Map<string, ClockSource>;
+  dirtyV: boolean;
 }
 
 const ServerRunsheet: RunsheetHandler & ServerRunsheetData = {
   runsheet: undefined,
+  dirtyV: false,
   tracking: new Map<string, TrackingShow>(),
   clocks: new Map<string, ClockSource>(),
   setRunsheet: (runsheet: Runsheet): void => {
     ServerRunsheet.runsheet = runsheet;
     ServerRunsheet.tracking.clear();
+  },
+  dirty: (): boolean => {
+    return ServerRunsheet.dirtyV;
+  },
+  markDirty: (): void => {
+    ServerRunsheet.dirtyV = true;
   },
   hasLoadedRunsheet: (): boolean => {
     return ServerRunsheet.runsheet !== undefined;

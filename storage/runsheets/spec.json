@@ -1,0 +1,179 @@
+{
+  "version": 1,
+  "id": "3e6e3a66-5ff7-4b38-b0ff-5b6f920efc80",
+  "display": "Example Runsheet",
+  "shows": [
+    {
+      "id": "3c8735e6-b536-419c-8950-9284116e50a2",
+      "tracking_list": [
+        "a91b219b-f292-4dfa-aae9-8a5e80ece795",
+        "4ad398b7-e3e1-4dd7-94b6-02a943cc3c8f",
+        "38bf26cd-2e41-442a-81bf-4dc8406dafd0",
+        "d5c2758f-67ba-4615-afb6-c3581dca5133",
+        "e06c23d3-f741-4e11-960a-519b9c920e5a",
+        "65e0afda-1cf4-41ee-96dc-6e24e1c4d2da"
+      ],
+      "overrides": [
+        { "id": "a91b219b-f292-4dfa-aae9-8a5e80ece795", "display": "Nope" },
+        { "id": "a91b219b-f292-4dfa-aae9-8a5e80ece795", "disabled": true },
+        {
+          "id": "4ad398b7-e3e1-4dd7-94b6-02a943cc3c8f",
+          "index_list": [
+            "38bf26cd-2e41-442a-81bf-4dc8406dafd0",
+            "65e0afda-1cf4-41ee-96dc-6e24e1c4d2da",
+            "d5c2758f-67ba-4615-afb6-c3581dca5133"
+          ]
+        }
+      ],
+      "index": 0
+    },
+    {
+      "id": "37866082-4296-4cb2-a602-a56e5fb319e8",
+      "tracking_list": [
+        "a91b219b-f292-4dfa-aae9-8a5e80ece795",
+        "1d7db0a7-7787-444a-bbd7-6efbeb7041cf",
+        "e213a399-a633-47cd-bcbf-6f39bc1d5014",
+        "4ad398b7-e3e1-4dd7-94b6-02a943cc3c8f",
+        "38bf26cd-2e41-442a-81bf-4dc8406dafd0",
+        "d5c2758f-67ba-4615-afb6-c3581dca5133"
+      ],
+      "overrides": [
+        {
+          "id": "a91b219b-f292-4dfa-aae9-8a5e80ece795",
+          "start_time": "10:00:00"
+        },
+        {
+          "id": "a91b219b-f292-4dfa-aae9-8a5e80ece795",
+          "display": "10am Service"
+        }
+      ],
+      "index": 1
+    }
+  ],
+  "defaults": [
+    {
+      "id": "a91b219b-f292-4dfa-aae9-8a5e80ece795",
+      "type": "session",
+      "display": "Derp",
+      "disabled": false,
+      "save": true,
+      "start_time": "08:00:00",
+      "index_list": [
+        "4ad398b7-e3e1-4dd7-94b6-02a943cc3c8f",
+        "e06c23d3-f741-4e11-960a-519b9c920e5a"
+      ],
+      "timer": {
+        "type": "elapsed",
+        "behaviour": "overrun",
+        "source": "internal",
+        "duration": "01:20:00"
+      },
+      "directions": []
+    },
+    {
+      "id": "1d7db0a7-7787-444a-bbd7-6efbeb7041cf",
+      "type": "bracket",
+      "parent": "a91b219b-f292-4dfa-aae9-8a5e80ece795",
+      "display": "Pre-Roll",
+      "disabled": false,
+      "index_list": ["e213a399-a633-47cd-bcbf-6f39bc1d5014"],
+      "timer": {
+        "type": "countdown",
+        "behaviour": "stop",
+        "source": "internal",
+        "duration": "00:05:00"
+      },
+      "directions": []
+    },
+    {
+      "id": "e213a399-a633-47cd-bcbf-6f39bc1d5014",
+      "type": "item",
+      "parent": "1d7db0a7-7787-444a-bbd7-6efbeb7041cf",
+      "display": "Jan PreRoll Video",
+      "disabled": false,
+      "timer": {
+        "type": "countdown",
+        "behaviour": "stop",
+        "source": "internal",
+        "duration": "00:04:30"
+      },
+      "directions": []
+    },
+    {
+      "id": "4ad398b7-e3e1-4dd7-94b6-02a943cc3c8f",
+      "type": "bracket",
+      "parent": "a91b219b-f292-4dfa-aae9-8a5e80ece795",
+      "display": "Worship",
+      "disabled": false,
+      "index_list": [
+        "38bf26cd-2e41-442a-81bf-4dc8406dafd0",
+        "d5c2758f-67ba-4615-afb6-c3581dca5133",
+        "65e0afda-1cf4-41ee-96dc-6e24e1c4d2da"
+      ],
+      "timer": {
+        "type": "elapsed",
+        "behaviour": "overrun",
+        "source": "internal",
+        "duration": "00:20:00"
+      },
+      "directions": []
+    },
+    {
+      "id": "38bf26cd-2e41-442a-81bf-4dc8406dafd0",
+      "type": "item",
+      "parent": "4ad398b7-e3e1-4dd7-94b6-02a943cc3c8f",
+      "display": "Song 1",
+      "disabled": false,
+      "timer": {
+        "type": "elapsed",
+        "behaviour": "overrun",
+        "source": "internal",
+        "duration": "00:05:00"
+      },
+      "directions": []
+    },
+    {
+      "id": "d5c2758f-67ba-4615-afb6-c3581dca5133",
+      "type": "item",
+      "parent": "4ad398b7-e3e1-4dd7-94b6-02a943cc3c8f",
+      "display": "Song 2",
+      "disabled": false,
+      "timer": {
+        "type": "elapsed",
+        "behaviour": "overrun",
+        "source": "internal",
+        "duration": "00:05:00"
+      },
+      "directions": []
+    },
+    {
+      "id": "e06c23d3-f741-4e11-960a-519b9c920e5a",
+      "type": "bracket",
+      "parent": "a91b219b-f292-4dfa-aae9-8a5e80ece795",
+      "display": "Hello I'm New",
+      "disabled": false,
+      "index_list": [],
+      "timer": {
+        "type": "countdown",
+        "behaviour": "hide",
+        "source": "internal",
+        "duration": "00:32:00"
+      },
+      "directions": []
+    },
+    {
+      "id": "65e0afda-1cf4-41ee-96dc-6e24e1c4d2da",
+      "type": "item",
+      "parent": "4ad398b7-e3e1-4dd7-94b6-02a943cc3c8f",
+      "display": "Hello I'm New Item",
+      "disabled": false,
+      "timer": {
+        "type": "countdown",
+        "behaviour": "hide",
+        "source": "internal",
+        "duration": "00:32:00"
+      },
+      "directions": []
+    }
+  ]
+}

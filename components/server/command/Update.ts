@@ -3,7 +3,6 @@ import ServerRunsheet, { syncRunsheet } from "../ServerRunsheetHandler";
 import { getPropertyJSON } from "../../common/property/IProperty";
 import { deleteOverrideProperty, setOverrideProperty } from "../../common/Show";
 import { setDefaultProperty } from "../../common/Storage";
-import {SaveRunsheet} from "../FileManager";
 
 interface UpdateData {
   show: string;
@@ -44,8 +43,7 @@ const UpdateCommand: ICommand<UpdateData> = {
           }
         });
         syncRunsheet();
-        if(ServerRunsheet.runsheet)
-        SaveRunsheet(ServerRunsheet.runsheet.id,ServerRunsheet.runsheet);
+        ServerRunsheet.markDirty();
       }
     }
   },

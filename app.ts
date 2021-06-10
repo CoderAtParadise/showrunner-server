@@ -179,13 +179,13 @@ schedule(() => {
         ],
       })
     );
+    schedule(() => {
+      CommandRegisty.get("delete")?.run({
+        show: "3c8735e6-b536-419c-8950-9284116e50a2",
+        tracking: "1d7db0a7-7787-444a-bbd7-6efbeb7041cf",
+        global: false,
+      });
+    });
   });
 });
 });
-/*schedule(() => {
-  CommandRegisty.get("delete")?.run({
-    show: "3c8735e6-b536-419c-8950-9284116e50a2",
-    tracking: "e213a399-a633-47cd-bcbf-6f39bc1d5014",
-    global: false,
-  });
-});*/
