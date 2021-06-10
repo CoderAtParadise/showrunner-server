@@ -1,8 +1,8 @@
 FROM node:14.16.1-alpine AS build
-WORKDIR /server/
+WORKDIR /server
 COPY package*.json yarn.lock ./
+COPY tsconfig.json ./
 RUN yarn install --frozen-lockfile
-COPY tsconfig.json nodemon.json ./
 COPY . .
 RUN yarn build
 RUN yarn install --production=true

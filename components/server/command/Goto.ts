@@ -8,7 +8,7 @@ import {
   INVALID as INVALID_PARENT,
 } from "../../common/property/Parent";
 import { TimerProperty } from "../../common/property/Timer";
-import EventHandler from "../Eventhandler";
+import EventHandler from "../Scheduler";
 import RunsheetHandler from "../../common/RunsheetHandler";
 import ServerRunsheet, { syncTracking } from "../ServerRunsheetHandler";
 

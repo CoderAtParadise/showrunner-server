@@ -4,7 +4,7 @@ import LoadRunsheet from "./command/LoadRunsheet";
 import Update from "./command/Update";
 import Create from "./command/Create";
 import Delete from "./command/Delete";
-import { addThisTickHandler, EventHandler } from "./Eventhandler";
+import EventHandler, { addThisTickHandler} from "./Scheduler";
 import ClockSourceInternal from "./ClockSourceInternal";
 import ServerRunsheet from "./ServerRunsheetHandler";
 import { InitIO } from "./FileManager";

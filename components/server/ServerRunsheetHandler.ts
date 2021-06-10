@@ -4,7 +4,7 @@ import TrackingShow, { JSON as TJSON } from "../common/TrackingShow";
 import ClockSource from "../common/ClockSource";
 import Show from "../common/Show";
 import Storage from "../common/Storage";
-import EventHandler from "./EventHandler";
+import EventHandler from "./Scheduler";
 
 interface ServerRunsheetData {
   runsheet: Runsheet | undefined;

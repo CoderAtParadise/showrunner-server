@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 const router = Router();
-import { EventHandler, schedule } from "../components/server/Eventhandler";
+import EventHandler,{ schedule } from "../components/server/Scheduler";
 import updgradeSSE from "../components/server/UpgradeSSE";
 import { stringify } from "../components/common/TimePoint";
 import { CommandRegisty } from "../components/server/command/ICommand";
