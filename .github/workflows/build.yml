@@ -34,5 +34,5 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: ghcr.io/coderatparadise/showrunner-server:${{github.ref}##/}
+          tags: ghcr.io/coderatparadise/showrunner-server:${{github.ref}}
         
