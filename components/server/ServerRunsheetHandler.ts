@@ -9,6 +9,7 @@ import EventHandler from "./Scheduler";
 interface ServerRunsheetData {
   runsheet: Runsheet | undefined;
   tracking: Map<string, TrackingShow>;
+  active: string;
   clocks: Map<string, ClockSource>;
   dirtyV: boolean;
 }
@@ -16,6 +17,7 @@ interface ServerRunsheetData {
 const ServerRunsheet: RunsheetHandler & ServerRunsheetData = {
   runsheet: undefined,
   dirtyV: false,
+  active: "",
   tracking: new Map<string, TrackingShow>(),
   clocks: new Map<string, ClockSource>(),
   setRunsheet: (runsheet: Runsheet): void => {
@@ -34,8 +36,8 @@ const ServerRunsheet: RunsheetHandler & ServerRunsheetData = {
   getClock: (id: string): ClockSource | undefined => {
     return ServerRunsheet.clocks.get(id);
   },
-  addClock: (clock:ClockSource): void => {
-    ServerRunsheet.clocks.set(clock.id,clock);
+  addClock: (clock: ClockSource): void => {
+    ServerRunsheet.clocks.set(clock.id, clock);
   },
   getShow: (id: string): Show | undefined => {
     return ServerRunsheet.runsheet?.shows.get(id);
@@ -46,13 +48,24 @@ const ServerRunsheet: RunsheetHandler & ServerRunsheetData = {
   deleteShow: (id: string): void => {
     ServerRunsheet.runsheet?.shows.delete(id);
   },
+  showList: (): string[] => {
+    if (ServerRunsheet.runsheet)
+      return Array.from(ServerRunsheet.runsheet.shows.keys());
+    return [];
+  },
+  activeShow: (): string => {
+    return ServerRunsheet.active;
+  },
+  setActiveShow: (id:string) : void => {
+    ServerRunsheet.active = id;
+  },
   getTrackingShow: (id: string): TrackingShow | undefined => {
     return ServerRunsheet.tracking.get(id);
   },
   addTrackingShow: (trackingShow: TrackingShow): void => {
     ServerRunsheet.tracking.set(trackingShow.id, trackingShow);
   },
-  deleteTrackingSHow: (id: string): void => {
+  deleteTrackingShow: (id: string): void => {
     ServerRunsheet.tracking.delete(id);
   },
   getStorage: (id: string): Storage<any> | undefined => {
@@ -67,8 +80,7 @@ const ServerRunsheet: RunsheetHandler & ServerRunsheetData = {
 };
 
 export function syncRunsheet(): void {
-  if (ServerRunsheet.runsheet)
-  {
+  if (ServerRunsheet.runsheet) {
     EventHandler.emit(
       "sync",
       "runsheet",

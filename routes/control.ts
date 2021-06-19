@@ -28,7 +28,7 @@ router.get("/sync", async (req: Request, res: Response) => {
   EventHandler.addListener("sync", cb);
 });
 
-router.get("/clock", async (req: Request, res: Response) => {
+router.get("/clocks", async (req: Request, res: Response) => {
   updgradeSSE(res);
   const cb = () => {
     const convertClocks = () => {

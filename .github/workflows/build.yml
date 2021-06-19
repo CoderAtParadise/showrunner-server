@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: Docker
+name: Build Image
 
 # Controls when the action will run. 
 on:
@@ -34,5 +34,7 @@ jobs:
         uses: docker/build-push-action@v2
         with:
           push: true
-          tags: ghcr.io/coderatparadise/showrunner-server:0.0.0
+          tags: |
+            ghcr.io/coderatparadise/showrunner-server:0.0.0
+            ghcr.io/coderatparadise/showrunner-server:latest
         
