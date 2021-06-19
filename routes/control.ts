@@ -13,6 +13,7 @@ import {RunsheetList,TemplateList} from "../components/server/FileManager";
 router.get("/sync", async (req: Request, res: Response) => {
   updgradeSSE(res);
   if(ServerRunsheet.hasLoadedRunsheet() && ServerRunsheet.runsheet) {
+    res.write(`event: show\ndata: ${ServerRunsheet.activeShow()}\n\n`);
     res.write(`event: runsheet\ndata: ${JSON.stringify(RJSON.serialize(ServerRunsheet.runsheet))}\n\n`);
     ServerRunsheet.tracking.forEach((value:TrackingShow) => {
       res.write(`event: tracking\ndata: ${JSON.stringify(TJSON.serialize(value))}\n\n`);

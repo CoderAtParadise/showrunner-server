@@ -58,6 +58,7 @@ const ServerRunsheet: RunsheetHandler & ServerRunsheetData = {
   },
   setActiveShow: (id:string) : void => {
     ServerRunsheet.active = id;
+    syncActiveShow();
   },
   getTrackingShow: (id: string): TrackingShow | undefined => {
     return ServerRunsheet.tracking.get(id);
@@ -87,6 +88,11 @@ export function syncRunsheet(): void {
       RJSON.serialize(ServerRunsheet.runsheet)
     );
   }
+}
+
+export function syncActiveShow() : void {
+  if(ServerRunsheet.hasLoadedRunsheet())
+    EventHandler.emit("sync","show",ServerRunsheet.activeShow());
 }
 
 export function syncTracking(show: TrackingShow): void {

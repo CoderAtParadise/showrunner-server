@@ -7,6 +7,7 @@ import ServerInit from "./components/server/ServerInit";
 import controlRouter from "./routes/control";
 import { schedule } from "./components/server/Scheduler";
 import { CommandRegisty } from "./components/server/command/ICommand";
+import ServerRunsheet from "./components/server/ServerRunsheetHandler";
 
 const normalizePort = (val: any) => {
   const port = parseInt(val, 10);
@@ -37,6 +38,7 @@ schedule(() => {
         id: "3e6e3a66-5ff7-4b38-b0ff-5b6f920efc80",
       })
     );
+    schedule(() => ServerRunsheet.active = "3c8735e6-b536-419c-8950-9284116e50a2");
     schedule(() => {
       schedule(() =>
         CommandRegisty.get("goto")?.run({
