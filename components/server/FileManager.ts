@@ -2,7 +2,7 @@ import fs from "fs";
 import Debug from "debug";
 import path from "path";
 import Runsheet, { JSON as RJSON } from "../common/Runsheet";
-import ServerRunsheet from "./ServerRunsheetHandler";
+import { ServerManager } from "./ServerInit";
 
 export type StorageKey = { display: string; id: string };
 
@@ -24,10 +24,12 @@ export function InitIO() {
   Watch(TemplateDir, KnownTemplates);
   Watch(StagePlotDir, KnownStagePlots);
   setInterval(() => {
-    if(ServerRunsheet.runsheet && ServerRunsheet.dirty())
-      SaveRunsheet(ServerRunsheet.runsheet.id,ServerRunsheet.runsheet);
-      ServerRunsheet.dirtyV = false;
-  },3000);
+    const handler = ServerManager.handler;
+    if (handler && handler.dirty()) {
+      handler.save();
+      handler?.markDirty(false);
+    }
+  }, 3000);
 }
 
 export function LoadRunsheet(
@@ -41,12 +43,11 @@ export function LoadRunsheet(
     });
 }
 
-function SaveRunsheet(id:string,runsheet:Runsheet) {
-  const key = RunsheetList().find((key:StorageKey) => key.id === id);
-  if(key) {
+export function SaveRunsheet(id: string, runsheet: Runsheet) {
+  const key = RunsheetList().find((key: StorageKey) => key.id === id);
+  if (key) {
     const file = KnownRunsheets.get(key);
-    if(file)
-    save(RunsheetDir,file,RJSON.serialize(runsheet));
+    if (file) save(RunsheetDir, file, RJSON.serialize(runsheet));
   }
 }
 

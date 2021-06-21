@@ -10,7 +10,7 @@ import {
 import { TimerProperty } from "../../common/property/Timer";
 import EventHandler from "../Scheduler";
 import RunsheetHandler from "../../common/RunsheetHandler";
-import ServerRunsheet, { syncTracking } from "../ServerRunsheetHandler";
+import ServerRunsheetHandler, { syncTracking } from "../ServerRunsheetHandler";
 
 interface GotoData {
   show: string;
@@ -63,7 +63,7 @@ function endTracking(
     const active = handler.getStorage(id);
     if (tracker) {
       tracker.timer.end =
-        ServerRunsheet.getClock("internal")?.clock() || INVALID_POINT;
+        handler.getClock("internal")?.clock() || INVALID_POINT;
       tracker.timer.state = TimerState.STOPPED;
       trackingShow.active = "";
       EventHandler.emit("direction:end", trackingShow.id, id);
@@ -110,43 +110,36 @@ function getNextEnabled(
   id: string,
   after: string
 ): Storage<any> | undefined {
-  if (ServerRunsheet.hasLoadedRunsheet()) {
-    const show = ServerRunsheet.getShow(trackingShow.id);
-    const storage = ServerRunsheet.getStorage(id);
-    if (show && storage) {
-      const children = getProperty(storage, show, "index_list");
-      if (children) {
-        const aindex = children.value.indexOf(after);
-        const next = children.value.find((cid: string, index: number) => {
-          const cstorage = ServerRunsheet.getStorage(cid);
-          if (show && cstorage) {
-            const disabled = getProperty(cstorage, show, "disabled");
-            if (disabled) {
-              if (
-                index > aindex &&
-                !disabled.value &&
-                trackingShow.trackers.get(cid)
-              )
-                return cid;
-            }
+  const show = handler.getShow(trackingShow.id);
+  const storage = handler.getStorage(id);
+  if (show && storage) {
+    const children = getProperty(storage, show, "index_list");
+    if (children) {
+      const aindex = children.value.indexOf(after);
+      const next = children.value.find((cid: string, index: number) => {
+        const cstorage = handler.getStorage(cid);
+        if (show && cstorage) {
+          const disabled = getProperty(cstorage, show, "disabled");
+          if (disabled) {
+            if (
+              index > aindex &&
+              !disabled.value &&
+              trackingShow.trackers.get(cid)
+            )
+              return cid;
           }
-        });
-        if (next) {
-          const ns = ServerRunsheet.getStorage(next);
-          if (ns) {
-            if (ns.type !== Type.SESSION && ns.type !== Type.BRACKET) return ns;
-            else return getNextEnabled(ServerRunsheet, trackingShow, next, id);
-          }
-        } else {
-          const parent = getProperty(storage, show, "parent") as ParentProperty;
-          if (parent)
-            return getNextEnabled(
-              ServerRunsheet,
-              trackingShow,
-              parent.value,
-              id
-            );
         }
+      });
+      if (next) {
+        const ns = handler.getStorage(next);
+        if (ns) {
+          if (ns.type !== Type.SESSION && ns.type !== Type.BRACKET) return ns;
+          else return getNextEnabled(handler, trackingShow, next, id);
+        }
+      } else {
+        const parent = getProperty(storage, show, "parent") as ParentProperty;
+        if (parent)
+          return getNextEnabled(handler, trackingShow, parent.value, id);
       }
     }
   }
@@ -154,13 +147,14 @@ function getNextEnabled(
 }
 
 function directionNext(
+  handler: RunsheetHandler,
   trackingShow: TrackingShow,
   activeId: string,
   id: string
 ) {
-  const show = ServerRunsheet.getShow(trackingShow.id);
-  const storage = ServerRunsheet.getStorage(id);
-  const active = ServerRunsheet.getStorage(activeId);
+  const show = handler.getShow(trackingShow.id);
+  const storage = handler.getStorage(id);
+  const active = handler.getStorage(activeId);
   if (show && storage) {
     const parent = getProperty(storage, show, "parent") as ParentProperty;
     let activeParent: ParentProperty;
@@ -169,7 +163,7 @@ function directionNext(
     else activeParent = INVALID_PARENT;
     if (parent && activeParent !== undefined) {
       if (parent.value !== activeParent.value)
-        directionNext(trackingShow, activeParent.value, parent.value);
+        directionNext(handler, trackingShow, activeParent.value, parent.value);
     }
   }
   EventHandler.emit("direction:next", trackingShow.id, id);
@@ -180,31 +174,31 @@ const GotoCommand: ICommand<GotoData> = {
   validate: (data: any) => {
     return isGotoData(data);
   },
-  run: (data: GotoData) => {
-    if (ServerRunsheet.hasLoadedRunsheet()) {
-      const show = ServerRunsheet.getTrackingShow(data.show);
-      if (show) {
-        if (show.trackers.has(data.tracking)) {
-          const storage = ServerRunsheet.getStorage(data.tracking);
-          let id = data.tracking;
-          if (storage) {
-            if (
-              storage.type === Type.SESSION ||
-              storage.type === Type.BRACKET
-            ) {
-              const next = getNextEnabled(ServerRunsheet,show, data.tracking, "");
-              if (next) id = next.id;
-              else id = "";
-            }
+  run: (handler: ServerRunsheetHandler, data: GotoData) => {
+    const show = handler.getTrackingShow(data.show);
+    if (show) {
+      if (show.trackers.has(data.tracking)) {
+        const storage = handler.getStorage(data.tracking);
+        let id = data.tracking;
+        if (storage) {
+          if (storage.type === Type.SESSION || storage.type === Type.BRACKET) {
+            const next = getNextEnabled(
+              handler,
+              show,
+              data.tracking,
+              ""
+            );
+            if (next) id = next.id;
+            else id = "";
           }
-          if (show.active === "") directionNext(show, "", id);
-          endTracking(ServerRunsheet,show, show.active, id);
-          startTracking(ServerRunsheet, show, id);
-          show.active = id;
-          show.next = getNext(ServerRunsheet,show);
-          directionNext(show, show.active, show.next);
-          syncTracking(show);
         }
+        if (show.active === "") directionNext(handler,show, "", id);
+        endTracking(handler, show, show.active, id);
+        startTracking(handler, show, id);
+        show.active = id;
+        show.next = getNext(handler, show);
+        directionNext(handler,show, show.active, show.next);
+        syncTracking(show);
       }
     }
   },

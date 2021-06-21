@@ -1,11 +1,11 @@
-import {
-  getDefaultProperty,
-  Type,
-} from "../../common/Storage";
+import { getDefaultProperty, Type } from "../../common/Storage";
 import { DEFAULT, insertInto } from "../../common/Show";
 import ICommand, { registerCommand } from "./ICommand";
-import ServerRunsheet,{ syncRunsheet,syncTracking } from "../ServerRunsheetHandler";
-import IProperty, { getPropertyJSON, hasAllProperties } from "../../common/property/IProperty";
+import ServerRunsheetHandler from "../ServerRunsheetHandler";
+import IProperty, {
+  getPropertyJSON,
+  hasAllProperties,
+} from "../../common/property/IProperty";
 import { v4 } from "uuid";
 import {
   BracketPropertiesDefault,
@@ -17,7 +17,7 @@ import { ParentProperty } from "../../common/property/Parent";
 
 interface CreateData {
   type: string;
-  insert: { show: string; after: string, useDefault: boolean }[];
+  insert: { show: string; after: string; useDefault: boolean }[];
   properties: { key: string; value: any }[];
 }
 
@@ -34,8 +34,8 @@ const CreateCommand: ICommand<CreateData> = {
   validate: (data: any) => {
     return isCreateData(data);
   },
-  run: (data: CreateData) => {
-    if (ServerRunsheet.hasLoadedRunsheet()) {
+  run: (handler: ServerRunsheetHandler, data: CreateData) => {
+    if (handler.hasLoadedRunsheet()) {
       const properties: IProperty<any>[] = [];
       data.properties.forEach((value: { key: string; value: any }) =>
         properties.push(getPropertyJSON(value.key).deserialize(value.value))
@@ -44,7 +44,7 @@ const CreateCommand: ICommand<CreateData> = {
       switch (data.type as Type) {
         case Type.SESSION:
           if (hasAllProperties(SessionPropertiesDefault, properties)) {
-           ServerRunsheet.addStorage({
+            handler.addStorage({
               id: id,
               type: Type.SESSION,
               properties,
@@ -53,7 +53,7 @@ const CreateCommand: ICommand<CreateData> = {
           break;
         case Type.BRACKET:
           if (hasAllProperties(BracketPropertiesDefault, properties)) {
-            ServerRunsheet.addStorage({
+            handler.addStorage({
               id: id,
               type: Type.BRACKET,
               properties,
@@ -62,7 +62,7 @@ const CreateCommand: ICommand<CreateData> = {
           break;
         case Type.ITEM:
           if (hasAllProperties(ItemPropertiesDefault, properties)) {
-            ServerRunsheet.addStorage({
+            handler.addStorage({
               id: id,
               type: Type.ITEM,
               properties,
@@ -71,7 +71,7 @@ const CreateCommand: ICommand<CreateData> = {
           break;
       }
       const tracker = buildTracker(id);
-      const current = ServerRunsheet.getStorage(id);
+      const current = handler.getStorage(id);
       if (current) {
         if (current) {
           const parentid = getDefaultProperty(
@@ -79,28 +79,34 @@ const CreateCommand: ICommand<CreateData> = {
             "parent"
           ) as ParentProperty;
           if (parentid) {
-            const parent = ServerRunsheet.getStorage(parentid.value);
+            const parent = handler.getStorage(parentid.value);
             if (parent) {
-              data.insert.forEach((insert: { show: string; after: string, useDefault: boolean }) => {
-                if (insert.show === "default") {
-                  insertInto(DEFAULT, parent, insert.after, id, true);
-                } else {
-                  const show = ServerRunsheet.getShow(insert.show);
-                  const trackingShow = ServerRunsheet.getTrackingShow(insert.show);
-                  if (show && trackingShow) {
-                    insertInto(show, parent, insert.after, id);
-                    show.tracking_list.push(id);
-                    trackingShow.trackers.set(id, tracker);
-                    syncTracking(trackingShow);
+              data.insert.forEach(
+                (insert: {
+                  show: string;
+                  after: string;
+                  useDefault: boolean;
+                }) => {
+                  if (insert.show === "default") {
+                    insertInto(DEFAULT, parent, insert.after, id, true);
+                  } else {
+                    const show = handler.getShow(insert.show);
+                    const trackingShow = handler.getTrackingShow(insert.show);
+                    if (show && trackingShow) {
+                      insertInto(show, parent, insert.after, id);
+                      show.tracking_list.push(id);
+                      trackingShow.trackers.set(id, tracker);
+                      handler.syncTracking(trackingShow);
+                    }
                   }
                 }
-              });
+              );
             }
           }
         }
       }
-      syncRunsheet();
-      ServerRunsheet.markDirty();
+      handler.syncRunsheet();
+      handler.markDirty(true);
     }
   },
 };

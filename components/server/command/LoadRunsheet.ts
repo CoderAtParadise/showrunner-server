@@ -1,14 +1,12 @@
 import ICommand, { registerCommand } from "./ICommand";
 import { LoadRunsheet, RunsheetList } from "../FileManager";
 import Runsheet from "../../common/Runsheet";
-import ServerRunsheet, {
-  syncRunsheet,
-  syncTracking,
-} from "../ServerRunsheetHandler";
+import ServerRunsheetHandler, { syncTracking } from "../ServerRunsheetHandler";
 import { StorageKey } from "../FileManager";
 import { buildTrackingShow } from "../../common/TrackingShow";
 import Show from "../../common/Show";
-import { debug } from "debug";
+import { ServerManager } from "../ServerInit";
+import { ServerRunsheet } from "../ServerRunsheetHandler";
 
 interface LoadRunsheetData {
   id: string;
@@ -23,17 +21,13 @@ const LoadRunsheetCommand: ICommand<LoadRunsheetData> = {
   validate: (data: any) => {
     return isLoadRunsheetData(data);
   },
-  run: (data: LoadRunsheetData) => {
+  run: (handler: ServerRunsheetHandler, data: LoadRunsheetData) => {
     const file = RunsheetList().find((key: StorageKey) => key.id === data.id);
     if (file)
       LoadRunsheet(file, (runsheet: Runsheet) => {
-        ServerRunsheet.setRunsheet(runsheet);
-        syncRunsheet();
-        ServerRunsheet.runsheet?.shows.forEach((value: Show) => {
-          const tracking = buildTrackingShow(value);
-          ServerRunsheet.addTrackingShow(tracking);
-          syncTracking(tracking);
-        });
+        ServerManager.handler = new ServerRunsheet(runsheet);
+        ServerManager.handler.syncRunsheet();
+        ServerManager.handler.syncAllTracking();
       });
   },
 };

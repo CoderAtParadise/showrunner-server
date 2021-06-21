@@ -1,102 +1,144 @@
 import RunsheetHandler from "../common/RunsheetHandler";
 import Runsheet, { JSON as RJSON } from "../common/Runsheet";
-import TrackingShow, { JSON as TJSON } from "../common/TrackingShow";
+import TrackingShow, {
+  buildTrackingShow,
+  JSON as TJSON,
+} from "../common/TrackingShow";
 import ClockSource from "../common/ClockSource";
 import Show from "../common/Show";
 import Storage from "../common/Storage";
 import EventHandler from "./Scheduler";
+import InternalClockSource from "./ClockSourceInternal";
+import { ServerManager } from "./ServerInit";
+import { SaveRunsheet } from "./FileManager";
 
-interface ServerRunsheetData {
-  runsheet: Runsheet | undefined;
-  tracking: Map<string, TrackingShow>;
-  active: string;
-  clocks: Map<string, ClockSource>;
-  dirtyV: boolean;
+export interface ServerRunsheetHandler extends RunsheetHandler {
+  syncRunsheet: () => void;
+  syncActive: () => void;
+  syncTracking: (tshow: TrackingShow) => void;
+  syncAllTracking: () => void;
+  dirty: () => boolean;
+  save: () => void;
+  markDirty: (dirty: boolean) => void;
 }
 
-const ServerRunsheet: RunsheetHandler & ServerRunsheetData = {
-  runsheet: undefined,
-  dirtyV: false,
-  active: "",
-  tracking: new Map<string, TrackingShow>(),
-  clocks: new Map<string, ClockSource>(),
-  setRunsheet: (runsheet: Runsheet): void => {
-    ServerRunsheet.runsheet = runsheet;
-    ServerRunsheet.tracking.clear();
-  },
-  dirty: (): boolean => {
-    return ServerRunsheet.dirtyV;
-  },
-  markDirty: (): void => {
-    ServerRunsheet.dirtyV = true;
-  },
-  hasLoadedRunsheet: (): boolean => {
-    return ServerRunsheet.runsheet !== undefined;
-  },
-  getClock: (id: string): ClockSource | undefined => {
-    return ServerRunsheet.clocks.get(id);
-  },
-  addClock: (clock: ClockSource): void => {
-    ServerRunsheet.clocks.set(clock.id, clock);
-  },
-  getShow: (id: string): Show | undefined => {
-    return ServerRunsheet.runsheet?.shows.get(id);
-  },
-  addShow: (show: Show): void => {
-    ServerRunsheet.runsheet?.shows.set(show.id, show);
-  },
-  deleteShow: (id: string): void => {
-    ServerRunsheet.runsheet?.shows.delete(id);
-  },
-  showList: (): string[] => {
-    if (ServerRunsheet.runsheet)
-      return Array.from(ServerRunsheet.runsheet.shows.keys());
-    return [];
-  },
-  activeShow: (): string => {
-    return ServerRunsheet.active;
-  },
-  setActiveShow: (id:string) : void => {
-    ServerRunsheet.active = id;
-    syncActiveShow();
-  },
-  getTrackingShow: (id: string): TrackingShow | undefined => {
-    return ServerRunsheet.tracking.get(id);
-  },
-  addTrackingShow: (trackingShow: TrackingShow): void => {
-    ServerRunsheet.tracking.set(trackingShow.id, trackingShow);
-  },
-  deleteTrackingShow: (id: string): void => {
-    ServerRunsheet.tracking.delete(id);
-  },
-  getStorage: (id: string): Storage<any> | undefined => {
-    return ServerRunsheet.runsheet?.defaults.get(id);
-  },
-  addStorage: (storage: Storage<any>): void => {
-    ServerRunsheet.runsheet?.defaults.set(storage.id, storage);
-  },
-  deleteStorage: (id: string): void => {
-    ServerRunsheet.runsheet?.defaults.delete(id);
-  },
-};
+export class ServerRunsheet implements ServerRunsheetHandler {
+  runsheet;
+  dirtyV = false;
+  active = "";
+  tracking = new Map<string, TrackingShow>();
 
-export function syncRunsheet(): void {
-  if (ServerRunsheet.runsheet) {
+  constructor(runsheet: Runsheet) {
+    this.runsheet = runsheet;
+    this.runsheet.shows.forEach((value: Show) =>
+      this.addTrackingShow(buildTrackingShow(value))
+    );
+  }
+
+  syncRunsheet(): void {
     EventHandler.emit(
       "sync",
       "runsheet",
-      RJSON.serialize(ServerRunsheet.runsheet)
+      this.runsheet.id,
+      RJSON.serialize(this.runsheet)
     );
   }
-}
 
-export function syncActiveShow() : void {
-  if(ServerRunsheet.hasLoadedRunsheet())
-    EventHandler.emit("sync","show",ServerRunsheet.activeShow());
+  syncActive(): void {
+    EventHandler.emit("sync", "show", this.runsheet.id, {active:this.activeShow()});
+  }
+
+  syncTracking(tshow: TrackingShow) {
+    EventHandler.emit(
+      "sync",
+      "tracking",
+      this.runsheet.id,
+      TJSON.serialize(tshow)
+    );
+  }
+
+  syncAllTracking() {
+    this.tracking.forEach((value: TrackingShow) => {
+      this.syncTracking(value);
+    });
+  }
+
+  dirty(): boolean {
+    return this.dirtyV;
+  }
+
+  markDirty(dirty: boolean): void {
+    this.dirtyV = dirty;
+  }
+
+  save() {
+    SaveRunsheet(this.runsheet.id, this.runsheet);
+  }
+
+  hasLoadedRunsheet(): boolean {
+    return true;
+  }
+
+  getClock(id: string): ClockSource | undefined {
+    return ServerManager.clocks.get(id);
+  }
+
+  addClock(clock: ClockSource): void {
+    ServerManager.clocks.set(clock.id, clock);
+  }
+
+  getShow(id: string): Show | undefined {
+    return this.runsheet.shows.get(id);
+  }
+
+  addShow(show: Show): void {
+    this.runsheet.shows.set(show.id, show);
+  }
+
+  deleteShow(id: string): boolean {
+    return this.runsheet.shows.delete(id);
+  }
+
+  showList(): string[] {
+    return Array.from(this.runsheet.shows.keys());
+  }
+
+  activeShow(): string {
+    return this.active;
+  }
+
+  setActiveShow(id: string): void {
+    this.active = id;
+    this.syncActive();
+  }
+
+  getTrackingShow(id: string): TrackingShow | undefined {
+    return this.tracking.get(id);
+  }
+
+  addTrackingShow(tshow: TrackingShow): void {
+    this.tracking.set(tshow.id, tshow);
+  }
+
+  deleteTrackingShow(id: string): boolean {
+    return this.tracking.delete(id);
+  }
+
+  getStorage(id: string): Storage<any> | undefined {
+    return this.runsheet.defaults.get(id);
+  }
+
+  addStorage(storage: Storage<any>): void {
+    this.runsheet.defaults.set(storage.id, storage);
+  }
+
+  deleteStorage(id: string): boolean {
+    return this.runsheet.defaults.delete(id);
+  }
 }
 
 export function syncTracking(show: TrackingShow): void {
   EventHandler.emit("sync", "tracking", TJSON.serialize(show));
 }
 
-export default ServerRunsheet;
+export default ServerRunsheetHandler;

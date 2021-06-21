@@ -6,10 +6,7 @@ import Show, {
 } from "../../common/Show";
 import ICommand, { registerCommand } from "./ICommand";
 import { ParentProperty } from "../../common/property/Parent";
-import ServerRunsheet, {
-  syncRunsheet,
-  syncTracking,
-} from "../ServerRunsheetHandler";
+import ServerRunsheetHandler from "../ServerRunsheetHandler";
 import { IndexListProperty } from "../../common/property/IndexList";
 import RunsheetHandler from "../../common/RunsheetHandler";
 
@@ -54,19 +51,19 @@ const DeleteCommand: ICommand<DeleteData> = {
   validate: (data: any) => {
     return isDeleteData(data);
   },
-  run: (data: DeleteData) => {
-    const show = ServerRunsheet.getShow(data.show);
-    const current = ServerRunsheet.getStorage(data.tracking);
+  run: (handler:ServerRunsheetHandler,data: DeleteData) => {
+    const show = handler.getShow(data.show);
+    const current = handler.getStorage(data.tracking);
     if (show && current) {
-      DeleteChildrenInShow(ServerRunsheet, show, current);
+      DeleteChildrenInShow(handler, show, current);
       deleteOverrideProperties(show, data.tracking);
-      const tracking_show = ServerRunsheet.getTrackingShow(data.show);
+      const tracking_show = handler.getTrackingShow(data.show);
       if (!data.global && tracking_show) {
         show.tracking_list.splice(show.tracking_list.indexOf(data.tracking), 1);
         tracking_show.trackers.delete(data.tracking);
         const parentid = getProperty(current, show, "parent") as ParentProperty;
         if (parentid) {
-          const parent = ServerRunsheet.getStorage(parentid.value);
+          const parent = handler.getStorage(parentid.value);
           if (parent) {
             const index_list = {
               key: "index_list",
@@ -76,12 +73,12 @@ const DeleteCommand: ICommand<DeleteData> = {
             setOverrideProperty(show, data.tracking, index_list);
           }
         }
-        syncRunsheet();
-        syncTracking(tracking_show);
-        ServerRunsheet.markDirty();
+        handler.syncRunsheet();
+        handler.syncTracking(tracking_show);
+        handler.markDirty(true);
       } else {
-        syncRunsheet();
-        ServerRunsheet.markDirty();
+        handler.syncRunsheet();
+        handler.markDirty(true);
       }
     }
   },

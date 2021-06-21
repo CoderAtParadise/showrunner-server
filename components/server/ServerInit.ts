@@ -6,9 +6,15 @@ import Create from "./command/Create";
 import Delete from "./command/Delete";
 import EventHandler, { addThisTickHandler} from "./Scheduler";
 import ClockSourceInternal from "./ClockSourceInternal";
-import ServerRunsheet from "./ServerRunsheetHandler";
+import ClockSource from "../common/ClockSource";
 import { InitIO } from "./FileManager";
+import ServerRunsheetHandler, { ServerRunsheet } from "./ServerRunsheetHandler";
+import { INVALID } from "../common/Runsheet";
 
+export const ServerManager: {clocks: Map<string,ClockSource>; handler: ServerRunsheetHandler} = {
+  clocks: new Map<string,ClockSource>(),
+  handler: new ServerRunsheet(INVALID),
+}
 
 export function ServerInit() {
   InitProperties();
@@ -30,7 +36,7 @@ export function ServerInit() {
   EventHandler.addListener("direction:next", (showid: string, id: string) => {
     console.log(`next:${id}`);
   });
-  ServerRunsheet.addClock(ClockSourceInternal);
+  ServerManager.clocks.set("internal",ClockSourceInternal);
 }
 
 export default ServerInit;
