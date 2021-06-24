@@ -31,10 +31,3 @@ app.listen(port, () => {
   debug(`Running at http://localhost:${port}`);
 });
 ServerInit();
-schedule(() => {
-  schedule(() => {
-    CommandRegisty.get("load_runsheet")?.run(ServerManager.handler, {
-      id: "3e6e3a66-5ff7-4b38-b0ff-5b6f920efc80",
-    });
-  });
-});

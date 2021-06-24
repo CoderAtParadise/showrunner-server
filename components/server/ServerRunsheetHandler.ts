@@ -35,6 +35,10 @@ export class ServerRunsheet implements ServerRunsheetHandler {
     );
   }
 
+  id() : string {
+    return this.runsheet.id;
+  }
+
   syncRunsheet(): void {
     EventHandler.emit(
       "sync",
@@ -45,7 +49,7 @@ export class ServerRunsheet implements ServerRunsheetHandler {
   }
 
   syncActive(): void {
-    EventHandler.emit("sync", "show", this.runsheet.id, {active:this.activeShow()});
+    EventHandler.emit("sync", "show", this.runsheet.id, this.activeShow());
   }
 
   syncTracking(tshow: TrackingShow) {

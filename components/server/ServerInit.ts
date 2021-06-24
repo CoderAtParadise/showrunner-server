@@ -1,6 +1,7 @@
 import InitProperties from "../common/Init";
 import Goto from "./command/Goto";
 import LoadRunsheet from "./command/LoadRunsheet";
+import DeleteRunsheet from "./command/DeleteRunsheet";
 import Update from "./command/Update";
 import Create from "./command/Create";
 import Delete from "./command/Delete";
@@ -24,6 +25,7 @@ export function ServerInit() {
   Create;
   Update;
   Delete;
+  DeleteRunsheet;
   addThisTickHandler(() => {
     EventHandler.emit("clock");
   });

@@ -51,6 +51,11 @@ export function SaveRunsheet(id: string, runsheet: Runsheet) {
   }
 }
 
+export function DeleteRunsheet(key: StorageKey) {
+    const file = KnownRunsheets.get(key);
+    if (file) deleteFile(RunsheetDir, file,KnownRunsheets);
+}
+
 function Watch(dir: string, storage: Map<StorageKey, string>) {
   Discover(dir, storage);
   fs.watch(dir, (): void => Discover(dir, storage));
@@ -74,10 +79,10 @@ function LoadDir(
 }
 
 function Discover(dir: string, output: Map<StorageKey, string>) {
-  output.clear();
   fs.access(dir, (err: Error | null) => {
     if (err) return;
     LoadDir(dir, ".json", (files: string[]) => {
+      output.clear();
       files.forEach((file: string) => {
         const re = path.basename(file, ".json");
         const name = re.split("/").pop() || re;
@@ -106,6 +111,10 @@ function save(dir: string, name: string, json: any): void {
       if (err) Debug("showrunner:io")(err);
     }
   );
+}
+
+function deleteFile(dir: string, name: string,output:Map<StorageKey,string>): void {
+  fs.unlink(`${dir}/${name}.json`, () => {});
 }
 
 export function RunsheetList(): StorageKey[] {

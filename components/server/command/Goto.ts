@@ -10,7 +10,7 @@ import {
 import { TimerProperty } from "../../common/property/Timer";
 import EventHandler from "../Scheduler";
 import RunsheetHandler from "../../common/RunsheetHandler";
-import ServerRunsheetHandler, { syncTracking } from "../ServerRunsheetHandler";
+import ServerRunsheetHandler from "../ServerRunsheetHandler";
 
 interface GotoData {
   show: string;
@@ -57,17 +57,19 @@ function endTracking(
   id: string,
   next: string
 ) {
-  if (handler.hasLoadedRunsheet()) {
-    const tracker = trackingShow.trackers.get(id);
-    const show = handler.getShow(trackingShow.id);
-    const active = handler.getStorage(id);
-    if (tracker) {
-      tracker.timer.end =
-        handler.getClock("internal")?.clock() || INVALID_POINT;
-      tracker.timer.state = TimerState.STOPPED;
-      trackingShow.active = "";
-      EventHandler.emit("direction:end", trackingShow.id, id);
-    }
+  const tracker = trackingShow.trackers.get(id);
+  const show = handler.getShow(trackingShow.id);
+  const active = handler.getStorage(id);
+  if (tracker) {
+    tracker.timer.end = handler.getClock("internal")?.clock() || INVALID_POINT;
+    tracker.timer.state = TimerState.STOPPED;
+    trackingShow.active = "";
+    EventHandler.emit("direction:end", trackingShow.id, id);
+  }
+  if (active && show && next === "") {
+    const parent = getProperty(active, show, "parent") as ParentProperty;
+    if (parent) endTracking(handler, trackingShow, parent.value, "");
+  } else {
     const nextStorage = handler.getStorage(next);
     if (active && show && nextStorage) {
       const parent = getProperty(active, show, "parent") as ParentProperty;
@@ -84,7 +86,7 @@ function endTracking(
   }
 }
 
-function getNext(handler: RunsheetHandler, trackingShow: TrackingShow): string {
+export function getNext(handler: RunsheetHandler, trackingShow: TrackingShow): string {
   if (handler.hasLoadedRunsheet()) {
     const show = handler.getShow(trackingShow.id);
     const active = handler.getStorage(trackingShow.active);
@@ -177,28 +179,33 @@ const GotoCommand: ICommand<GotoData> = {
   run: (handler: ServerRunsheetHandler, data: GotoData) => {
     const show = handler.getTrackingShow(data.show);
     if (show) {
-      if (show.trackers.has(data.tracking)) {
-        const storage = handler.getStorage(data.tracking);
-        let id = data.tracking;
-        if (storage) {
-          if (storage.type === Type.SESSION || storage.type === Type.BRACKET) {
-            const next = getNextEnabled(
-              handler,
-              show,
-              data.tracking,
-              ""
-            );
-            if (next) id = next.id;
-            else id = "";
+      if (handler.activeShow() !== data.show) handler.setActiveShow(data.show);
+      if (data.tracking === "") {
+        endTracking(handler, show, show.active, "");
+        handler.setActiveShow("");
+        handler.syncTracking(show);
+      } else {
+        if (show.trackers.has(data.tracking)) {
+          const storage = handler.getStorage(data.tracking);
+          let id = data.tracking;
+          if (storage) {
+            if (
+              storage.type === Type.SESSION ||
+              storage.type === Type.BRACKET
+            ) {
+              const next = getNextEnabled(handler, show, data.tracking, "");
+              if (next) id = next.id;
+              else id = "";
+            }
           }
+          if (show.active === "") directionNext(handler, show, "", id);
+          endTracking(handler, show, show.active, id);
+          startTracking(handler, show, id);
+          show.active = id;
+          show.next = getNext(handler, show);
+          directionNext(handler, show, show.active, show.next);
+          handler.syncTracking(show);
         }
-        if (show.active === "") directionNext(handler,show, "", id);
-        endTracking(handler, show, show.active, id);
-        startTracking(handler, show, id);
-        show.active = id;
-        show.next = getNext(handler, show);
-        directionNext(handler,show, show.active, show.next);
-        syncTracking(show);
       }
     }
   },

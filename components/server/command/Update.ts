@@ -3,6 +3,7 @@ import { getPropertyJSON } from "../../common/property/IProperty";
 import { deleteOverrideProperty, setOverrideProperty } from "../../common/Show";
 import { setDefaultProperty } from "../../common/Storage";
 import ServerRunsheetHandler from "../ServerRunsheetHandler";
+import { getNext } from "./Goto";
 
 interface UpdateData {
   show: string;
@@ -41,6 +42,12 @@ const UpdateCommand: ICommand<UpdateData> = {
           }
         }
       });
+      const tshow = handler.getTrackingShow(data.show);
+      if(tshow)
+      {
+        tshow.next = getNext(handler,tshow);
+        handler.syncTracking(tshow);
+      }
       handler.syncRunsheet();
       handler.markDirty(true);
     }
