@@ -20,9 +20,9 @@ export function InitIO() {
   fs.mkdir(RunsheetDir, () => {});
   fs.mkdir(TemplateDir, () => {});
   fs.mkdir(StagePlotDir, () => {});
-  Watch(RunsheetDir, KnownRunsheets);
-  Watch(TemplateDir, KnownTemplates);
-  Watch(StagePlotDir, KnownStagePlots);
+  DiscoverRunsheets();
+  DiscoverTemplates();
+  
   setInterval(() => {
     const handler = ServerManager.handler;
     if (handler && handler.dirty()) {
@@ -30,6 +30,18 @@ export function InitIO() {
       handler?.markDirty(false);
     }
   }, 3000);
+}
+
+export const DiscoverRunsheets = () => {
+  Discover(RunsheetDir,KnownRunsheets);
+}
+
+export const DiscoverTemplates = () => {
+  Discover(TemplateDir, KnownTemplates);
+}
+
+export const DiscoverStagePlots = () => {
+  Discover(StagePlotDir, KnownStagePlots);
 }
 
 export function LoadRunsheet(
@@ -54,11 +66,6 @@ export function SaveRunsheet(id: string, runsheet: Runsheet) {
 export function DeleteRunsheet(key: StorageKey) {
     const file = KnownRunsheets.get(key);
     if (file) deleteFile(RunsheetDir, file,KnownRunsheets);
-}
-
-function Watch(dir: string, storage: Map<StorageKey, string>) {
-  Discover(dir, storage);
-  fs.watch(dir, (): void => Discover(dir, storage));
 }
 
 function LoadDir(
@@ -89,6 +96,7 @@ function Discover(dir: string, output: Map<StorageKey, string>) {
         let RName = name;
         load(dir, name, (json: any) => {
           if (json.display && json.id) RName = json.display;
+          if(!output.has({ display: RName, id: json.id}))
           output.set({ display: RName, id: json.id }, name);
         });
       });

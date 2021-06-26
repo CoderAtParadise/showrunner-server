@@ -9,6 +9,7 @@ import { ParentProperty } from "../../common/property/Parent";
 import ServerRunsheetHandler from "../ServerRunsheetHandler";
 import { IndexListProperty } from "../../common/property/IndexList";
 import RunsheetHandler from "../../common/RunsheetHandler";
+import TrackingShow from "../../common/TrackingShow";
 
 interface DeleteData {
   show: string;
@@ -24,8 +25,15 @@ function isDeleteData(obj: any): obj is DeleteData {
   );
 }
 
+function DeleteFromShow(tshow: TrackingShow, show: Show, id: string): void {
+  tshow.trackers.delete(id);
+  show.tracking_list.splice(show.tracking_list.indexOf(id), 1);
+  deleteOverrideProperties(show, id);
+}
+
 function DeleteChildrenInShow(
   handler: RunsheetHandler,
+  tshow: TrackingShow,
   show: Show,
   storage: Storage<any>
 ) {
@@ -37,13 +45,29 @@ function DeleteChildrenInShow(
     const child = handler.getStorage(value);
     if (child) {
       if (hasProperty(child, "index_list"))
-        DeleteChildrenInShow(handler, show, child);
-      const tracking = handler.getTrackingShow(show.id);
-      show.tracking_list.splice(show.tracking_list.indexOf(value), 1);
-      deleteOverrideProperties(show, storage.id);
-      if (tracking) tracking.trackers.delete(value);
+        DeleteChildrenInShow(handler, tshow, show, child);
+      DeleteFromShow(tshow, show, value);
     }
   });
+}
+
+function DeleteChildFromParent(
+  handler: RunsheetHandler,
+  show: Show,
+  child: Storage<any>
+) {
+  const pid = getProperty(child, show, "parent") as ParentProperty;
+  if (pid) {
+    const parent = handler.getStorage(pid.value);
+    if (parent) {
+      const index_list: IndexListProperty = {
+        key: "index_list",
+        value: Array.from(getProperty(parent, show, "index_list")?.value) || [],
+      };
+      index_list.value.splice(index_list.value.indexOf(child.id), 1);
+      setOverrideProperty(show, pid.value, index_list);
+    }
+  }
 }
 
 const DeleteCommand: ICommand<DeleteData> = {
@@ -51,35 +75,32 @@ const DeleteCommand: ICommand<DeleteData> = {
   validate: (data: any) => {
     return isDeleteData(data);
   },
-  run: (handler:ServerRunsheetHandler,data: DeleteData) => {
+  run: (handler: ServerRunsheetHandler, data: DeleteData) => {
     const show = handler.getShow(data.show);
-    const current = handler.getStorage(data.tracking);
-    if (show && current) {
-      DeleteChildrenInShow(handler, show, current);
-      deleteOverrideProperties(show, data.tracking);
-      const tracking_show = handler.getTrackingShow(data.show);
-      if (!data.global && tracking_show) {
-        show.tracking_list.splice(show.tracking_list.indexOf(data.tracking), 1);
-        tracking_show.trackers.delete(data.tracking);
-        const parentid = getProperty(current, show, "parent") as ParentProperty;
-        if (parentid) {
-          const parent = handler.getStorage(parentid.value);
-          if (parent) {
-            const index_list = {
-              key: "index_list",
-              value: getProperty(parent, show, "index_list")?.value || [],
-            };
-            index_list.value.splice(index_list.value.indexOf(data.tracking), 1);
-            setOverrideProperty(show, data.tracking, index_list);
+    const tshow = handler.getTrackingShow(data.show);
+    const toDelete = handler.getStorage(data.tracking);
+    if (show && toDelete && tshow) {
+      DeleteChildrenInShow(handler, tshow, show, toDelete);
+      DeleteFromShow(tshow, show, data.tracking);
+      DeleteChildFromParent(handler, show, toDelete);
+      if (data.global) {
+        handler.showList().forEach((id: string) => {
+          if (data.show !== id) {
+            const gshow = handler.getShow(id);
+            const gtshow = handler.getTrackingShow(id);
+            const gtoDelete = handler.getStorage(data.tracking);
+            if (gshow && gtoDelete && gtshow) {
+              DeleteChildrenInShow(handler, gtshow, gshow, gtoDelete);
+              DeleteFromShow(gtshow, gshow, data.tracking);
+              DeleteChildFromParent(handler, gshow, gtoDelete);
+              handler.syncTracking(gtshow);
+            }
           }
-        }
-        handler.syncRunsheet();
-        handler.syncTracking(tracking_show);
-        handler.markDirty(true);
-      } else {
-        handler.syncRunsheet();
-        handler.markDirty(true);
+        });
       }
+      handler.syncRunsheet();
+      handler.syncTracking(tshow);
+      handler.markDirty(true);
     }
   },
 };

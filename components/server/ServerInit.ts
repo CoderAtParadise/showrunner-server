@@ -11,6 +11,7 @@ import ClockSource from "../common/ClockSource";
 import { InitIO } from "./FileManager";
 import ServerRunsheetHandler, { ServerRunsheet } from "./ServerRunsheetHandler";
 import { INVALID } from "../common/Runsheet";
+import RefreshList from "./command/RefreshList";
 
 export const ServerManager: {clocks: Map<string,ClockSource>; handler: ServerRunsheetHandler} = {
   clocks: new Map<string,ClockSource>(),
@@ -26,6 +27,7 @@ export function ServerInit() {
   Update;
   Delete;
   DeleteRunsheet;
+  RefreshList;
   addThisTickHandler(() => {
     EventHandler.emit("clock");
   });
