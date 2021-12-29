@@ -1,10 +1,14 @@
 {
-    "compilerOptions": {
-      "target": "es6",
-      "module": "commonjs",
-      "rootDir": "./",
-      "outDir": "./dist",
-      "esModuleInterop": true,
-      "strict": true
-    }
-  }
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "commonjs",
+    "lib": ["ES2020"],
+    "moduleResolution": "node",
+    "rootDir": "./",
+    "outDir": "./dist",
+    "esModuleInterop": true,
+    "strict": true,
+  },
+  "files": ["app.ts"],
+  "include": ["src/**/*" ]
+}

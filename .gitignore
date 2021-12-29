@@ -1,9 +1,21 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Ignore smpte files they are just way to big
+/smpte
+smpte.7z //File is too big even compressed
+
 # dependencies
 /node_modules
 /.pnp
 .pnp.js
+
+.yarn/*
+!.yarn/cache
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
 
 # testing
 /coverage
