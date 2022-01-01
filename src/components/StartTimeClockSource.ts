@@ -18,11 +18,11 @@ export class StartTimeClockSource implements MutableClockSource {
     }
 
     start(): void {
-        // NOOP
+        this.state = ClockState.RUNNING;
     }
 
     stop(): void {
-        // NOOP
+        this.state = ClockState.STOPPED;
     }
 
     pause(): void {
@@ -34,8 +34,10 @@ export class StartTimeClockSource implements MutableClockSource {
     }
 
     update(): void {
-        if (getSyncClock().current().equals(this.startTime))
+        if (getSyncClock().current().equals(this.startTime)) {
             EventHandler.emit("timer.complete", this.id);
+            this.stop();
+        }
     }
 
     data(): object | undefined {

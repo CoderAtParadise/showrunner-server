@@ -16,6 +16,7 @@ export class TimerClockSource implements MutableClockSource {
     }
 
     current(): SMPTE {
+        if (this.startTimes.length === 0) return new SMPTE();
         let currentTime: SMPTE = new SMPTE();
         this.startTimes.forEach((value: SMPTE, index: number) => {
             let end: SMPTE;
@@ -33,25 +34,16 @@ export class TimerClockSource implements MutableClockSource {
             this.state === ClockState.HIDDEN
         )
             this.reset();
-        EventHandler.emit("timer.start", this.id);
         if (
             this.state !== ClockState.RUNNING &&
             this.state !== ClockState.OVERRUN
         ) {
-            this.startTimes.push(getSyncClock().current());
-            const current = this.current();
+            EventHandler.emit("timer.start", this.id);
             if (this.state === ClockState.STOPPED)
                 this.state = ClockState.RUNNING;
-            else if (current.greaterThanOrEqual(this.settings.duration))
+            else if (this.current().greaterThanOrEqual(this.settings.duration))
                 this.state = ClockState.OVERRUN;
-            else {
-                this.state = ClockState.RUNNING;
-                this.endTimes.push(
-                    getSyncClock()
-                        .current()
-                        .add(this.settings.duration.subtract(current))
-                );
-            }
+            this.startTimes.push(getSyncClock().current());
         }
     }
 
@@ -72,11 +64,11 @@ export class TimerClockSource implements MutableClockSource {
     }
 
     pause(): void {
-        EventHandler.emit("timer.pause", this.id);
         if (
             this.state === ClockState.RUNNING ||
             this.state === ClockState.OVERRUN
         ) {
+            EventHandler.emit("timer.pause", this.id);
             this.state = ClockState.PAUSED;
             this.endTimes.push(getSyncClock().current());
         }
