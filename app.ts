@@ -3,13 +3,13 @@ import morgan from "morgan";
 import Debug from "debug";
 import cors from "cors";
 import bodyparser from "body-parser";
+import { EventHandler } from "./src/components/Scheduler";
 import { TimerClockSource } from "./src/components/TimerClockSource";
 import {
     Behaviour,
-    Direction
-} from "@coderatparadise/showrunner-common/src/TimerSettings";
-import { SMPTE } from "@coderatparadise/showrunner-common";
-import { addThisTickHandler, EventHandler } from "./src/components/Scheduler";
+    Direction,
+    SMPTE
+} from "@coderatparadise/showrunner-common";
 
 const normalizePort = (val: any) => {
     const port = parseInt(val, 10);
@@ -29,7 +29,10 @@ const timer = new TimerClockSource("testing", "Testing", {
     direction: Direction.COUNTDOWN,
     duration: new SMPTE("00:00:05:00")
 });
-addThisTickHandler(() => EventHandler.emit("clock"));
+EventHandler.on("timer.*", (id) => {
+    Debug("showrunner:timer")(id);
+});
+
 timer.start();
 EventHandler.addListener("clock", () => {
     timer.update();

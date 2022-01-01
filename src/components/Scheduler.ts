@@ -1,7 +1,11 @@
 import EventEmitter2 from "eventemitter2";
 
 export const EventHandler: EventEmitter2.EventEmitter2 =
-    new EventEmitter2.EventEmitter2({ maxListeners: 20 });
+    new EventEmitter2.EventEmitter2({
+        maxListeners: 20,
+        wildcard: true,
+        delimiter: "."
+    });
 
 const thisTick: (() => void)[] = [];
 const nextTick: (() => void)[] = [];
@@ -16,4 +20,6 @@ setInterval(() => {
     temp.forEach((cb) => cb());
 }, 1000);
 
-export default EventHandler;
+addThisTickHandler(() => EventHandler.emit("clock"));
+
+export default { EventHandler, addThisTickHandler, schedule };

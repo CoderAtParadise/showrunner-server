@@ -3,8 +3,7 @@
   "version": "0.5.3",
   "packageManager": "yarn@3.1.1",
   "scripts": {
-    "start": "nodemon app.ts",
-    "start:dev": "DEBUG='showrunner:*' nodemon app.ts",
+    "start": "DEBUG='showrunner:*' nodemon app.ts",
     "build": "tsc",
     "lint": "yarn eslint app.ts src/**/*.ts",
     "format": "yarn prettier --write 'app.ts' 'src/**/*.ts'"

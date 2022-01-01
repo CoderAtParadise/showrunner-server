@@ -3,10 +3,10 @@ import {
     ClockState,
     SMPTE,
     TimerSettings,
+    Behaviour,
     getSyncClock
 } from "@coderatparadise/showrunner-common";
-import { Behaviour } from "@coderatparadise/showrunner-common/src/TimerSettings";
-import Debug from "debug";
+import { EventHandler } from "./Scheduler";
 
 export class TimerClockSource implements MutableClockSource {
     constructor(id: string, display: string, settings: TimerSettings) {
@@ -33,6 +33,7 @@ export class TimerClockSource implements MutableClockSource {
             this.state === ClockState.HIDDEN
         )
             this.reset();
+        EventHandler.emit("timer.start", this.id);
         if (
             this.state !== ClockState.RUNNING &&
             this.state !== ClockState.OVERRUN
@@ -55,6 +56,7 @@ export class TimerClockSource implements MutableClockSource {
     }
 
     stop(): void {
+        EventHandler.emit("timer.stop", this.id);
         if (
             this.state !== ClockState.HIDDEN &&
             this.state !== ClockState.STOPPED
@@ -70,6 +72,7 @@ export class TimerClockSource implements MutableClockSource {
     }
 
     pause(): void {
+        EventHandler.emit("timer.pause", this.id);
         if (
             this.state === ClockState.RUNNING ||
             this.state === ClockState.OVERRUN
@@ -80,19 +83,21 @@ export class TimerClockSource implements MutableClockSource {
     }
 
     reset(): void {
+        EventHandler.emit("timer.reset", this.id);
         this.startTimes.length = 0;
         this.endTimes.length = 0;
         this.state = ClockState.STOPPED;
     }
 
     update(): void {
-        Debug("showrunner:current")(this);
         if (
             this.current().greaterThanOrEqual(this.settings.duration) &&
             this.state === ClockState.RUNNING
         ) {
+            EventHandler.emit("timer.complete", this.id);
             if (this.settings.behaviour !== Behaviour.OVERRUN) this.stop();
             else {
+                EventHandler.emit("timer.overrun", this.id);
                 this.state = ClockState.OVERRUN;
                 this.endTimes[this.endTimes.length - 1] =
                     getSyncClock().current();
