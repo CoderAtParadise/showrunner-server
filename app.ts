@@ -3,18 +3,19 @@ import morgan from "morgan";
 import Debug from "debug";
 import cors from "cors";
 import bodyparser from "body-parser";
-import { EventHandler } from "./src/components/Scheduler";
-import { TimerClockSource } from "./src/components/TimerClockSource";
-import {
-    Behaviour,
-    Direction,
-    SMPTE
-} from "@coderatparadise/showrunner-common";
+import { EventHandler } from "./src/Scheduler";
+import { TimerClockSource } from "./src/clock/TimerClockSource";
+import { SMPTE } from "@coderatparadise/showrunner-common";
 import {
     globalShowHandler,
     initGlobalShowHandler
-} from "./src/GlobalShowHandler";
-import { OffsetClockSource } from "./src/components/OffsetClockSource";
+} from "./src/show/GlobalShowHandler";
+import { OffsetClockSource } from "./src/clock/OffsetClockSource";
+import { ToTimeClockSource } from "./src/clock/ToTimeClockSource";
+import { ClockBehaviour, ClockDirection } from "./src/clock/ClockData";
+import { ToTimeOffsetClockSource } from "./src/clock/ToTimeOffsetClockSource";
+import { router as SyncClockRouter } from "./src/route/SyncClockRoute";
+import { router as ClockSyncRouter } from "./src/route/production/ClockSyncRoute";
 
 const normalizePort = (val: any) => {
     const port = parseInt(val, 10);
@@ -22,39 +23,91 @@ const normalizePort = (val: any) => {
     if (port >= 0) return port;
     return false;
 };
-
+initGlobalShowHandler();
 const app = express();
 app.use(cors());
 app.use(bodyparser.json());
 app.use(bodyparser.urlencoded({ extended: true }));
 const debug = Debug("showrunner:server");
 const port = normalizePort(process.env.PORT || "3001");
-const timer = new TimerClockSource("testing", "Testing", {
-    behaviour: Behaviour.OVERRUN,
-    direction: Direction.COUNTDOWN,
+const timer = new TimerClockSource("system", "system", "testing", "Testing", {
+    behaviour: ClockBehaviour.HIDE,
+    direction: ClockDirection.COUNTDOWN,
     duration: new SMPTE("00:00:30:00")
 });
-initGlobalShowHandler();
-EventHandler.onAny((msg, id) => {
-    if (msg !== "clock") Debug(("showrunner:" + msg) as string)(id);
+app.use(SyncClockRouter);
+app.use(ClockSyncRouter);
+EventHandler.onAny((msg, owner, show, id) => {
+    if (msg !== "clock")
+        Debug(("showrunner:" + msg) as string)(`${show}:${owner}:${id}`);
 });
 const offset = new OffsetClockSource(
+    "system",
+    "system",
     "offset_testing",
     "Offset Testing",
-    globalShowHandler(),
-    "testing",
-    new SMPTE("00:00:10:00")
+    {
+        authority: "testing",
+        offset: new SMPTE("00:00:10:00")
+    }
+);
+const offsetNegative = new OffsetClockSource(
+    "system",
+    "system",
+    "offset_negate_testing",
+    "Offset Negative Testing",
+    {
+        authority: "testing",
+        offset: new SMPTE("-00:00:10:00")
+    }
+);
+const startTime = new ToTimeClockSource(
+    "system",
+    "system",
+    "start_time",
+    "Start Time",
+    {
+        behaviour: ClockBehaviour.STOP,
+        time: new SMPTE("15:35:00:00")
+    }
+);
+const startTimeOffset = new ToTimeOffsetClockSource(
+    "system",
+    "system",
+    "start_time_offset",
+    "Start Time Offset",
+    {
+        authority: "start_time",
+        offset: new SMPTE("-00:04:00:00")
+    }
+);
+const startTimeOffsetPositive = new ToTimeOffsetClockSource(
+    "system",
+    "system",
+    "start_time_offset_positive",
+    "Start Time Offset",
+    {
+        authority: "start_time",
+        offset: new SMPTE("+00:04:00:00")
+    }
 );
 globalShowHandler().registerClock(timer);
 globalShowHandler().registerClock(offset);
+globalShowHandler().registerClock(offsetNegative);
+globalShowHandler().registerClock(startTime);
+globalShowHandler().registerClock(startTimeOffset);
+globalShowHandler().registerClock(startTimeOffsetPositive);
 globalShowHandler().getClock("testing")?.start();
 globalShowHandler().getClock("offset_testing")?.start();
+globalShowHandler().getClock("offset_negate_testing")?.start();
+globalShowHandler().getClock("start_time")?.start();
+globalShowHandler().getClock("start_time_offset")?.start();
+globalShowHandler().getClock("start_time_offset_positive")?.start();
 app.use(
     morgan("dev", {
         stream: { write: (msg: any) => Debug("showrunner:http")(msg) }
     })
 );
-
 app.listen(port, () => {
     debug(`Running at http://localhost:${port}`);
 });

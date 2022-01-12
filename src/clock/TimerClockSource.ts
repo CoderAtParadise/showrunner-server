@@ -2,14 +2,21 @@ import {
     MutableClockSource,
     ClockState,
     SMPTE,
-    TimerSettings,
-    Behaviour,
     getSyncClock
 } from "@coderatparadise/showrunner-common";
-import { EventHandler } from "./Scheduler";
+import { EventHandler } from "../Scheduler";
+import { ClockBehaviour, TimerSettings } from "./ClockData";
 
 export class TimerClockSource implements MutableClockSource {
-    constructor(id: string, display: string, settings: TimerSettings) {
+    constructor(
+        owner: string,
+        show: string,
+        id: string,
+        display: string,
+        settings: TimerSettings
+    ) {
+        this.owner = owner;
+        this.show = show;
         this.id = id;
         this.display = display;
         this.settings = settings;
@@ -38,7 +45,7 @@ export class TimerClockSource implements MutableClockSource {
             this.state !== ClockState.RUNNING &&
             this.state !== ClockState.OVERRUN
         ) {
-            EventHandler.emit("timer.start", this.id);
+            EventHandler.emit("clock.start", this.owner, this.show, this.id);
             if (this.state === ClockState.STOPPED)
                 this.state = ClockState.RUNNING;
             else if (this.current().greaterThanOrEqual(this.settings.duration))
@@ -48,12 +55,12 @@ export class TimerClockSource implements MutableClockSource {
     }
 
     stop(): void {
-        EventHandler.emit("timer.stop", this.id);
         if (
             this.state !== ClockState.HIDDEN &&
             this.state !== ClockState.STOPPED
         ) {
-            if (this.settings.behaviour === Behaviour.HIDE)
+            EventHandler.emit("clock.stop", this.owner, this.show, this.id);
+            if (this.settings.behaviour === ClockBehaviour.HIDE)
                 this.state = ClockState.HIDDEN;
             else this.state = ClockState.STOPPED;
             if (this.endTimes.length === this.startTimes.length) {
@@ -68,28 +75,28 @@ export class TimerClockSource implements MutableClockSource {
             this.state === ClockState.RUNNING ||
             this.state === ClockState.OVERRUN
         ) {
-            EventHandler.emit("timer.pause", this.id);
+            EventHandler.emit("clock.pause", this.owner, this.show, this.id);
             this.state = ClockState.PAUSED;
             this.endTimes.push(getSyncClock().current());
         }
     }
 
     reset(): void {
-        EventHandler.emit("timer.reset", this.id);
+        this.stop();
+        EventHandler.emit("clock.reset", this.owner, this.show, this.id);
         this.startTimes.length = 0;
         this.endTimes.length = 0;
-        this.state = ClockState.STOPPED;
     }
 
     update(): void {
         if (
-            this.current().greaterThanOrEqual(this.settings.duration) &&
-            this.state === ClockState.RUNNING
+            this.state === ClockState.RUNNING &&
+            this.current().greaterThanOrEqual(this.settings.duration)
         ) {
-            EventHandler.emit("timer.complete", this.id);
-            if (this.settings.behaviour !== Behaviour.OVERRUN) this.stop();
+            EventHandler.emit("clock.complete", this.owner, this.show, this.id);
+            if (this.settings.behaviour !== ClockBehaviour.OVERRUN) this.stop();
             else {
-                EventHandler.emit("timer.overrun", this.id);
+                EventHandler.emit("clock.overrun", this.owner, this.show, this.id);
                 this.state = ClockState.OVERRUN;
                 this.endTimes[this.endTimes.length - 1] =
                     getSyncClock().current();
@@ -117,6 +124,9 @@ export class TimerClockSource implements MutableClockSource {
         if (data?.settings as TimerSettings) this.settings = data.settings;
     }
 
+    type: string = "timer";
+    show: string;
+    owner: string;
     id: string;
     display: string;
     state: ClockState = ClockState.STOPPED;

@@ -1,17 +1,17 @@
 import {
     ShowHandler,
     ClockSource,
-    getSyncClock
+    Storage,
+    ClockIdentifier
 } from "@coderatparadise/showrunner-common";
-import Debug from "debug";
-import { EventHandler } from "./components/Scheduler";
-
-export interface ClockIdentifier {
-    clock: ClockSource;
-    active: boolean;
-}
+import { IProperty } from "@coderatparadise/showrunner-common/src/IProperty";
+import { EventHandler } from "../Scheduler";
 
 class GlobalShowHandler implements ShowHandler {
+    listClocks(): ClockIdentifier[] {
+        return Array.from(this.showClocks.values());
+    }
+
     getClock(id: string): ClockSource | undefined {
         const clock = this.showClocks.get(id);
         if (clock?.active) return clock?.clock;
@@ -30,6 +30,7 @@ class GlobalShowHandler implements ShowHandler {
     disableClock(id: string): boolean {
         const clock = this.showClocks.get(id);
         if (clock) {
+            clock.clock.stop();
             clock.active = false;
             return true;
         }
@@ -42,17 +43,40 @@ class GlobalShowHandler implements ShowHandler {
     }
 
     tickClocks(): void {
-        Debug("showrunner:tick")(getSyncClock().current().toString());
         this.showClocks.forEach((value: ClockIdentifier) => {
             if (value.active) value.clock.update();
         });
     }
 
     registerClock(clock: ClockSource) {
-        this.showClocks.set(clock.id, { clock: clock, active: true });
+        this.showClocks.set(clock.id, {
+            clock: clock,
+            active: true,
+            render: []
+        });
     }
 
-    id: string = "globalShow";
+    getStorage(): Storage<any> | undefined {
+        return undefined;
+    }
+
+    hasOverrideProperty(): boolean {
+        return false;
+    }
+
+    getOverrideProperty(): IProperty<any> | undefined {
+        return undefined;
+    }
+
+    setOverrideProperty(): void {
+        // NOOP
+    }
+
+    removeOverrideProperty(): void {
+        // NOOP
+    }
+
+    id: string = "system";
     private showClocks: Map<string, ClockIdentifier> = new Map<
         string,
         ClockIdentifier
