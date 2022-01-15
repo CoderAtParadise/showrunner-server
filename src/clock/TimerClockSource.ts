@@ -27,10 +27,13 @@ export class TimerClockSource implements MutableClockSource {
         let currentTime: SMPTE = new SMPTE();
         this.startTimes.forEach((value: SMPTE, index: number) => {
             let end: SMPTE;
-            if (this.endTimes.length !== this.startTimes.length)
+            if (
+                this.endTimes.length !== this.startTimes.length &&
+                index > this.endTimes.length - 1
+            )
                 end = getSyncClock().current();
             else end = this.endTimes.at(index) as SMPTE;
-            currentTime = currentTime.add(end.subtract(value));
+            currentTime = currentTime.add(end.subtract(value, true));
         });
         return currentTime;
     }
@@ -63,10 +66,7 @@ export class TimerClockSource implements MutableClockSource {
             if (this.settings.behaviour === ClockBehaviour.HIDE)
                 this.state = ClockState.HIDDEN;
             else this.state = ClockState.STOPPED;
-            if (this.endTimes.length === this.startTimes.length) {
-                this.endTimes[this.endTimes.length - 1] =
-                    getSyncClock().current();
-            } else this.endTimes.push(getSyncClock().current());
+            this.endTimes.push(getSyncClock().current());
         }
     }
 
@@ -91,18 +91,20 @@ export class TimerClockSource implements MutableClockSource {
     update(): void {
         if (
             this.state === ClockState.RUNNING &&
-            this.current().greaterThanOrEqual(this.settings.duration)
+            this.current().greaterThan(this.settings.duration)
         ) {
             EventHandler.emit("clock.complete", this.owner, this.show, this.id);
             if (this.settings.behaviour !== ClockBehaviour.OVERRUN) this.stop();
             else {
-                EventHandler.emit("clock.overrun", this.owner, this.show, this.id);
-                this.state = ClockState.OVERRUN;
-                this.endTimes[this.endTimes.length - 1] =
-                    getSyncClock().current();
-                this.startTimes.push(
-                    getSyncClock().current().add(new SMPTE("00:00:01:00"))
+                EventHandler.emit(
+                    "clock.overrun",
+                    this.owner,
+                    this.show,
+                    this.id
                 );
+                this.state = ClockState.OVERRUN;
+                this.endTimes.push(getSyncClock().current());
+                this.startTimes.push(getSyncClock().current());
             }
         }
     }

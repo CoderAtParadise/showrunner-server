@@ -12,15 +12,18 @@ router.get("/production/:show/clocks", async (req: Request, res: Response) => {
         const show = req.params.show;
         const gatherClocks = () => {
             const clocks: object[] = [];
-            globalShowHandler()
-                .listClocks()
-                .forEach((clock: ClockIdentifier) => {
-                    clocks.push({
-                        clock: encodeClockSouce(clock.clock),
-                        active: clock.active,
-                        render: clock.render
+            if (show === "system") {
+                globalShowHandler()
+                    .listClocks()
+                    .forEach((clock: ClockIdentifier) => {
+                        clocks.push({
+                            clock: encodeClockSouce(clock.clock),
+                            active: clock.active,
+                            automation: clock.automation,
+                            renderChannel: clock.renderChannel
+                        });
                     });
-                });
+            }
 
             return clocks;
         };

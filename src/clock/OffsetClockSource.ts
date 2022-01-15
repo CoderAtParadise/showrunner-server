@@ -49,7 +49,7 @@ export class OffsetClockSource implements MutableClockSource {
                         }
                     case Offset.END:
                         if (
-                            current.greaterThanOrEqual(
+                            current.greaterThan(
                                 end.subtract(this.settings.offset)
                             )
                         ) {

@@ -2,9 +2,12 @@ import {
     ShowHandler,
     ClockSource,
     Storage,
-    ClockIdentifier
+    ClockIdentifier,
+    ClockState,
+    getSyncClock
 } from "@coderatparadise/showrunner-common";
 import { IProperty } from "@coderatparadise/showrunner-common/src/IProperty";
+import { ClockOptions } from "@coderatparadise/showrunner-common/src/ShowHandler";
 import { EventHandler } from "../Scheduler";
 
 class GlobalShowHandler implements ShowHandler {
@@ -44,16 +47,20 @@ class GlobalShowHandler implements ShowHandler {
 
     tickClocks(): void {
         this.showClocks.forEach((value: ClockIdentifier) => {
-            if (value.active) value.clock.update();
+            if (value.active || value.clock.state !== ClockState.STOPPED)
+                value.clock.update();
         });
     }
 
-    registerClock(clock: ClockSource) {
+    registerClock(clock: ClockSource, options?: ClockOptions): boolean {
+        if (this.isRegisteredClock(clock.id)) return false;
         this.showClocks.set(clock.id, {
             clock: clock,
-            active: true,
-            render: []
+            active: options?.active || true,
+            automation: options?.automation || false,
+            renderChannel: options?.renderChannel || []
         });
+        return true;
     }
 
     getStorage(): Storage<any> | undefined {
@@ -86,6 +93,7 @@ class GlobalShowHandler implements ShowHandler {
 export const initGlobalShowHandler = (): void => {
     if (mGlobalShowHandler === undefined) {
         mGlobalShowHandler = new GlobalShowHandler();
+        mGlobalShowHandler.registerClock(getSyncClock());
         EventHandler.on("clock", () => globalShowHandler().tickClocks());
     }
 };

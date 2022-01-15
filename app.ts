@@ -14,8 +14,8 @@ import { OffsetClockSource } from "./src/clock/OffsetClockSource";
 import { ToTimeClockSource } from "./src/clock/ToTimeClockSource";
 import { ClockBehaviour, ClockDirection } from "./src/clock/ClockData";
 import { ToTimeOffsetClockSource } from "./src/clock/ToTimeOffsetClockSource";
-import { router as SyncClockRouter } from "./src/route/SyncClockRoute";
 import { router as ClockSyncRouter } from "./src/route/production/ClockSyncRoute";
+import { router as RunsheetRouter } from "./src/route/production/RunsheetRoute";
 
 const normalizePort = (val: any) => {
     const port = parseInt(val, 10);
@@ -31,12 +31,12 @@ app.use(bodyparser.urlencoded({ extended: true }));
 const debug = Debug("showrunner:server");
 const port = normalizePort(process.env.PORT || "3001");
 const timer = new TimerClockSource("system", "system", "testing", "Testing", {
-    behaviour: ClockBehaviour.HIDE,
+    behaviour: ClockBehaviour.OVERRUN,
     direction: ClockDirection.COUNTDOWN,
     duration: new SMPTE("00:00:30:00")
 });
-app.use(SyncClockRouter);
 app.use(ClockSyncRouter);
+app.use(RunsheetRouter);
 EventHandler.onAny((msg, owner, show, id) => {
     if (msg !== "clock")
         Debug(("showrunner:" + msg) as string)(`${show}:${owner}:${id}`);
@@ -68,7 +68,7 @@ const startTime = new ToTimeClockSource(
     "Start Time",
     {
         behaviour: ClockBehaviour.STOP,
-        time: new SMPTE("15:35:00:00")
+        time: new SMPTE("17:30:00:00")
     }
 );
 const startTimeOffset = new ToTimeOffsetClockSource(

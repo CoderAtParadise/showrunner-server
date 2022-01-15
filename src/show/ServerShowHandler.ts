@@ -1,15 +1,28 @@
-import { ClockSource, ShowHandler, Storage } from "@coderatparadise/showrunner-common";
+import {
+    ClockSource,
+    ShowHandler,
+    Storage,
+    ClockIdentifier
+} from "@coderatparadise/showrunner-common";
 import { IProperty } from "@coderatparadise/showrunner-common/src/IProperty";
-import { ClockIdentifier, globalShowHandler } from "./GlobalShowHandler";
+import { globalShowHandler } from "./GlobalShowHandler";
 
 export class ServerShowHandler implements ShowHandler {
     constructor(id: string, sessionId: string) {
         this.id = id;
         this.sessionId = sessionId;
     }
+
+    listClocks(): ClockIdentifier[] {
+        return Array.from(this.showClocks.values());
+    }
+
     getStorage: (id: string) => Storage<any> | undefined;
     hasOverrideProperty: (id: string, key: string) => boolean;
-    getOverrideProperty: (id: string, key: string) => IProperty<any> | undefined;
+    getOverrideProperty: (
+        id: string,
+        key: string
+    ) => IProperty<any> | undefined;
     setOverrideProperty: (property: IProperty<any>) => void;
     removeOverrideProperty: (id: string, key: string) => void;
 
