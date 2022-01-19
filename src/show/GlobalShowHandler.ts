@@ -33,7 +33,7 @@ class GlobalShowHandler implements ShowHandler {
     disableClock(id: string): boolean {
         const clock = this.showClocks.get(id);
         if (clock) {
-            clock.clock.stop();
+            clock.clock.stop(false);
             clock.active = false;
             return true;
         }

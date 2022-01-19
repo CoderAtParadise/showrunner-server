@@ -1,7 +1,9 @@
 import {
     ClockState,
     ClockSource,
-    SMPTE
+    SMPTE,
+    setSyncClock,
+    FallbackSyncClockSource
 } from "@coderatparadise/showrunner-common";
 import udp, { Socket } from "dgram";
 import Debug from "debug";
@@ -33,7 +35,8 @@ export class AmpCtrlClock implements ClockSource {
         this.server.on("message", (message) => {
             // NO
         });
-        this.server.on("close", () => {});
+        this.server.on("close", () => {
+        });
         this.server.bind(this.port, this.address);
     }
 

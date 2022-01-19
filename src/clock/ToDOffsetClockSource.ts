@@ -1,15 +1,16 @@
 import {
-    MutableClockSource,
-    SMPTE,
     ClockState,
+    getSyncClock,
+    MutableClockSource,
+    Offset,
     ShowHandler,
-    Offset
+    SMPTE
 } from "@coderatparadise/showrunner-common";
 import { EventHandler } from "../Scheduler";
 import { globalShowHandler } from "../show/GlobalShowHandler";
-import { ClockBehaviour, OffsetSettings, TimerSettings } from "./ClockData";
+import { ClockBehaviour, OffsetSettings, ToTimeSettings } from "./ClockData";
 
-export class OffsetClockSource implements MutableClockSource {
+export class ToTimeOffsetClockSource implements MutableClockSource {
     constructor(
         owner: string,
         show: string,
@@ -28,14 +29,12 @@ export class OffsetClockSource implements MutableClockSource {
 
     current(): SMPTE {
         const authClock = this.getHandler()?.getClock(this.settings.authority);
-        if (authClock && authClock.type === "timer") {
+        if (authClock && authClock.type === "tod") {
             const settings = (authClock.data() as any)!
-                .settings as TimerSettings;
+                .settings as ToTimeSettings;
             if (
-                (authClock.state !== ClockState.STOPPED &&
-                    this.state === ClockState.STOPPED) ||
-                (authClock.current().greaterThan(this.settings.offset, true) &&
-                    this.settings.behaviour === ClockBehaviour.STOP)
+                this.settings.behaviour === ClockBehaviour.STOP &&
+                this.state === ClockState.STOPPED
             )
                 return new SMPTE("00:00:00:00");
             if (this.state === ClockState.RESET) {
@@ -43,18 +42,14 @@ export class OffsetClockSource implements MutableClockSource {
                     case Offset.NONE:
                     case Offset.START:
                         return new SMPTE(this.settings.offset).setOffset(
-                            Offset.END
+                            Offset.START
                         );
                     case Offset.END:
-                        return settings.duration
-                            .subtract(this.settings.offset, true)
-                            .setOffset(Offset.END);
+                        return new SMPTE(this.settings.offset).setOffset(
+                            Offset.END
+                        );
                 }
             }
-            const difference = settings.duration.subtract(
-                this.settings.offset,
-                true
-            );
             switch (this.settings.offset.offset()) {
                 case Offset.NONE:
                 case Offset.START:
@@ -63,66 +58,74 @@ export class OffsetClockSource implements MutableClockSource {
                         this.state === ClockState.STOPPED
                     ) {
                         if (
-                            this.stopTime.lessThanOrEqual(
-                                difference,
-                                true
-                            )
+                            this.stopTime.lessThanOrEqual(settings.time, true)
                         ) {
-                            return settings.duration
+                            return settings.time
                                 .subtract(this.stopTime, true)
-                                .subtract(this.settings.offset, true)
+                                .add(this.settings.offset, true)
                                 .setOffset(Offset.END);
                         }
                         return this.stopTime
-                            .subtract(settings.duration, true)
-                            .add(this.settings.offset, true)
+                            .subtract(settings.time, true)
+                            .subtract(this.settings.offset, true)
                             .setOffset(Offset.START);
                     }
                     if (
-                        authClock
+                        getSyncClock()
                             .current()
-                            .greaterThanOrEqual(this.settings.offset, true)
+                            .greaterThanOrEqual(settings.time, true)
                     ) {
                         return authClock
                             .current()
                             .subtract(this.settings.offset, true)
                             .setOffset(Offset.START);
+                    } else {
+                        const c = authClock.current().add(this.settings.offset);
+                        c.setOffset(Offset.END);
+                        return c;
                     }
-                    return this.settings.offset
-                        .subtract(authClock.current(), true)
-                        .setOffset(Offset.END);
                 case Offset.END:
                     if (
                         this.state === ClockState.PAUSED ||
                         this.state === ClockState.STOPPED
                     ) {
                         if (
-                            this.stopTime.lessThanOrEqual(
-                                difference,
-                                true
-                            )
+                            this.stopTime.lessThanOrEqual(settings.time, true)
                         ) {
-                            return settings.duration
+                            return settings.time
                                 .subtract(this.stopTime, true)
                                 .subtract(this.settings.offset, true)
                                 .setOffset(Offset.END);
                         }
                         return this.stopTime
-                            .subtract(settings.duration, true)
+                            .subtract(settings.time, true)
                             .add(this.settings.offset, true)
                             .setOffset(Offset.START);
                     }
                     if (
-                        authClock.current().greaterThanOrEqual(difference, true)
+                        getSyncClock()
+                            .current()
+                            .greaterThanOrEqual(settings.time, true)
                     ) {
                         return authClock
                             .current()
-                            .subtract(difference, true)
+                            .add(this.settings.offset, true)
                             .setOffset(Offset.START);
+                    } else {
+                        const current = authClock.current();
+                        if (
+                            current.lessThanOrEqual(this.settings.offset, true)
+                        ) {
+                            return this.settings.offset
+                                .subtract(current)
+                                .setOffset(Offset.START);
+                        } else {
+                            return authClock
+                                .current()
+                                .subtract(this.settings.offset)
+                                .setOffset(Offset.END);
+                        }
                     }
-                    return difference
-                        .subtract(authClock.current(), true)
-                        .setOffset(Offset.END);
             }
         }
         return new SMPTE();
@@ -131,7 +134,7 @@ export class OffsetClockSource implements MutableClockSource {
     start(): void {
         if (this.state === ClockState.STOPPED) this.reset(false);
         const authClock = this.getHandler()?.getClock(this.settings.authority);
-        if (authClock && authClock.type === "timer") {
+        if (authClock && authClock.type === "tod") {
             if (authClock.state === ClockState.RUNNING) {
                 this.state = ClockState.RUNNING;
                 EventHandler.emit(
@@ -149,82 +152,61 @@ export class OffsetClockSource implements MutableClockSource {
         if (this.state !== ClockState.STOPPED) {
             EventHandler.emit("clock.stop", this.owner, this.show, this.id);
             this.state = ClockState.STOPPED;
-            this.stopTime =
-                this.getHandler()
-                    ?.getClock(this.settings.authority)
-                    ?.current() || new SMPTE();
+            this.stopTime = getSyncClock().current();
             if (override) this.override = true;
         }
     }
 
-    pause(override: boolean): void {
+    pause(override:boolean): void {
         if (this.state === ClockState.RUNNING) {
-            this.state = ClockState.PAUSED;
             EventHandler.emit("clock.pause", this.owner, this.show, this.id);
-            this.stopTime =
-                this.getHandler()
-                    ?.getClock(this.settings.authority)
-                    ?.current() || new SMPTE();
+            this.state = ClockState.PAUSED;
+            this.stopTime = getSyncClock().current();
             if (override) this.override = true;
         }
     }
 
-    reset(override: boolean): void {
+    reset(override:boolean): void {
         if (this.state !== ClockState.STOPPED) this.stop(override);
         EventHandler.emit("clock.reset", this.owner, this.show, this.id);
-        this.overrun = false;
         this.state = ClockState.RESET;
-        this.complete = false;
+        this.overrun = false;
+        this.complete = true;
+        this.stopTime = new SMPTE();
         if (override) this.override = true;
     }
 
     update(): void {
         const authClock = this.getHandler()?.getClock(this.settings.authority);
-        if (authClock && authClock.type === "timer") {
+        if (authClock && authClock.type === "tod") {
             if (this.lastParentState !== authClock.state)
                 this.lastParentState = authClock.state;
             switch (this.lastParentState) {
                 case ClockState.RESET:
-                    if (
-                        this.state !== ClockState.RESET &&
-                        this.automation &&
-                        !this.override
-                    )
+                    if (this.state !== ClockState.RESET && this.automation && !this.override)
                         this.reset(false);
                     break;
                 case ClockState.STOPPED:
-                    if (
-                        this.state !== ClockState.STOPPED &&
-                        this.automation &&
-                        !this.override
-                    )
+                    if (this.state !== ClockState.STOPPED && this.automation && !this.override)
                         this.stop(false);
                     break;
                 case ClockState.PAUSED:
-                    if (
-                        this.state !== ClockState.PAUSED &&
-                        this.automation &&
-                        !this.override
-                    )
+                    if (this.state !== ClockState.PAUSED && this.automation && !this.override)
                         this.pause(false);
                     break;
                 case ClockState.RUNNING:
-                    if (
-                        this.state !== ClockState.RUNNING &&
-                        this.automation &&
-                        !this.complete &&
-                        !this.override
-                    )
+                    if (this.state !== ClockState.RUNNING && this.automation && !this.complete && !this.override)
                         this.start();
+                    break;
             }
             if (this.state === ClockState.RUNNING && !this.overrun) {
                 const settings = (authClock.data() as any)!
-                    .settings as TimerSettings;
+                    .settings as ToTimeSettings;
                 const end =
                     this.settings.offset.offset() === Offset.END
-                        ? settings.duration.subtract(this.settings.offset, true)
-                        : this.settings.offset;
-                if (authClock.current().greaterThanOrEqual(end)) {
+                        ? settings.time.subtract(this.settings.offset, true)
+                        : settings.time.add(this.settings.offset, true);
+                if (getSyncClock().current().greaterThanOrEqual(end)) {
                     this.complete = true;
                     EventHandler.emit(
                         "clock.complete",
@@ -249,22 +231,19 @@ export class OffsetClockSource implements MutableClockSource {
     }
 
     data(): object | undefined {
-        return {
-            show: this.show,
-            settings: this.settings
-        };
+        return { show: this.show, settings: this.settings };
     }
 
-    public setData(data: any) {
+    setData(data: any): void {
         if (data as OffsetSettings) this.settings = data;
         if (data?.settings as OffsetSettings) this.settings = data.settings;
     }
 
     private getHandler(): ShowHandler | undefined {
-        return globalShowHandler(); // TODO undate to actually get show
+        return globalShowHandler();
     }
 
-    type: string = "offset";
+    type: string = "tod:offset";
     owner: string;
     show: string;
     id: string;
@@ -272,9 +251,9 @@ export class OffsetClockSource implements MutableClockSource {
     state: ClockState = ClockState.RESET;
     overrun: boolean = false;
     automation: boolean;
-    private stopTime: SMPTE = new SMPTE();
     private lastParentState: ClockState = ClockState.RESET;
-    private complete: boolean = false;
+    private stopTime: SMPTE = new SMPTE();
     private override: boolean = false;
+    private complete: boolean = false;
     private settings: OffsetSettings;
 }

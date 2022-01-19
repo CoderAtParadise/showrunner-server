@@ -7,10 +7,12 @@ export const encodeClockSouce = (clock: ClockSource): object => {
         owner: clock.owner,
         show: clock.show,
         id: clock.id,
-        display: clock.display,
+        displayName: clock.displayName,
         current: clock.current().toString(),
         framerate: clock.current().frameRate(),
         data: encodeData(clock.data() || {}),
-        state: clock.state
+        state: clock.state,
+        overrun: clock.overrun,
+        automation: clock.automation
     };
 };

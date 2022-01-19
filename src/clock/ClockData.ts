@@ -1,14 +1,8 @@
-import { SMPTE } from "@coderatparadise/showrunner-common";
+import { SMPTE, ClockDirection } from "@coderatparadise/showrunner-common";
 
 export enum ClockBehaviour {
     STOP = "stop",
-    HIDE = "hide",
     OVERRUN = "overrun"
-}
-
-export enum ClockDirection {
-    COUNTDOWN = "countdown",
-    COUNTUP = "countup"
 }
 
 export interface TimerSettings {
@@ -19,6 +13,7 @@ export interface TimerSettings {
 
 export interface OffsetSettings {
     authority: string;
+    behaviour: ClockBehaviour;
     offset: SMPTE;
 }
 

@@ -1,8 +1,8 @@
 import {
     ICommand,
-    ShowHandler,
     registerCommand
 } from "@coderatparadise/showrunner-common";
+import { globalShowHandler } from "../../show/GlobalShowHandler";
 import { ClockCommandData, isClockCommandData } from "./ClockCommandData";
 
 interface ClockCreateData extends ClockCommandData {
@@ -20,11 +20,13 @@ export const StopCommand: ICommand<ClockCreateData> = {
     validate: (data?: any): boolean => {
         return isClockCreateData(data);
     },
-    run: (handler: ShowHandler, data?: ClockCommandData) => {
-        if (data) handler.getClock(data?.id)?.start();
+    run: (data?: ClockCommandData) : boolean => {
+        const handler = globalShowHandler(); // TODO replace with get
+        handler.getClock(data!.id)?.start();
+        return true;
     }
 };
 
-export default function init() {
+export function init() {
     registerCommand(StopCommand);
 }
