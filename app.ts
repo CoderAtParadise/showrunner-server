@@ -11,9 +11,9 @@ import {
     initGlobalShowHandler
 } from "./src/show/GlobalShowHandler";
 import { OffsetClockSource } from "./src/clock/OffsetClockSource";
-import { ToTimeClockSource } from "./src/clock/ToDClockSource";
+import { TODClockSource } from "./src/clock/ToDClockSource";
 import { ClockBehaviour } from "./src/clock/ClockData";
-import { ToTimeOffsetClockSource } from "./src/clock/ToDOffsetClockSource";
+import { TODOffsetClockSource } from "./src/clock/ToDOffsetClockSource";
 import { router as ClockSyncRouter } from "./src/route/production/ClockSyncRoute";
 import { router as RunsheetRouter } from "./src/route/production/RunsheetRoute";
 import { router as CommandRouter } from "./src/route/Command";
@@ -45,9 +45,6 @@ const timer = new TimerClockSource(
     }
 );
 CommandInit();
-app.use(ClockSyncRouter);
-app.use(RunsheetRouter);
-app.use(CommandRouter);
 EventHandler.onAny((msg, owner, show, id) => {
     if (msg !== "clock")
         Debug(("showrunner:" + msg) as string)(`${show}:${owner}:${id}`);
@@ -76,7 +73,7 @@ const offsetNegative = new OffsetClockSource(
         offset: new SMPTE("-00:00:10:00")
     }
 );
-const startTime = new ToTimeClockSource(
+const startTime = new TODClockSource(
     "system",
     "system",
     "start_time",
@@ -87,7 +84,7 @@ const startTime = new ToTimeClockSource(
         time: new SMPTE("12:10:00:00")
     }
 );
-const startTimeOffset = new ToTimeOffsetClockSource(
+const startTimeOffset = new TODOffsetClockSource(
     "system",
     "system",
     "start_time_offset",
@@ -99,7 +96,7 @@ const startTimeOffset = new ToTimeOffsetClockSource(
         offset: new SMPTE("-00:00:30:00")
     }
 );
-const startTimeOffsetPositive = new ToTimeOffsetClockSource(
+const startTimeOffsetPositive = new TODOffsetClockSource(
     "system",
     "system",
     "start_time_offset_positive",
@@ -122,6 +119,9 @@ app.use(
         stream: { write: (msg: any) => Debug("showrunner:http")(msg) }
     })
 );
+app.use(ClockSyncRouter);
+app.use(RunsheetRouter);
+app.use(CommandRouter);
 app.listen(port, () => {
     debug(`Running at http://localhost:${port}`);
 });

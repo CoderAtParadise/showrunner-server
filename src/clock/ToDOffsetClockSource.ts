@@ -10,7 +10,7 @@ import { EventHandler } from "../Scheduler";
 import { globalShowHandler } from "../show/GlobalShowHandler";
 import { ClockBehaviour, OffsetSettings, ToTimeSettings } from "./ClockData";
 
-export class ToTimeOffsetClockSource implements MutableClockSource {
+export class TODOffsetClockSource implements MutableClockSource {
     constructor(
         owner: string,
         show: string,
@@ -235,8 +235,9 @@ export class ToTimeOffsetClockSource implements MutableClockSource {
     }
 
     setData(data: any): void {
-        if (data as OffsetSettings) this.settings = data;
-        if (data?.settings as OffsetSettings) this.settings = data.settings;
+        if (data?.displayName as string) this.displayName = data.displayName;
+        if (data?.time as string) this.settings.offset = new SMPTE(data.time);
+        if (data?.behaviour as string) this.settings.behaviour = data.behaviour;
     }
 
     private getHandler(): ShowHandler | undefined {

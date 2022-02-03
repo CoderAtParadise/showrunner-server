@@ -4,10 +4,11 @@ import {
     Storage,
     ClockIdentifier,
     ClockState,
-    getSyncClock
+    ClockOptions,
+    getSyncClock,
+    IProperty,
+    History
 } from "@coderatparadise/showrunner-common";
-import { IProperty } from "@coderatparadise/showrunner-common/src/IProperty";
-import { ClockOptions } from "@coderatparadise/showrunner-common/src/ShowHandler";
 import { EventHandler } from "../Scheduler";
 
 class GlobalShowHandler implements ShowHandler {
@@ -16,8 +17,7 @@ class GlobalShowHandler implements ShowHandler {
     }
 
     getClock(id: string): ClockSource | undefined {
-        const clock = this.showClocks.get(id);
-        if (clock?.active) return clock?.clock;
+        return this.showClocks.get(id)?.clock;
     }
 
     enableClock(id: string): boolean {
@@ -57,7 +57,10 @@ class GlobalShowHandler implements ShowHandler {
         this.showClocks.set(clock.id, {
             clock: clock,
             active: options?.active || true,
-            automation: options?.automation || false,
+            configurable:
+                options?.configurable !== undefined
+                    ? options?.configurable
+                    : true,
             renderChannel: options?.renderChannel || []
         });
         return true;
@@ -83,6 +86,18 @@ class GlobalShowHandler implements ShowHandler {
         // NOOP
     }
 
+    history(): History[] {
+        return [];
+    }
+
+    writeHistory(): boolean {
+        return false;
+    }
+
+    undoHistory(): boolean {
+        return false;
+    }
+
     id: string = "system";
     private showClocks: Map<string, ClockIdentifier> = new Map<
         string,
@@ -93,7 +108,9 @@ class GlobalShowHandler implements ShowHandler {
 export const initGlobalShowHandler = (): void => {
     if (mGlobalShowHandler === undefined) {
         mGlobalShowHandler = new GlobalShowHandler();
-        mGlobalShowHandler.registerClock(getSyncClock());
+        mGlobalShowHandler.registerClock(getSyncClock(), {
+            configurable: false
+        });
         EventHandler.on("clock", () => globalShowHandler().tickClocks());
     }
 };

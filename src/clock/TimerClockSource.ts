@@ -76,7 +76,8 @@ export class TimerClockSource implements MutableClockSource {
 
     update(): void {
         if (
-            this.state === ClockState.RUNNING && !this.overrun &&
+            this.state === ClockState.RUNNING &&
+            !this.overrun &&
             this.current().greaterThan(this.settings.duration)
         ) {
             EventHandler.emit("clock.complete", this.owner, this.show, this.id);
@@ -104,12 +105,10 @@ export class TimerClockSource implements MutableClockSource {
     }
 
     setData(data: any): void {
-        if (data as string) this.displayName = data;
-        if (data?.display as string) this.displayName = data.display;
-        if (data as ClockState) this.state = data;
-        if (data?.state as ClockState) this.state = data.state;
-        if (data as TimerSettings) this.settings = data;
-        if (data?.settings as TimerSettings) this.settings = data.settings;
+        if (data?.displayName as string) this.displayName = data.displayName;
+        if (data?.time as string) this.settings.duration = new SMPTE(data.time);
+        if (data?.behaviour as string) this.settings.behaviour = data.behaviour;
+        if (data?.direction as string) this.settings.direction = data.direction;
     }
 
     type: string = "timer";

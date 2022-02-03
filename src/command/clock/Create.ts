@@ -1,32 +1,119 @@
 import {
+    ClockDirection,
     ICommand,
-    registerCommand
+    SMPTE
 } from "@coderatparadise/showrunner-common";
+import { TimerClockSource } from "../../clock/TimerClockSource";
 import { globalShowHandler } from "../../show/GlobalShowHandler";
-import { ClockCommandData, isClockCommandData } from "./ClockCommandData";
+import { v4 as uuidv4 } from "uuid";
+import { ClockBehaviour } from "../../clock/ClockData";
+import { TODClockSource } from "../../clock/ToDClockSource";
+import { OffsetClockSource } from "../../clock/OffsetClockSource";
+import { TODOffsetClockSource } from "../../clock/ToDOffsetClockSource";
 
-interface ClockCreateData extends ClockCommandData {
-    owner: string;
-    type: string;
-    display: string;
+interface ClockCreateData {
+    show: string;
+    data: {
+        owner: string;
+        type: string;
+        displayName: string;
+        authority: string;
+        time: string;
+        behaviour: string;
+        direction: string;
+    };
 }
 
 function isClockCreateData(data: any): data is ClockCreateData {
-    return isClockCommandData(data);
+    return (
+        data.show !== undefined &&
+        data.data !== undefined &&
+        data.data.owner !== undefined &&
+        data.data.type !== undefined &&
+        data.data.displayName !== undefined &&
+        data.data.authority !== undefined &&
+        data.data.time !== undefined &&
+        data.data.behaviour !== undefined &&
+        data.data.direction !== undefined
+    );
 }
 
-export const StopCommand: ICommand<ClockCreateData> = {
+export const CreateCommand: ICommand<ClockCreateData> = {
     id: "clock.create",
     validate: (data?: any): boolean => {
         return isClockCreateData(data);
     },
-    run: (data?: ClockCommandData) : boolean => {
-        const handler = globalShowHandler(); // TODO replace with get
-        handler.getClock(data!.id)?.start();
-        return true;
+    run: (data?: ClockCreateData): boolean => {
+        const authority = globalShowHandler().getClock(data!.data.authority);
+        switch (data?.data.type) {
+            case "tod":
+                return globalShowHandler().registerClock(
+                    new TODClockSource(
+                        data.data.owner,
+                        data.show,
+                        uuidv4(),
+                        data.data.displayName,
+                        true,
+                        {
+                            behaviour: data.data.behaviour as ClockBehaviour,
+                            time: new SMPTE(data.data.time)
+                        }
+                    )
+                );
+            case "timer":
+                return globalShowHandler().registerClock(
+                    new TimerClockSource(
+                        data.data.owner,
+                        data.show,
+                        uuidv4(),
+                        data.data.displayName,
+                        true,
+                        {
+                            behaviour: data.data.behaviour as ClockBehaviour,
+                            direction: data.data.direction as ClockDirection,
+                            duration: new SMPTE(data.data.time)
+                        }
+                    )
+                );
+            case "offset":
+                switch (authority?.type) {
+                    case "timer":
+                        return globalShowHandler().registerClock(
+                            new OffsetClockSource(
+                                data.data.owner,
+                                data.show,
+                                uuidv4(),
+                                data.data.displayName,
+                                true,
+                                {
+                                    offset: new SMPTE(data.data.time),
+                                    behaviour: data.data
+                                        .behaviour as ClockBehaviour,
+                                    authority: data.data.authority
+                                }
+                            )
+                        );
+                    case "tod":
+                        return globalShowHandler().registerClock(
+                            new TODOffsetClockSource(
+                                data.data.owner,
+                                data.show,
+                                uuidv4(),
+                                data.data.displayName,
+                                true,
+                                {
+                                    offset: new SMPTE(data.data.time),
+                                    behaviour: data.data
+                                        .behaviour as ClockBehaviour,
+                                    authority: data.data.authority
+                                }
+                            )
+                        );
+                    default:
+                        return false;
+                }
+            default:
+                return false;
+        }
     }
 };
-
-export function init() {
-    registerCommand(StopCommand);
-}

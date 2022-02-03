@@ -1,13 +1,16 @@
-import { init as CreateInit } from "./Create";
-import { init as PlayInit } from "./Play";
-import { init as StopInit } from "./Stop";
-import { init as PauseInit } from "./Pause";
-import { init as ResetInit } from "./Reset";
+import { CreateCommand } from "./Create";
+import { PlayCommand } from "./Play";
+import { StopCommand } from "./Stop";
+import { PauseCommand } from "./Pause";
+import { ResetCommand } from "./Reset";
+import { EditCommand } from "./Edit";
+import { registerCommand } from "@coderatparadise/showrunner-common";
 
 export function init() {
-    CreateInit();
-    PlayInit();
-    StopInit();
-    PauseInit();
-    ResetInit();
+    registerCommand(CreateCommand);
+    registerCommand(PlayCommand);
+    registerCommand(StopCommand);
+    registerCommand(PauseCommand);
+    registerCommand(ResetCommand);
+    registerCommand(EditCommand);
 }

@@ -12,7 +12,5 @@ export const encodeClockSouce = (clock: ClockSource): object => {
         framerate: clock.current().frameRate(),
         data: encodeData(clock.data() || {}),
         state: clock.state,
-        overrun: clock.overrun,
-        automation: clock.automation
     };
 };

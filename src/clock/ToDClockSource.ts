@@ -8,7 +8,7 @@ import {
 import { EventHandler } from "../Scheduler";
 import { ClockBehaviour, ToTimeSettings } from "./ClockData";
 
-export class ToTimeClockSource implements MutableClockSource {
+export class TODClockSource implements MutableClockSource {
     constructor(
         owner: string,
         show: string,
@@ -100,8 +100,9 @@ export class ToTimeClockSource implements MutableClockSource {
     }
 
     setData(data: any): void {
-        if (data as ToTimeSettings) this.settings = data;
-        if (data?.settings as ToTimeSettings) this.settings = data.settings;
+        if (data?.displayName as string) this.displayName = data.displayName;
+        if (data?.time as string) this.settings.time = new SMPTE(data.time);
+        if (data?.behaviour as string) this.settings.behaviour = data.behaviour;
     }
 
     type: string = "tod";

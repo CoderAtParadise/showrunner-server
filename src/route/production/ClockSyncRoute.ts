@@ -19,7 +19,7 @@ router.get("/production/:show/clocks", async (req: Request, res: Response) => {
                         clocks.push({
                             clock: encodeClockSouce(clock.clock),
                             active: clock.active,
-                            automation: clock.automation,
+                            configurable: clock.configurable,
                             renderChannel: clock.renderChannel
                         });
                     });

@@ -62,12 +62,7 @@ export class OffsetClockSource implements MutableClockSource {
                         this.state === ClockState.PAUSED ||
                         this.state === ClockState.STOPPED
                     ) {
-                        if (
-                            this.stopTime.lessThanOrEqual(
-                                difference,
-                                true
-                            )
-                        ) {
+                        if (this.stopTime.lessThanOrEqual(difference, true)) {
                             return settings.duration
                                 .subtract(this.stopTime, true)
                                 .subtract(this.settings.offset, true)
@@ -96,12 +91,7 @@ export class OffsetClockSource implements MutableClockSource {
                         this.state === ClockState.PAUSED ||
                         this.state === ClockState.STOPPED
                     ) {
-                        if (
-                            this.stopTime.lessThanOrEqual(
-                                difference,
-                                true
-                            )
-                        ) {
+                        if (this.stopTime.lessThanOrEqual(difference, true)) {
                             return settings.duration
                                 .subtract(this.stopTime, true)
                                 .subtract(this.settings.offset, true)
@@ -256,8 +246,9 @@ export class OffsetClockSource implements MutableClockSource {
     }
 
     public setData(data: any) {
-        if (data as OffsetSettings) this.settings = data;
-        if (data?.settings as OffsetSettings) this.settings = data.settings;
+        if (data?.displayName as string) this.displayName = data.displayName;
+        if (data?.time as string) this.settings.offset = new SMPTE(data.time);
+        if (data?.behaviour as string) this.settings.behaviour = data.behaviour;
     }
 
     private getHandler(): ShowHandler | undefined {

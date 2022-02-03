@@ -1,4 +1,4 @@
-import { ICommand, registerCommand } from "@coderatparadise/showrunner-common";
+import { ICommand } from "@coderatparadise/showrunner-common";
 import { globalShowHandler } from "../../show/GlobalShowHandler";
 import { ClockCommandData, isClockCommandData } from "./ClockCommandData";
 
@@ -13,7 +13,3 @@ export const StopCommand: ICommand<ClockCommandData> = {
         return true;
     }
 };
-
-export function init() {
-    registerCommand(StopCommand);
-}
