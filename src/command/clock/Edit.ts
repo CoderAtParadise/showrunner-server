@@ -18,10 +18,8 @@ export const EditCommand: ICommand<ClockEditData> = {
     run: (data?: ClockEditData) => {
         const handler = globalShowHandler(); // TODO replace with get
         const clock = handler.getClock(data!.id);
-        if (clock && (clock as MutableClockSource)) {
-            debug("showrunner:debug")(data!.data);
+        if (clock && (clock as MutableClockSource))
             (clock as MutableClockSource).setData(data!.data);
-        }
 
         return false;
     }
