@@ -13,6 +13,7 @@ import { TODOffsetClockSource } from "../../clock/ToDOffsetClockSource";
 
 interface ClockCreateData {
     show: string;
+    id?: string;
     data: {
         owner: string;
         type: string;
@@ -44,14 +45,16 @@ export const CreateCommand: ICommand<ClockCreateData> = {
         return isClockCreateData(data);
     },
     run: (data?: ClockCreateData): boolean => {
+        const handler = globalShowHandler();
         const authority = globalShowHandler().getClock(data!.data.authority);
         switch (data?.data.type) {
             case "tod":
-                return globalShowHandler().registerClock(
+                handler.markDirty(true);
+                return handler.registerClock(
                     new TODClockSource(
                         data.data.owner,
                         data.show,
-                        uuidv4(),
+                        data?.id ? data.id : uuidv4(),
                         data.data.displayName,
                         true,
                         {
@@ -61,11 +64,12 @@ export const CreateCommand: ICommand<ClockCreateData> = {
                     )
                 );
             case "timer":
-                return globalShowHandler().registerClock(
+                handler.markDirty(true);
+                return handler.registerClock(
                     new TimerClockSource(
                         data.data.owner,
                         data.show,
-                        uuidv4(),
+                        data?.id ? data.id : uuidv4(),
                         data.data.displayName,
                         true,
                         {
@@ -78,11 +82,12 @@ export const CreateCommand: ICommand<ClockCreateData> = {
             case "offset":
                 switch (authority?.type) {
                     case "timer":
-                        return globalShowHandler().registerClock(
+                        handler.markDirty(true);
+                        return handler.registerClock(
                             new OffsetClockSource(
                                 data.data.owner,
                                 data.show,
-                                uuidv4(),
+                                data?.id ? data.id : uuidv4(),
                                 data.data.displayName,
                                 true,
                                 {
@@ -94,11 +99,12 @@ export const CreateCommand: ICommand<ClockCreateData> = {
                             )
                         );
                     case "tod":
-                        return globalShowHandler().registerClock(
+                        handler.markDirty(true);
+                        return handler.registerClock(
                             new TODOffsetClockSource(
                                 data.data.owner,
                                 data.show,
-                                uuidv4(),
+                                data?.id ? data.id : uuidv4(),
                                 data.data.displayName,
                                 true,
                                 {

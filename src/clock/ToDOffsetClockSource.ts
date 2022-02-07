@@ -231,7 +231,7 @@ export class TODOffsetClockSource implements MutableClockSource {
     }
 
     data(): object | undefined {
-        return { show: this.show, settings: this.settings };
+        return { settings: this.settings };
     }
 
     setData(data: any): void {

@@ -10,6 +10,7 @@ import {
     History
 } from "@coderatparadise/showrunner-common";
 import { EventHandler } from "../Scheduler";
+import { loadClocks, saveClocks } from "../util/FileHandler";
 
 class GlobalShowHandler implements ShowHandler {
     listClocks(): ClockIdentifier[] {
@@ -98,7 +99,14 @@ class GlobalShowHandler implements ShowHandler {
         return false;
     }
 
+    markDirty(dirty: boolean): void {
+        this.dirty = dirty;
+    }
+
     id: string = "system";
+    displayName: string = "System";
+    location: string = "system";
+    dirty: boolean = false;
     private showClocks: Map<string, ClockIdentifier> = new Map<
         string,
         ClockIdentifier
@@ -112,6 +120,13 @@ export const initGlobalShowHandler = (): void => {
             configurable: false
         });
         EventHandler.on("clock", () => globalShowHandler().tickClocks());
+        loadClocks();
+        setInterval(() => {
+            if (mGlobalShowHandler.dirty) {
+                saveClocks();
+                mGlobalShowHandler.markDirty(false);
+            }
+        }, 5000);
     }
 };
 

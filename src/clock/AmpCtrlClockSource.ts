@@ -1,14 +1,10 @@
 import {
     ClockState,
     ClockSource,
-    SMPTE,
-    setSyncClock,
-    FallbackSyncClockSource
+    SMPTE
 } from "@coderatparadise/showrunner-common";
 import udp, { Socket } from "dgram";
 import Debug from "debug";
-
-interface VideoInformation {}
 
 export class AmpCtrlClock implements ClockSource {
     constructor(address: string, port: number) {
@@ -17,15 +13,25 @@ export class AmpCtrlClock implements ClockSource {
         this.server = udp.createSocket("udp4");
         this.createServer();
     }
-    setData: (data: any) => void;
-    current: () => SMPTE;
-    data: () => object | undefined;
-    start: () => void;
-    pause: () => void;
-    stop: () => void;
-    reset: () => void;
 
-    update(): void {}
+    current(): SMPTE {
+        return new SMPTE();
+    }
+
+    start(): void {}
+
+    pause(): void {}
+
+    stop(): void {}
+    reset(): void {}
+
+    update(): void {
+        // let secOnly = Math.floor(this.rawTime);
+    }
+
+    data(): object | undefined {
+        return undefined;
+    }
 
     private createServer() {
         this.server.on("error", (err) => {
@@ -33,21 +39,25 @@ export class AmpCtrlClock implements ClockSource {
             this.server.close();
         });
         this.server.on("message", (message) => {
-            // NO
+            this.rawTime = message.readFloatBE();
         });
-        this.server.on("close", () => {
+        this.server.on("listening", () => {
+            this.state = ClockState.RUNNING;
         });
+        this.server.on("close", () => {});
         this.server.bind(this.port, this.address);
     }
 
     owner: string = "system";
     show: string = "system";
     id: string = "ampctrl";
-    type: string = "AmpCtrl";
-    display: string = "Video Clock";
+    type: string = "ampctrl";
+    displayName: string = "Video Sync Clock";
+    overrun: boolean = false;
+    automation: boolean = false;
     state: ClockState = ClockState.STOPPED;
     private server: Socket;
     private address: string;
     private port: number;
-    private info?: VideoInformation;
+    private rawTime?: number;
 }
