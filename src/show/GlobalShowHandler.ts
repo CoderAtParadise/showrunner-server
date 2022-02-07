@@ -11,6 +11,7 @@ import {
 } from "@coderatparadise/showrunner-common";
 import { EventHandler } from "../Scheduler";
 import { loadClocks, saveClocks } from "../util/FileHandler";
+const { AMPCtrlClock } = require("../clock/AmpCtrlClock");
 
 class GlobalShowHandler implements ShowHandler {
     listClocks(): ClockIdentifier[] {
@@ -117,6 +118,9 @@ export const initGlobalShowHandler = (): void => {
     if (mGlobalShowHandler === undefined) {
         mGlobalShowHandler = new GlobalShowHandler();
         mGlobalShowHandler.registerClock(getSyncClock(), {
+            configurable: false
+        });
+        mGlobalShowHandler.registerClock(new AMPCtrlClock(13000), {
             configurable: false
         });
         EventHandler.on("clock", () => globalShowHandler().tickClocks());

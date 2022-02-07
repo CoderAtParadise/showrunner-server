@@ -3,7 +3,7 @@ import {
     ShowHandler
 } from "@coderatparadise/showrunner-common";
 import debug from "debug";
-import fs, { Dirent } from "fs";
+import fs from "fs";
 import {
     OffsetSettings,
     TimerSettings,
@@ -18,7 +18,10 @@ export const saveClocks = (): void => {
     globalShowHandler()
         .listClocks()
         .forEach((clock) => {
-            if (clock.clock.type !== "sync") {
+            if (
+                clock.clock.type !== "sync" &&
+                clock.clock.type !== "ampctrlclock"
+            ) {
                 const object: LooseObject = {};
                 object.type = clock.clock.type;
                 object.owner = clock.clock.owner;
