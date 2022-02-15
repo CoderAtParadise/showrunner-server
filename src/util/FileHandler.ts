@@ -69,7 +69,7 @@ export const saveClocks = (): void => {
 export const loadClocks = (): void => {
     load("storage", "clocks", (json: any) => {
         json.forEach((j: any) => {
-            if (CreateCommand.validate(j)) CreateCommand.run(j);
+            if (CreateCommand.validate(j) === undefined) CreateCommand.run(j);
         });
     });
 };
@@ -82,9 +82,9 @@ export const saveShowHandler = (show: ShowHandler): void => {
     save("storage/runsheet", show.location, saveObject);
 };
 
-export const loadShowHandler = (id: string, location: string): void => {
-    // NOOP
-};
+// export const loadShowHandler = (id: string, location: string): void => {
+//     // NOOP
+// };
 
 const save = (dir: string, name: string, json: any): void => {
     fs.writeFile(

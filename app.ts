@@ -4,16 +4,9 @@ import Debug from "debug";
 import cors from "cors";
 import bodyparser from "body-parser";
 import { EventHandler } from "./src/Scheduler";
-import { TimerClockSource } from "./src/clock/TimerClockSource";
-import { SMPTE, ClockDirection } from "@coderatparadise/showrunner-common";
 import {
-    globalShowHandler,
     initGlobalShowHandler
 } from "./src/show/GlobalShowHandler";
-import { OffsetClockSource } from "./src/clock/OffsetClockSource";
-import { TODClockSource } from "./src/clock/ToDClockSource";
-import { ClockBehaviour } from "./src/clock/ClockData";
-import { TODOffsetClockSource } from "./src/clock/ToDOffsetClockSource";
 import { router as ClockSyncRouter } from "./src/route/production/ClockSyncRoute";
 import { router as RunsheetRouter } from "./src/route/production/RunsheetRoute";
 import { router as CommandRouter } from "./src/route/Command";
@@ -35,7 +28,7 @@ const port = normalizePort(process.env.PORT || "3001");
 CommandInit();
 EventHandler.onAny((msg, owner, show, id) => {
     if (msg !== "clock")
-        Debug(("showrunner:" + msg) as string)(`${show}:${owner}:${id}`);
+        Debug(("showrunner:" + msg) as string)(`${show}(${owner}):${id}`);
 });
 app.use(
     morgan("dev", {

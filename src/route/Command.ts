@@ -1,20 +1,13 @@
 import { Router, Request, Response } from "express";
-import {
-    executeCommand,
-    commandExists
-} from "@coderatparadise/showrunner-common";
-import { schedule } from "../Scheduler";
+import { executeCommand } from "@coderatparadise/showrunner-common";
 export const router = Router();
 
 router.post("/command", (req: Request, res: Response) => {
     const data = req.body as { command: string; data: any };
-    if (commandExists(data.command)) {
-        schedule(() => {
-            executeCommand(data.command, data.data);
-        });
-        return res.sendStatus(200);
-    }
-    return res.sendStatus(404);
+    const result = executeCommand(data.command, data.data) as any;
+    const status = result.status;
+    delete result.status;
+    res.status(status).send(result);
 });
 
 export default router;

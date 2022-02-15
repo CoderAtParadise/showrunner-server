@@ -1,6 +1,7 @@
 import {
     ClockDirection,
     ICommand,
+    CommandReturn,
     SMPTE
 } from "@coderatparadise/showrunner-common";
 import { TimerClockSource } from "../../clock/TimerClockSource";
@@ -41,16 +42,18 @@ function isClockCreateData(data: any): data is ClockCreateData {
 
 export const CreateCommand: ICommand<ClockCreateData> = {
     id: "clock.create",
-    validate: (data?: any): boolean => {
-        return isClockCreateData(data);
+    validate: (data?: any): CommandReturn | undefined => {
+        return isClockCreateData(data)
+            ? undefined
+            : { status: 400, error: "clock.invalidData" };
     },
-    run: (data?: ClockCreateData): boolean => {
+    run: (data?: ClockCreateData): CommandReturn => {
         const handler = globalShowHandler();
         const authority = globalShowHandler().getClock(data!.data.authority);
         switch (data?.data.type) {
             case "tod":
                 handler.markDirty(true);
-                return handler.registerClock(
+                handler.registerClock(
                     new TODClockSource(
                         data.data.owner,
                         data.show,
@@ -63,9 +66,10 @@ export const CreateCommand: ICommand<ClockCreateData> = {
                         }
                     )
                 );
+                break;
             case "timer":
                 handler.markDirty(true);
-                return handler.registerClock(
+                handler.registerClock(
                     new TimerClockSource(
                         data.data.owner,
                         data.show,
@@ -79,11 +83,12 @@ export const CreateCommand: ICommand<ClockCreateData> = {
                         }
                     )
                 );
+                break;
             case "offset":
                 switch (authority?.type) {
                     case "timer":
                         handler.markDirty(true);
-                        return handler.registerClock(
+                        handler.registerClock(
                             new OffsetClockSource(
                                 data.data.owner,
                                 data.show,
@@ -98,9 +103,10 @@ export const CreateCommand: ICommand<ClockCreateData> = {
                                 }
                             )
                         );
+                        break;
                     case "tod":
                         handler.markDirty(true);
-                        return handler.registerClock(
+                        handler.registerClock(
                             new TODOffsetClockSource(
                                 data.data.owner,
                                 data.show,
@@ -115,11 +121,14 @@ export const CreateCommand: ICommand<ClockCreateData> = {
                                 }
                             )
                         );
+                        break;
                     default:
-                        return false;
+                        return { status: 404, error: "clock.unknownType" };
                 }
+                break;
             default:
-                return false;
+                return { status: 404, error: "clock.unknownType" };
         }
+        return { status: 200 };
     }
 };

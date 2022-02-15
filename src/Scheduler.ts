@@ -14,12 +14,13 @@ export const registerTickHandler = (cb: () => void) => tickHandlers.push(cb);
 export const schedule = (cb: () => void) => scheduled.push(cb);
 
 setInterval(() => {
-    tickHandlers.forEach((cb) => cb());
+    EventHandler.emit("clock");
+    // tickHandlers.forEach((cb) => cb());
     const temp = Array.from(scheduled);
     scheduled.length = 0;
     temp.forEach((cb) => cb());
 }, 1000);
 
-registerTickHandler(() => EventHandler.emit("clock"));
+// registerTickHandler(() => );
 
 export default { EventHandler, registerTickHandler, schedule };

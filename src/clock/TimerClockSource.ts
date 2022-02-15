@@ -70,6 +70,7 @@ export class TimerClockSource implements MutableClockSource {
         EventHandler.emit("clock.reset", this.owner, this.show, this.id);
         this.state = ClockState.RESET;
         this.overrun = false;
+        this.automation = false;
         this.startTimes.length = 0;
         this.endTimes.length = 0;
     }
