@@ -1,7 +1,7 @@
 {
     "delay" : "5000",
     "execMap": {
-        "ts": "yarn run ts-node"
+        "ts": "yarn ts-node"
     },
     "ignore": ["storage/","components/common/spec.json"]
 } 

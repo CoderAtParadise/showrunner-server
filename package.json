@@ -1,12 +1,12 @@
 {
   "name": "showrunner-server",
-  "version": "0.5.3",
-  "packageManager": "yarn@3.1.1",
+  "version": "1.0.0",
+  "packageManager": "yarn@3.2.0",
   "scripts": {
-    "start": "DEBUG='showrunner:*' nodemon app.ts",
-    "build": "tsc",
-    "lint": "yarn eslint app.ts src/**/*.ts",
-    "format": "yarn prettier --write 'app.ts' 'src/**/*.ts'"
+    "start": "DEBUG='showrunner:*' nodemon ./src/app.ts",
+    "build": "tsc -p tsconfig.json ",
+    "lint": "yarn eslint src/**/*.ts",
+    "format": "yarn prettier --write'src/**/*.ts'"
   },
   "resolutions": {
     "@coderatparadise/showrunner-common": "portal:/D:/Dev/showrunner-common",

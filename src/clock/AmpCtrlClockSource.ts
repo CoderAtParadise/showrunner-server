@@ -3,9 +3,8 @@ import {
     ClockSource,
     SMPTE
 } from "@coderatparadise/showrunner-common";
-import { CurrentTimeSense, Play } from "@coderatparadise/amp-grassvalley";
+import { CurrentTimeSense, Play, Stop } from "@coderatparadise/amp-grassvalley";
 import { openChannels } from "./VideoClockManager";
-import { Stop } from "@coderatparadise/amp-grassvalley/lib/cjs/Commands";
 
 export class AmpCtrlClock implements ClockSource {
     constructor(channel: string = "") {
