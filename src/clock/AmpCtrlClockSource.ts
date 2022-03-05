@@ -1,63 +1,69 @@
-// import {
-//     ClockState,
-//     ClockSource,
-//     SMPTE
-// } from "@coderatparadise/showrunner-common";
-// import udp, { Socket } from "dgram";
-// import Debug from "debug";
+import {
+    ClockState,
+    ClockSource,
+    SMPTE
+} from "@coderatparadise/showrunner-common";
+import { CurrentTimeSense, Play } from "@coderatparadise/amp-grassvalley";
+import { openChannels } from "./VideoClockManager";
+import { Stop } from "@coderatparadise/amp-grassvalley/lib/cjs/Commands";
 
-// export class AmpCtrlClock implements ClockSource {
-//     constructor(address: string, port: number) {
-//         this.address = address;
-//         this.port = port;
-//         this.server = udp.createSocket("udp4");
-//         this.createServer();
-//     }
+export class AmpCtrlClock implements ClockSource {
+    constructor(channel: string = "") {
+        this.channel = channel;
+    }
 
-//     current(): SMPTE {
-//         return new SMPTE();
-//     }
+    current(): SMPTE {
+        const currentTime = async () => {
+            return await (
+                await openChannels.get("PVS")!.sendCommand(CurrentTimeSense)
+            ).data;
+        };
+        currentTime().then((v) => {
+            this.lastTime = new SMPTE(v.timecode, 30);
+        });
+        return this.lastTime;
+    }
 
-//     start(): void {}
+    start(): void {
+        openChannels.get("PVS")!.sendCommand(Play, { byteCount: "0" });
+    }
 
-//     pause(): void {}
+    pause(): void {
+        openChannels.get("PVS")!.sendCommand(Stop, { byteCount: "0" }); // PVS pauses on stop and will resume where left off
+    }
 
-//     stop(): void {}
-//     reset(): void {}
+    stop(): void {
+        // get current loaded
+        // stop
+        // reset
+    }
 
-//     update(): void {
-//         // let secOnly = Math.floor(this.rawTime);
-//     }
+    reset(): void {
+        // openChannels.get("PVS")!.sendCommand() get current loaded
+        openChannels
+            .get("PVS")!
+            .sendCommand(Stop)
+            .then(() => {
+                // Require last
+            });
+    }
 
-//     data(): object | undefined {
-//         return undefined;
-//     }
+    update(): void {
+        // let secOnly = Math.floor(this.rawTime);
+    }
 
-//     private createServer() {
-//         this.server.on("error", (err) => {
-//             Debug("showrunner:amp")(err);
-//             // this.server.close();
-//         });
-//         this.server.on("message", (message) => {
-//             this.rawTime = message.readInt32LE();
-//         });
-//         this.server.on("listening", () => {
-//             this.state = ClockState.RUNNING;
-//         });
-//         this.server.on("close", () => {});
-//         this.server.bind(this.port, this.address);
-//     }
+    data(): object | undefined {
+        return { channel: this.channel };
+    }
 
-//     owner: string = "system";
-//     show: string = "system";
-//     id: string = "ampctrl";
-//     type: string = "ampctrl";
-//     displayName: string = "Video Sync Clock";
-//     overrun: boolean = false;
-//     automation: boolean = false;
-//     state: ClockState = ClockState.STOPPED;
-//     private server: Socket;
-//     private address: string;
-//     private port: number;
-//     private rawTime?: number;
-// }
+    owner: string = "system";
+    show: string = "system";
+    id: string = "ampctrl";
+    type: string = "ampctrl";
+    displayName: string = "Video Sync Clock";
+    overrun: boolean = false;
+    automation: boolean = false;
+    state: ClockState = ClockState.STOPPED;
+    private channel: string;
+    private lastTime: SMPTE = new SMPTE();
+}

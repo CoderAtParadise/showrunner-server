@@ -4,13 +4,16 @@ import Debug from "debug";
 import cors from "cors";
 import bodyparser from "body-parser";
 import { EventHandler } from "./src/Scheduler";
-import {
-    initGlobalShowHandler
-} from "./src/show/GlobalShowHandler";
+import { initGlobalShowHandler } from "./src/show/GlobalShowHandler";
 import { router as ClockSyncRouter } from "./src/route/production/ClockSyncRoute";
 import { router as RunsheetRouter } from "./src/route/production/RunsheetRoute";
 import { router as CommandRouter } from "./src/route/Command";
 import { init as CommandInit } from "./src/command/clock";
+import {
+    closeChannels,
+    openChannel,
+    openChannels
+} from "./src/clock/VideoClockManager";
 
 const normalizePort = (val: any) => {
     const port = parseInt(val, 10);
@@ -25,6 +28,7 @@ app.use(bodyparser.json());
 app.use(bodyparser.urlencoded({ extended: true }));
 const debug = Debug("showrunner:server");
 const port = normalizePort(process.env.PORT || "3001");
+openChannel("PVS", "192.168.0.16", 3811, "Channel 1");
 CommandInit();
 EventHandler.onAny((msg, owner, show, id) => {
     if (msg !== "clock")
@@ -38,6 +42,16 @@ app.use(
 app.use(ClockSyncRouter);
 app.use(RunsheetRouter);
 app.use(CommandRouter);
-app.listen(port, () => {
+const server = app.listen(port, () => {
     debug(`Running at http://localhost:${port}`);
 });
+
+const startGracefullShutdown = () => {
+    server.close(() => {
+        closeChannels();
+        process.exit(0);
+    });
+};
+
+process.on("SIGTERM", startGracefullShutdown);
+process.on("SIGINT", startGracefullShutdown);
