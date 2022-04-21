@@ -1,0 +1,435 @@
+{
+    "info": {
+        "_postman_id": "eaf54476-2ed6-4567-8662-14978dca7f7e",
+        "name": "Commands",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "clock",
+            "item": [
+                {
+                    "name": "clock.play",
+                    "id": "940f8b4b-ecdf-46ad-a28e-3b531c1ba021",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"command\": \"clock.play\",\n  \"data\": {\n    \"id\": \"TestClock\"\n  }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/production/:show/:session/command#clock.play",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "production",
+                                ":show",
+                                ":session",
+                                "command"
+                            ],
+                            "hash": "clock.play",
+                            "variable": [
+                                {
+                                    "key": "show",
+                                    "value": "system"
+                                },
+                                {
+                                    "key": "session",
+                                    "value": "system"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "clock.pause",
+                    "id": "7214ed3f-d479-4889-8ce8-4a839cf0fa1d",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"command\": \"clock.pause\",\n  \"data\": {\n    \"id\": \"TestClock\"\n  }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/production/:show/:session/command#clock.pause",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "production",
+                                ":show",
+                                ":session",
+                                "command"
+                            ],
+                            "hash": "clock.pause",
+                            "variable": [
+                                {
+                                    "key": "show",
+                                    "value": "system"
+                                },
+                                {
+                                    "key": "session",
+                                    "value": "system"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "clock.stop",
+                    "id": "abbd7b97-5253-4afc-b386-3b2d6d9bb8fd",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"command\": \"clock.stop\",\n  \"data\": {\n    \"id\": \"TestClock\"\n  }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/production/:show/:session/command#clock.stop",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "production",
+                                ":show",
+                                ":session",
+                                "command"
+                            ],
+                            "hash": "clock.stop",
+                            "variable": [
+                                {
+                                    "key": "show",
+                                    "value": "system",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "session",
+                                    "value": "system",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                },
+                {
+                    "name": "clock.reset",
+                    "id": "78d682d2-dd7f-4cee-b6ad-0aa2333a774b",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"command\": \"clock.reset\",\n  \"data\": {\n    \"id\": \"TestClock\"\n  }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/production/:show/:session/command#clock.reset",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "production",
+                                ":show",
+                                ":session",
+                                "command"
+                            ],
+                            "hash": "clock.reset",
+                            "variable": [
+                                {
+                                    "key": "show",
+                                    "value": "system",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "session",
+                                    "value": "system",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ],
+            "id": "41453fb4-71db-47ce-a259-f36cad8dac52"
+        },
+        {
+            "name": "amp",
+            "item": [
+                {
+                    "name": "amp.channel",
+                    "id": "c3892252-55b8-4c58-8b15-8e735866407a",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"command\": \"amp.channel\",\n  \"data\": {}\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/production/:show/:session/command#amp.channel",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "production",
+                                ":show",
+                                ":session",
+                                "command"
+                            ],
+                            "hash": "amp.channel",
+                            "variable": [
+                                {
+                                    "key": "show",
+                                    "value": "system",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "session",
+                                    "value": "system",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "id": "6048b326-9991-4a8a-bf5a-d30ff8618aad",
+                            "name": "Ok",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"command\": \"aliquip incididunt velit\",\n  \"data\": {}\n}",
+                                    "options": {
+                                        "raw": {
+                                            "language": "json"
+                                        }
+                                    }
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/production/:show/:session/command#amp.channel",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "production",
+                                        ":show",
+                                        ":session",
+                                        "command"
+                                    ],
+                                    "hash": "amp.channel",
+                                    "variable": [
+                                        {
+                                            "key": "show"
+                                        },
+                                        {
+                                            "key": "session"
+                                        }
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "_postman_previewlanguage": "json",
+                            "header": [
+                                {
+                                    "key": "Content-Type",
+                                    "value": "application/json"
+                                }
+                            ],
+                            "cookie": [],
+                            "responseTime": null,
+                            "body": "{\n  \"message\": [\n    \"velit mollit et Ut\",\n    \"amet eiu\"\n  ]\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "amp.list",
+                    "id": "d9725d89-68d9-4b6a-a0d9-1e2d014f5f90",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            },
+                            {
+                                "key": "Accept",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"command\": \"amp.list\",\n  \"data\": {\n    \"channel\": \"PVS\"\n  }\n}",
+                            "options": {
+                                "raw": {
+                                    "language": "json"
+                                }
+                            }
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/production/:show/:session/command#amp.list",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "production",
+                                ":show",
+                                ":session",
+                                "command"
+                            ],
+                            "hash": "amp.list",
+                            "variable": [
+                                {
+                                    "key": "show",
+                                    "value": "system",
+                                    "type": "string"
+                                },
+                                {
+                                    "key": "session",
+                                    "value": "system",
+                                    "type": "string"
+                                }
+                            ]
+                        }
+                    },
+                    "response": []
+                }
+            ],
+            "id": "35d1bf75-d1b8-4f24-afc7-07ec3a08fbef"
+        },
+        {
+            "name": "command",
+            "id": "41fd5c17-a2fd-4f03-a0ea-a4ba7800bfba",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Accept",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n  \"command\": \"adipisicing consectetur re\",\n  \"data\": {}\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "url": {
+                    "raw": "{{baseUrl}}/production/:show/:session/command",
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "path": [
+                        "production",
+                        ":show",
+                        ":session",
+                        "command"
+                    ],
+                    "variable": [
+                        {
+                            "key": "show"
+                        },
+                        {
+                            "key": "session"
+                        }
+                    ]
+                }
+            },
+            "response": []
+        }
+    ],
+    "variable": [
+        {
+            "id": "69e45fac-dbd2-48c6-95ed-f2d2f78be76d",
+            "key": "baseUrl",
+            "value": "localhost:3001",
+            "type": "string"
+        }
+    ]
+}

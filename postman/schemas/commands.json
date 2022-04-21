@@ -1,0 +1,485 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "version": "1.0.0",
+        "title": "Showrunner",
+        "license": {
+            "name": "MIT"
+        }
+    },
+    "servers": [
+        {
+            "url": "localhost:3001"
+        }
+    ],
+    "paths": {
+        "/production/{show}/{session}/command": {
+            "description": "Runs a command on the server",
+            "post": {
+                "operationId": "command",
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "show",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "session",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Command",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "command",
+                                    "data"
+                                ],
+                                "properties": {
+                                    "command": {
+                                        "type": "string"
+                                    },
+                                    "data": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "404": {
+                        "description": "404-Unknown Command",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/command.error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/production/{show}/{session}/command#clock.play": {
+            "description": "Starts a clock of a given id",
+            "post": {
+                "operationId": "clock.play",
+                "tags": [
+                    "clock"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "show",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "session",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Clock Control",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/command.clock.control"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    },
+                    "400": {
+                        "description": "Clock Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/command.error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/production/{show}/{session}/command#clock.pause": {
+            "description": "Pauses a clock of a given id",
+            "post": {
+                "operationId": "clock.pause",
+                "tags": [
+                    "clock"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "show",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "session",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Clock Control",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/command.clock.control"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    },
+                    "400": {
+                        "description": "Clock Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/command.error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/production/{show}/{session}/command#clock.stop": {
+            "description": "Stops a clock of a given id",
+            "post": {
+                "operationId": "clock.stop",
+                "tags": [
+                    "clock"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "show",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "session",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Clock Control",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/command.clock.control"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    },
+                    "400": {
+                        "description": "Clock Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/command.error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/production/{show}/{session}/command#clock.reset": {
+            "description": "Resets a clock of a given id",
+            "post": {
+                "operationId": "clock.reset",
+                "tags": [
+                    "clock"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "show",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "session",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "Clock Control",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/command.clock.control"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ok"
+                    },
+                    "400": {
+                        "description": "Clock Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/command.error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/production/{show}/{session}/command#amp.list": {
+            "description": "Returns a list of all videos in a given AMP channel",
+            "post": {
+                "operationId": "amp.list",
+                "tags": [
+                    "amp"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "show",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "session",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "command",
+                                    "data"
+                                ],
+                                "properties": {
+                                    "command": {
+                                        "type": "string"
+                                    },
+                                    "data": {
+                                        "type": "object",
+                                        "required": [
+                                            "channel"
+                                        ],
+                                        "properties": {
+                                            "channel": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "message": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Amp Error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/command.error"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/production/{show}/{session}/command#amp.channel": {
+            "description": "Returns a list of all AMP channels",
+            "post": {
+                "operationId": "amp.channel",
+                "tags": [
+                    "amp"
+                ],
+                "parameters": [
+                    {
+                        "in": "path",
+                        "name": "show",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "in": "path",
+                        "name": "session",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "description": "",
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "type": "object",
+                                "required": [
+                                    "command",
+                                    "data"
+                                ],
+                                "properties": {
+                                    "command": {
+                                        "type": "string"
+                                    },
+                                    "data": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Ok",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "required": [
+                                        "message"
+                                    ],
+                                    "properties": {
+                                        "message": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "command.clock.control": {
+                "type": "object",
+                "required": [
+                    "command",
+                    "data"
+                ],
+                "properties": {
+                    "command": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "type": "object",
+                        "required": [
+                            "id"
+                        ],
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "command.error": {
+                "type": "object",
+                "required": [
+                    "error",
+                    "message"
+                ],
+                "properties": {
+                    "error": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    }
+                }
+            }
+        }
+    }
+}
