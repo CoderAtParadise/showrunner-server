@@ -40,6 +40,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/debug", "npm:4.1.7"],\
             ["@types/eslint", "npm:8.4.1"],\
             ["@types/express", "npm:4.17.13"],\
+            ["@types/lodash", "npm:4.14.182"],\
             ["@types/morgan", "npm:1.9.3"],\
             ["@types/node", "npm:17.0.21"],\
             ["@types/prettier", "npm:2.4.4"],\
@@ -59,6 +60,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["eslint-plugin-tsdoc", "npm:0.2.14"],\
             ["eventemitter2", "npm:6.4.5"],\
             ["express", "npm:4.17.3"],\
+            ["lodash", "npm:4.17.21"],\
             ["morgan", "npm:1.10.0"],\
             ["nodemon", "npm:2.0.15"],\
             ["prettier", "npm:2.5.1"],\
@@ -476,6 +478,15 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageDependencies": [\
             ["@types/keyv", "npm:3.1.3"],\
             ["@types/node", "npm:17.0.21"]\
+          ],\
+          "linkType": "HARD"\
+        }]\
+      ]],\
+      ["@types/lodash", [\
+        ["npm:4.14.182", {\
+          "packageLocation": "./.yarn/cache/@types-lodash-npm-4.14.182-1073aac722-7dd137aa9d.zip/node_modules/@types/lodash/",\
+          "packageDependencies": [\
+            ["@types/lodash", "npm:4.14.182"]\
           ],\
           "linkType": "HARD"\
         }]\
@@ -4821,6 +4832,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["@types/debug", "npm:4.1.7"],\
             ["@types/eslint", "npm:8.4.1"],\
             ["@types/express", "npm:4.17.13"],\
+            ["@types/lodash", "npm:4.14.182"],\
             ["@types/morgan", "npm:1.9.3"],\
             ["@types/node", "npm:17.0.21"],\
             ["@types/prettier", "npm:2.4.4"],\
@@ -4840,6 +4852,7 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
             ["eslint-plugin-tsdoc", "npm:0.2.14"],\
             ["eventemitter2", "npm:6.4.5"],\
             ["express", "npm:4.17.3"],\
+            ["lodash", "npm:4.17.21"],\
             ["morgan", "npm:1.10.0"],\
             ["nodemon", "npm:2.0.15"],\
             ["prettier", "npm:2.5.1"],\

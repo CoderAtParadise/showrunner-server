@@ -5,6 +5,8 @@ export const openChannels: Map<string, AmpChannel> = new Map<
     AmpChannel
 >();
 
+export const videoCache: Map<string, string[]> = new Map<string, string[]>();
+
 export function openChannel(
     name: string,
     address: string,
@@ -13,8 +15,9 @@ export function openChannel(
 ) {
     openChannels.set(name, new AmpChannel(address, port, channel));
     openChannels.get(name)!.open();
+    videoCache.set(name, []);
 }
 
 export function closeChannels() {
-    openChannels.forEach(value => value.close());
+    openChannels.forEach((value) => value.close());
 }

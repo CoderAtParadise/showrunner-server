@@ -6,27 +6,28 @@ import {
     Offset
 } from "@coderatparadise/showrunner-common";
 import { EventHandler } from "../Scheduler";
-import { ClockBehaviour, ToTimeSettings } from "./ClockData";
+import { ClockBehaviour, ClockSettingsBase } from "./ClockData";
 
-export class TODClockSource implements MutableClockSource {
+export class TODClockSource implements MutableClockSource<ClockSettingsBase> {
     constructor(
         owner: string,
-        show: string,
         id: string,
         displayName: string,
         automation: boolean,
-        settings: ToTimeSettings
+        settings: ClockSettingsBase
     ) {
         this.owner = owner;
-        this.show = show;
         this.id = id;
-        this.displayName = displayName;
         this.automation = automation;
-        this.settings = settings;
+        this.settings = { displayName: displayName, ...settings };
     }
 
     current(): SMPTE {
-        if (this.state === ClockState.STOPPED || this.state === ClockState.PAUSED) return this.stopTime;
+        if (
+            this.state === ClockState.STOPPED ||
+            this.state === ClockState.PAUSED
+        )
+            return this.stopTime;
         if (this.state === ClockState.RESET) return this.settings.time;
         if (this.completed) {
             if (this.overrun) {
@@ -41,17 +42,21 @@ export class TODClockSource implements MutableClockSource {
             .setOffset(Offset.END);
     }
 
+    duration(): SMPTE {
+        return this.settings.time;
+    }
+
     start(): void {
         if (this.state === ClockState.STOPPED) this.reset();
         if (this.state !== ClockState.RUNNING) {
-            EventHandler.emit("clock.start", this.owner, this.show, this.id);
+            EventHandler.emit("clock.start", this.owner, this.id);
             this.state = ClockState.RUNNING;
         }
     }
 
     stop(): void {
         if (this.state !== ClockState.STOPPED) {
-            EventHandler.emit("clock.stop", this.owner, this.show, this.id);
+            EventHandler.emit("clock.stop", this.owner, this.id);
             this.state = ClockState.STOPPED;
             this.stopTime = getSyncClock().current();
         }
@@ -59,7 +64,7 @@ export class TODClockSource implements MutableClockSource {
 
     pause(): void {
         if (this.state === ClockState.RUNNING) {
-            EventHandler.emit("clock.pause", this.owner, this.show, this.id);
+            EventHandler.emit("clock.pause", this.owner, this.id);
             this.state = ClockState.PAUSED;
             this.stopTime = getSyncClock().current();
         }
@@ -67,7 +72,7 @@ export class TODClockSource implements MutableClockSource {
 
     reset(): void {
         if (this.state !== ClockState.STOPPED) this.stop();
-        EventHandler.emit("clock.reset", this.owner, this.show, this.id);
+        EventHandler.emit("clock.reset", this.owner, this.id);
         this.state = ClockState.RESET;
         this.overrun = false;
         this.completed = false;
@@ -80,40 +85,30 @@ export class TODClockSource implements MutableClockSource {
             !this.overrun &&
             getSyncClock().current().greaterThanOrEqual(this.settings.time)
         ) {
-            EventHandler.emit("clock.complete", this.owner, this.show, this.id);
+            EventHandler.emit("clock.complete", this.owner, this.id);
             this.completed = true;
             if (this.settings.behaviour !== ClockBehaviour.OVERRUN) this.stop();
             else {
-                EventHandler.emit(
-                    "clock.overrun",
-                    this.owner,
-                    this.show,
-                    this.id
-                );
+                EventHandler.emit("clock.overrun", this.owner, this.id);
                 this.overrun = true;
             }
         }
     }
 
-    data(): object | undefined {
-        return { settings: this.settings };
-    }
-
     setData(data: any): void {
-        if (data?.displayName as string) this.displayName = data.displayName;
+        if (data?.displayName as string)
+            this.settings.displayName = data.displayName;
         if (data?.time as string) this.settings.time = new SMPTE(data.time);
         if (data?.behaviour as string) this.settings.behaviour = data.behaviour;
     }
 
     type: string = "tod";
-    show: string;
     owner: string;
     id: string;
-    displayName: string;
     state: ClockState = ClockState.RESET;
     overrun: boolean = false;
     automation: boolean;
     private stopTime: SMPTE = new SMPTE();
     private completed: boolean = false;
-    private settings: ToTimeSettings;
+    settings: { displayName: string } & ClockSettingsBase;
 }

@@ -1,11 +1,10 @@
 import { ShowManager, ShowHandler } from "@coderatparadise/showrunner-common";
 import debug from "debug";
-import { loadShowHandler, saveShowHandler } from "../util/FileHandler";
+import { saveShowHandler } from "../util/FileHandler";
 
 interface ShowLoadState {
     loaded: boolean;
     displayName: string;
-    location: string;
     show?: ShowHandler;
 }
 
@@ -21,7 +20,6 @@ export class ServerShowManager implements ShowManager {
             this.shows.set(show.id, {
                 loaded: true,
                 displayName: show.displayName,
-                location: show.location,
                 show: show
             });
         }
@@ -29,8 +27,8 @@ export class ServerShowManager implements ShowManager {
 
     loadShow(id: string): void {
         if (this.shows.has(id)) {
-            const LoadState = this.shows.get(id);
-            if (!LoadState!.loaded) loadShowHandler(id, LoadState!.location);
+            // const LoadState = this.shows.get(id);
+            // if (!LoadState!.loaded) loadShowHandler(id, LoadState!.location);
         }
     }
 

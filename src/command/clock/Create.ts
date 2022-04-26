@@ -13,7 +13,7 @@ import { OffsetClockSource } from "../../clock/OffsetClockSource";
 import { TODOffsetClockSource } from "../../clock/ToDOffsetClockSource";
 
 interface ClockCreateData {
-    show: string;
+    session: string;
     id?: string;
     data: {
         owner: string;
@@ -28,7 +28,7 @@ interface ClockCreateData {
 
 function isClockCreateData(data: any): data is ClockCreateData {
     return (
-        data.show !== undefined &&
+        data.session !== undefined &&
         data.data !== undefined &&
         data.data.owner !== undefined &&
         data.data.type !== undefined &&
@@ -43,92 +43,99 @@ function isClockCreateData(data: any): data is ClockCreateData {
 export const CreateCommand: ICommand<ClockCreateData> = {
     id: "clock.create",
     validate: (data?: any): CommandReturn | undefined => {
+        // prettier-ignore
         return isClockCreateData(data)
             ? undefined
-            : { status: 400, error: "clock.invalidData" };
+            : { status: 400, error: "clock.invalidData", message: "Invalid Clock Data" };
     },
-    run: (data?: ClockCreateData): CommandReturn => {
+    run: (
+        commandInfo: { show: string; session: string },
+        data?: ClockCreateData
+    ): CommandReturn => {
         const handler = globalShowHandler();
-        const authority = globalShowHandler().getClock(data!.data.authority);
-        switch (data?.data.type) {
-            case "tod":
-                handler.markDirty(true);
-                handler.registerClock(
-                    new TODClockSource(
-                        data.data.owner,
-                        data.show,
-                        data?.id ? data.id : uuidv4(),
-                        data.data.displayName,
-                        true,
-                        {
-                            behaviour: data.data.behaviour as ClockBehaviour,
-                            time: new SMPTE(data.data.time)
-                        }
-                    )
-                );
-                break;
-            case "timer":
-                handler.markDirty(true);
-                handler.registerClock(
-                    new TimerClockSource(
-                        data.data.owner,
-                        data.show,
-                        data?.id ? data.id : uuidv4(),
-                        data.data.displayName,
-                        true,
-                        {
-                            behaviour: data.data.behaviour as ClockBehaviour,
-                            direction: data.data.direction as ClockDirection,
-                            duration: new SMPTE(data.data.time)
-                        }
-                    )
-                );
-                break;
-            case "offset":
-                switch (authority?.type) {
-                    case "timer":
-                        handler.markDirty(true);
-                        handler.registerClock(
-                            new OffsetClockSource(
-                                data.data.owner,
-                                data.show,
-                                data?.id ? data.id : uuidv4(),
-                                data.data.displayName,
-                                true,
-                                {
-                                    offset: new SMPTE(data.data.time),
-                                    behaviour: data.data
-                                        .behaviour as ClockBehaviour,
-                                    authority: data.data.authority
-                                }
-                            )
-                        );
-                        break;
-                    case "tod":
-                        handler.markDirty(true);
-                        handler.registerClock(
-                            new TODOffsetClockSource(
-                                data.data.owner,
-                                data.show,
-                                data?.id ? data.id : uuidv4(),
-                                data.data.displayName,
-                                true,
-                                {
-                                    offset: new SMPTE(data.data.time),
-                                    behaviour: data.data
-                                        .behaviour as ClockBehaviour,
-                                    authority: data.data.authority
-                                }
-                            )
-                        );
-                        break;
-                    default:
-                        return { status: 404, error: "clock.unknownType" };
-                }
-                break;
-            default:
-                return { status: 404, error: "clock.unknownType" };
-        }
-        return { status: 200 };
+        const authority = globalShowHandler().getValue(
+            "clocks",
+            data!.data.authority
+        );
+        // switch (data?.data.type) {
+        //     case "tod":
+        //         handler.markDirty(true);
+        //         handler.registerClock(
+        //             new TODClockSource(
+        //                 data.data.owner,
+        //                 data.show,
+        //                 data?.id ? data.id : uuidv4(),
+        //                 data.data.displayName,
+        //                 true,
+        //                 {
+        //                     behaviour: data.data.behaviour as ClockBehaviour,
+        //                     time: new SMPTE(data.data.time)
+        //                 }
+        //             )
+        //         );
+        //         break;
+        //     case "timer":
+        //         handler.markDirty(true);
+        //         handler.registerClock(
+        //             new TimerClockSource(
+        //                 data.data.owner,
+        //                 data.show,
+        //                 data?.id ? data.id : uuidv4(),
+        //                 data.data.displayName,
+        //                 true,
+        //                 {
+        //                     behaviour: data.data.behaviour as ClockBehaviour,
+        //                     direction: data.data.direction as ClockDirection,
+        //                     time: new SMPTE(data.data.time)
+        //                 }
+        //             )
+        //         );
+        //         break;
+        //     case "offset":
+        //         switch (authority?.type) {
+        //             case "timer":
+        //                 handler.markDirty(true);
+        //                 handler.registerClock(
+        //                     new OffsetClockSource(
+        //                         data.data.owner,
+        //                         data.show,
+        //                         data?.id ? data.id : uuidv4(),
+        //                         data.data.displayName,
+        //                         true,
+        //                         {
+        //                             time: new SMPTE(data.data.time),
+        //                             behaviour: data.data
+        //                                 .behaviour as ClockBehaviour,
+        //                             authority: data.data.authority
+        //                         }
+        //                     )
+        //                 );
+        //                 break;
+        //             case "tod":
+        //                 handler.markDirty(true);
+        //                 handler.registerClock(
+        //                     new TODOffsetClockSource(
+        //                         data.data.owner,
+        //                         data.show,
+        //                         data?.id ? data.id : uuidv4(),
+        //                         data.data.displayName,
+        //                         true,
+        //                         {
+        //                             time: new SMPTE(data.data.time),
+        //                             behaviour: data.data
+        //                                 .behaviour as ClockBehaviour,
+        //                             authority: data.data.authority
+        //                         }
+        //                     )
+        //                 );
+        //                 break;
+        //             default:
+        //                 return { status: 404, error: "clock.unknownType" };
+        //         }
+        //         break;
+        //     default:
+        //         return { status: 404, error: "clock.unknownType" };
+        // }
+        return { status: 200, message: "Ok" };
     }
 };

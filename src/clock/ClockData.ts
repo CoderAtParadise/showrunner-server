@@ -5,21 +5,22 @@ export enum ClockBehaviour {
     OVERRUN = "overrun"
 }
 
-export interface TimerSettings {
-    direction: ClockDirection;
-    behaviour: ClockBehaviour;
-    duration: SMPTE;
-}
-
-export interface OffsetSettings {
-    authority: string;
-    behaviour: ClockBehaviour;
-    offset: SMPTE;
-}
-
-export interface ToTimeSettings {
+export interface ClockSettingsBase {
     behaviour: ClockBehaviour;
     time: SMPTE;
+}
+
+export interface TimerSettings extends ClockSettingsBase {
+    direction: ClockDirection;
+}
+
+export interface OffsetSettings extends ClockSettingsBase {
+    authority: string;
+}
+
+export interface VideoClockSettings {
+    source: string;
+    id: string;
 }
 
 export default { ClockBehaviour, ClockDirection };

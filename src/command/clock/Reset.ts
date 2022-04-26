@@ -5,13 +5,17 @@ import { ClockCommandData, isClockCommandData } from "./ClockCommandData";
 export const ResetCommand: ICommand<ClockCommandData> = {
     id: "clock.reset",
     validate: (data?: any): CommandReturn | undefined => {
+        // prettier-ignore
         return isClockCommandData(data)
             ? undefined
-            : { status: 400, error: "clock.invalidData" };
+            : { status: 400, error: "clock.invalidData", message: "Invalid Clock Data" };
     },
-    run: (data?: ClockCommandData): CommandReturn => {
+    run: (
+        commandInfo: { show: string; session: string },
+        data?: ClockCommandData
+    ): CommandReturn => {
         const handler = globalShowHandler(); // TODO replace with get
-        handler.getClock(data!.id)?.reset(true);
-        return { status: 200 };
+        handler.getValue("clocks", data!.id)?.reset(true);
+        return { status: 200, message: "OK" };
     }
 };

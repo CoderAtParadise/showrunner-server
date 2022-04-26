@@ -1,91 +1,21 @@
 import {
+    ListFirstID,
+    ListNextID
+} from "@coderatparadise/amp-grassvalley";
+import {
     ShowHandler,
     ClockSource,
-    Storage,
-    ClockIdentifier,
-    ClockState,
-    ClockOptions,
     getSyncClock,
-    IProperty,
     History
 } from "@coderatparadise/showrunner-common";
+import { AmpCtrlClock } from "../clock/AmpCtrlClockSource";
 import { EventHandler } from "../Scheduler";
 import { loadClocks, saveClocks } from "../util/FileHandler";
-import { AmpCtrlClock } from "../clock/AmpCtrlClockSource";
+import { openChannels, videoCache } from "./AmpChannelManager";
 
 class GlobalShowHandler implements ShowHandler {
-    listClocks(): ClockIdentifier[] {
-        return Array.from(this.showClocks.values());
-    }
-
-    getClock(id: string): ClockSource | undefined {
-        return this.showClocks.get(id)?.clock;
-    }
-
-    enableClock(id: string): boolean {
-        const clock = this.showClocks.get(id);
-        if (clock) {
-            clock.active = true;
-            return true;
-        }
-
-        return false;
-    }
-
-    disableClock(id: string): boolean {
-        const clock = this.showClocks.get(id);
-        if (clock) {
-            clock.clock.stop(false);
-            clock.active = false;
-            return true;
-        }
-
-        return false;
-    }
-
-    isRegisteredClock(id: string): boolean {
-        return this.showClocks.has(id);
-    }
-
-    tickClocks(): void {
-        this.showClocks.forEach((value: ClockIdentifier) => {
-            if (value.active || value.clock.state !== ClockState.STOPPED)
-                value.clock.update();
-        });
-    }
-
-    registerClock(clock: ClockSource, options?: ClockOptions): boolean {
-        if (this.isRegisteredClock(clock.id)) return false;
-        this.showClocks.set(clock.id, {
-            clock: clock,
-            active: options?.active || true,
-            configurable:
-                options?.configurable !== undefined
-                    ? options?.configurable
-                    : true,
-            renderChannel: options?.renderChannel || []
-        });
-        return true;
-    }
-
-    getStorage(): Storage<any> | undefined {
-        return undefined;
-    }
-
-    hasOverrideProperty(): boolean {
-        return false;
-    }
-
-    getOverrideProperty(): IProperty<any> | undefined {
-        return undefined;
-    }
-
-    setOverrideProperty(): void {
-        // NOOP
-    }
-
-    removeOverrideProperty(): void {
-        // NOOP
+    tick(): void {
+        this.clocks.forEach((value: ClockSource<any>) => value.update());
     }
 
     history(): History[] {
@@ -100,41 +30,97 @@ class GlobalShowHandler implements ShowHandler {
         return false;
     }
 
+    isDirty(): boolean {
+        return this.dirty;
+    }
+
     markDirty(dirty: boolean): void {
         this.dirty = dirty;
+    }
+
+    get(key: string): any[] {
+        switch (key) {
+            case "clocks":
+                return Array.from(this.clocks.values());
+        }
+        return [];
+    }
+
+    getValue(key: string, id: string): any {
+        switch (key) {
+            case "clocks":
+                return this.clocks.get(id);
+        }
+        return undefined;
+    }
+
+    setValue(key: string, value: any): void {
+        switch (key) {
+            case "clocks":
+                // eslint-disable-next-line no-case-declarations
+                const clock = value as ClockSource<any>;
+                this.clocks.set(clock.id, clock);
+                break;
+        }
     }
 
     id: string = "system";
     displayName: string = "System";
     location: string = "system";
-    dirty: boolean = false;
-    private showClocks: Map<string, ClockIdentifier> = new Map<
+    private dirty: boolean = false;
+    private clocks: Map<string, ClockSource<any>> = new Map<
         string,
-        ClockIdentifier
+        ClockSource<any>
     >();
 }
 
 export const initGlobalShowHandler = (): void => {
     if (mGlobalShowHandler === undefined) {
         mGlobalShowHandler = new GlobalShowHandler();
-        mGlobalShowHandler.registerClock(getSyncClock(), {
-            configurable: false
-        });
-        mGlobalShowHandler.registerClock(new AmpCtrlClock("PVS"), {
-            configurable: false
-        });
-        EventHandler.on("clock", () => globalShowHandler().tickClocks());
+        mGlobalShowHandler.setValue("clocks", getSyncClock());
+        mGlobalShowHandler.setValue(
+            "clocks",
+            new AmpCtrlClock("PVS", "PVS", "Video Sync Clock")
+        );
+        EventHandler.on("clock", () => globalShowHandler().tick());
         loadClocks();
         setInterval(() => {
-            if (mGlobalShowHandler.dirty) {
+            if (mGlobalShowHandler.isDirty()) {
                 saveClocks();
                 mGlobalShowHandler.markDirty(false);
             }
         }, 5000);
+
+        const fetchVideos = () => {
+            videoCache.forEach((value: string[], key: string) => {
+                const channel = openChannels.get(key);
+                let videos: string[];
+                if (channel) {
+                    channel
+                        .sendCommand(ListFirstID, { byteCount: "2" })
+                        .then((v) => {
+                            videos = v.data.clipNames;
+                            channel
+                                .sendCommand(ListNextID, {
+                                    data: { count: 255 }
+                                })
+                                .then((lv) => {
+                                    videos = videos.concat(lv.data.clipNames);
+                                    videoCache.set(key, videos);
+                                });
+                        });
+                }
+            });
+        };
+        setTimeout(() => {
+            fetchVideos();
+            setInterval(() => fetchVideos(), 300000);
+        }, 3000);
     }
 };
 
 export const globalShowHandler = (): GlobalShowHandler => {
+    initGlobalShowHandler();
     return mGlobalShowHandler;
 };
 
