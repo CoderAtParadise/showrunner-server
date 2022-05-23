@@ -12,6 +12,7 @@ export interface ExternalSource<T> {
     isOpen(): boolean;
     close(): void;
     get(): T;
+    tryCounter: number;
 }
 
 export class ExternalSourceManager {
@@ -25,18 +26,17 @@ export class ExternalSourceManager {
         if (!this.sources.get(id)?.isOpen()) {
             const source = this.sources.get(id);
             if (source) {
-                let tryCounter = 0;
                 const tryOpen = async (): Promise<boolean> => {
                     const open = await source.open(tryOpen);
                     if (!open) {
-                        tryCounter++;
+                        source.tryCounter++;
                         const time =
-                            tryCounter < source.timeBetweenRetries.length
-                                ? source.timeBetweenRetries[tryCounter]
+                            source.tryCounter < source.timeBetweenRetries.length
+                                ? source.timeBetweenRetries[source.tryCounter]
                                 : source.timeBetweenRetries[
                                       source.timeBetweenRetries.length - 1
                                   ];
-                        if (tryCounter < source.maxRetries) {
+                        if (source.tryCounter < source.maxRetries) {
                             console.log("Hello");
                             return new Promise<boolean>((res) => {
                                 setTimeout(() => {
@@ -44,7 +44,10 @@ export class ExternalSourceManager {
                                 }, time);
                             });
                         } else return false;
-                    } else return true;
+                    } else {
+                        source.tryCounter = 0;
+                        return true;
+                    }
                 };
                 return await tryOpen();
             }
