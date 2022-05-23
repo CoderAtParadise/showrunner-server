@@ -48,4 +48,5 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
     port: number;
     channel: string | undefined;
     source: AmpChannel | undefined = undefined;
+    tryCounter: number = 0;
 }

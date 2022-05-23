@@ -1,5 +1,3 @@
-import { AmpChannel } from "@coderatparadise/amp-grassvalley";
-
 export interface ExternalSource<T> {
     readonly id: string;
     readonly type: string;
@@ -37,7 +35,6 @@ export class ExternalSourceManager {
                                       source.timeBetweenRetries.length - 1
                                   ];
                         if (source.tryCounter < source.maxRetries) {
-                            console.log("Hello");
                             return new Promise<boolean>((res) => {
                                 setTimeout(() => {
                                     res(tryOpen());
