@@ -1,5 +1,6 @@
+import { AmpChannel } from "@coderatparadise/amp-grassvalley";
 import { CommandReturn, ICommand } from "@coderatparadise/showrunner-common";
-import { openChannels } from "../../show/AmpChannelManager";
+import { externalSourceManager } from "../../show/ExternalSourceManager";
 
 export const ListChannels: ICommand<{}> = {
     id: "amp.channel",
@@ -9,7 +10,7 @@ export const ListChannels: ICommand<{}> = {
     run: (): CommandReturn => {
         return {
             status: 200,
-            message: Array.from(openChannels.keys())
+            message: externalSourceManager.getAllOfType(AmpChannel.name)
         };
     }
 };

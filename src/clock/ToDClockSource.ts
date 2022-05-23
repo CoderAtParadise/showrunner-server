@@ -3,23 +3,20 @@ import {
     SMPTE,
     getSyncClock,
     ClockState,
-    Offset
+    Offset,
+    BaseClockSettings,
+    ClockIdentifier
 } from "@coderatparadise/showrunner-common";
 import { EventHandler } from "../Scheduler";
 import { ClockBehaviour, ClockSettingsBase } from "./ClockData";
 
 export class TODClockSource implements MutableClockSource<ClockSettingsBase> {
     constructor(
-        owner: string,
-        id: string,
-        displayName: string,
-        automation: boolean,
-        settings: ClockSettingsBase
+        identifier: ClockIdentifier,
+        settings: BaseClockSettings & ClockSettingsBase
     ) {
-        this.owner = owner;
-        this.id = id;
-        this.automation = automation;
-        this.settings = { displayName: displayName, ...settings };
+        this.identifier = identifier;
+        this.settings = settings;
     }
 
     current(): SMPTE {
@@ -49,14 +46,14 @@ export class TODClockSource implements MutableClockSource<ClockSettingsBase> {
     start(): void {
         if (this.state === ClockState.STOPPED) this.reset();
         if (this.state !== ClockState.RUNNING) {
-            EventHandler.emit("clock.start", this.owner, this.id);
+            EventHandler.emit("clock.start", this.identifier);
             this.state = ClockState.RUNNING;
         }
     }
 
     stop(): void {
         if (this.state !== ClockState.STOPPED) {
-            EventHandler.emit("clock.stop", this.owner, this.id);
+            EventHandler.emit("clock.stop", this.identifier);
             this.state = ClockState.STOPPED;
             this.stopTime = getSyncClock().current();
         }
@@ -64,7 +61,7 @@ export class TODClockSource implements MutableClockSource<ClockSettingsBase> {
 
     pause(): void {
         if (this.state === ClockState.RUNNING) {
-            EventHandler.emit("clock.pause", this.owner, this.id);
+            EventHandler.emit("clock.pause", this.identifier);
             this.state = ClockState.PAUSED;
             this.stopTime = getSyncClock().current();
         }
@@ -72,7 +69,7 @@ export class TODClockSource implements MutableClockSource<ClockSettingsBase> {
 
     reset(): void {
         if (this.state !== ClockState.STOPPED) this.stop();
-        EventHandler.emit("clock.reset", this.owner, this.id);
+        EventHandler.emit("clock.reset", this.identifier);
         this.state = ClockState.RESET;
         this.overrun = false;
         this.completed = false;
@@ -85,11 +82,11 @@ export class TODClockSource implements MutableClockSource<ClockSettingsBase> {
             !this.overrun &&
             getSyncClock().current().greaterThanOrEqual(this.settings.time)
         ) {
-            EventHandler.emit("clock.complete", this.owner, this.id);
+            EventHandler.emit("clock.complete", this.identifier);
             this.completed = true;
             if (this.settings.behaviour !== ClockBehaviour.OVERRUN) this.stop();
             else {
-                EventHandler.emit("clock.overrun", this.owner, this.id);
+                EventHandler.emit("clock.overrun", this.identifier);
                 this.overrun = true;
             }
         }
@@ -103,12 +100,11 @@ export class TODClockSource implements MutableClockSource<ClockSettingsBase> {
     }
 
     type: string = "tod";
-    owner: string;
-    id: string;
+    identifier: ClockIdentifier;
     state: ClockState = ClockState.RESET;
     overrun: boolean = false;
-    automation: boolean;
+    incorrectFramerate: boolean = false;
     private stopTime: SMPTE = new SMPTE();
     private completed: boolean = false;
-    settings: { displayName: string } & ClockSettingsBase;
+    settings: BaseClockSettings & ClockSettingsBase;
 }

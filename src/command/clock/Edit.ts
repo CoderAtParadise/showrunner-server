@@ -27,13 +27,23 @@ export const EditCommand: ICommand<ClockEditData> = {
         const handler = globalShowHandler(); // TODO replace with get
         const clock = handler.getValue("clocks", data!.id);
         if (clock && (clock as MutableClockSource<any>)) {
-            const old = { ...clock.settings };
+            const oldSetttings = { ...clock.settings };
+            const oldData = {
+                displayName: clock.displayName(),
+                duration: clock.duration(),
+                data: clock.data()
+            };
             (clock as MutableClockSource<any>).setData(data!.data);
-            const diff = diffObject(old, clock.settings);
+            const diff = diffObject(oldSetttings, clock.settings);
+            const datadiff = diffObject(oldData, {
+                displayName: clock.displayName(),
+                duration: clock.duration(),
+                data: clock.data()
+            });
             EventHandler.emit(
                 `clock-update-${commandInfo.show}:${commandInfo.session}`,
                 clock.id,
-                { settings: diff }
+                { settings: diff, additional: datadiff }
             );
             handler.markDirty(true);
             return { status: 200, message: "Ok" };

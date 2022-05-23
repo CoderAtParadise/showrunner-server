@@ -1,22 +1,24 @@
-import {
-    Codec,
-    ClockSource
-} from "@coderatparadise/showrunner-common";
+import { Codec, ClockSource } from "@coderatparadise/showrunner-common";
 import { encodeData } from "../../util/LooseObject";
 
 export const ClockSourceCodec: Codec<ClockSource<any>> = {
     serialize(clock: ClockSource<any>): object {
         const serObj = {
             type: clock.type,
-            owner: clock.owner,
-            id: clock.id,
-            displayName: clock.displayName?.() || "",
-            current: clock.current().toString(),
-            duration: clock.duration().toString(),
-            framerate: clock.current().frameRate(),
-            data: encodeData(clock.data?.() || {}),
+            identifier: clock.identifier,
+            currentState: {
+                current: clock.current().toString(),
+                state: clock.state,
+                overrun: clock.overrun,
+                incorrectFramerate: clock.incorrectFramerate
+            },
             settings: encodeData(clock.settings),
-            state: clock.state
+            additional: {
+                displayName: clock.displayName?.() || "",
+                duration: clock.duration().toString(),
+                data: encodeData(clock.data?.() || {}),
+                framerate: clock.current().frameRate()
+            }
         };
         return serObj;
     },

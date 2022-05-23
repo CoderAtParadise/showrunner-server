@@ -1,12 +1,4 @@
 import {
-    ClockState,
-    SMPTE,
-    ClockDirection,
-    MutableClockSource,
-    BaseClockSettings,
-    ClockIdentifier
-} from "@coderatparadise/showrunner-common";
-import {
     CurrentTimeSense,
     IDDurationRequest,
     IDLoadedRequest,
@@ -14,20 +6,35 @@ import {
     Play,
     Stop
 } from "@coderatparadise/amp-grassvalley";
+import {
+    BaseClockSettings,
+    ClockDirection,
+    ClockIdentifier,
+    ClockState,
+    MutableClockSource,
+    SMPTE
+} from "@coderatparadise/showrunner-common";
 import { EventHandler } from "../Scheduler";
 import { externalSourceManager } from "../show/ExternalSourceManager";
 
-// prettier-ignore
-export class AmpCtrlClock implements MutableClockSource<{ channel: string; direction: ClockDirection }> {
-    // prettier-enable
-    constructor(identifier: ClockIdentifier, settings: BaseClockSettings & {channel:string, direction:ClockDirection}) {
+interface VideoCtrlData {
+    channel: string;
+    source: string;
+    direction: ClockDirection;
+}
+
+export class VideoCtrlClockSource implements MutableClockSource<VideoCtrlData> {
+    constructor(
+        identifier: ClockIdentifier,
+        settings: BaseClockSettings & VideoCtrlData
+    ) {
         this.identifier = identifier;
         this.settings = settings;
     }
 
     displayName(): string {
-        return this.syncData.currentID !== ""
-            ? `${this.settings.channel}-${this.syncData.currentID} \u0028${this.settings.displayName}\u0029`
+        return this.settings.source !== ""
+            ? this.settings.channel + " - " + this.settings.source
             : this.settings.channel + " - " + this.settings.displayName;
     }
 
@@ -49,19 +56,22 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
         if (this.state !== ClockState.RUNNING) {
             if (this.state === ClockState.STOPPED) {
                 externalSourceManager
-                    .getSource(this.settings.channel)?.get()
+                    .getSource(this.settings.channel)
+                    ?.get()
                     ?.sendCommand(InPreset, {
                         byteCount: "A",
-                        data: { clipName: this.syncData.currentID }
+                        data: { clipName: this.settings.source }
                     })
                     .then(() => {
                         externalSourceManager
-                            .getSource(this.settings.channel)?.get()!
+                            .getSource(this.settings.channel)
+                            ?.get()!
                             .sendCommand(Play, { byteCount: "0" });
                     });
             } else {
                 externalSourceManager
-                    .getSource(this.settings.channel)?.get()!
+                    .getSource(this.settings.channel)
+                    ?.get()!
                     .sendCommand(Play, { byteCount: "0" });
             }
             this.state = ClockState.RUNNING;
@@ -72,7 +82,8 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
     pause(): void {
         if (this.state === ClockState.RUNNING) {
             externalSourceManager
-                .getSource(this.settings.channel)?.get()!
+                .getSource(this.settings.channel)
+                ?.get()!
                 .sendCommand(Stop, { byteCount: "0" }); // PVS pauses on stop and will resume where left off
             this.state = this.syncData.lastRequest = ClockState.PAUSED;
             EventHandler.emit("clock.pause", this.identifier);
@@ -85,7 +96,8 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
             this.state === ClockState.PAUSED
         ) {
             externalSourceManager
-                .getSource(this.settings.channel)?.get()!
+                .getSource(this.settings.channel)
+                ?.get()!
                 .sendCommand(Stop, { byteCount: "0" });
             this.state = this.syncData.lastRequest = ClockState.STOPPED;
             EventHandler.emit("clock.stop", this.identifier);
@@ -95,19 +107,25 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
     reset(): void {
         if (this.state !== ClockState.RESET) {
             externalSourceManager
-                .getSource(this.settings.channel)?.get()!
+                .getSource(this.settings.channel)
+                ?.get()!
                 .sendCommand(Stop)
                 .then(() => {
                     externalSourceManager
-                        .getSource(this.settings.channel)?.get()!
+                        .getSource(this.settings.channel)
+                        ?.get()!
                         .sendCommand(InPreset, {
                             byteCount: "A",
                             data: { clipName: "TestVideo copy" }
-                        }).then(() => {
-                            externalSourceManager.getSource(this.settings.channel)?.get()?.sendCommand(InPreset, {
-                                byteCount: "A",
-                                data: { clipName: this.syncData.currentID }
-                            });
+                        })
+                        .then(() => {
+                            externalSourceManager
+                                .getSource(this.settings.channel)
+                                ?.get()
+                                ?.sendCommand(InPreset, {
+                                    byteCount: "A",
+                                    data: { clipName: this.settings.source }
+                                });
                         });
                 });
             this.syncData.lastTime = new SMPTE("00:00:00:00");
@@ -124,7 +142,8 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
         const currentTime = async () => {
             return await (
                 await externalSourceManager
-                    .getSource(this.settings.channel)?.get()!
+                    .getSource(this.settings.channel)
+                    ?.get()!
                     .sendCommand(CurrentTimeSense)
             ).data;
         };
@@ -132,56 +151,37 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
         const clipDuration = async () => {
             return await (
                 await externalSourceManager
-                    .getSource(this.settings.channel)?.get()!
+                    .getSource(this.settings.channel)
+                    ?.get()!
                     .sendCommand(IDDurationRequest, {
-                        data: { clipName: this.syncData.currentID }
+                        data: { clipName: this.settings.source }
                     })
             ).data;
         };
-        const currentId = async () => {
-            return await (
-                await externalSourceManager
-                    .getSource(this.settings.channel)?.get()!
-                    .sendCommand(IDLoadedRequest)
-            ).data;
-        };
-        currentId().then((v) => {
-            if(v !== undefined && v.code !== "-1") {
-            if (this.syncData.currentID !== v.name) {
-                this.syncData.currentID = v.name;
-                clipDuration().then((v) => {
-                    this.syncData.duration = new SMPTE(v.timecode, 1000); // Set framerate to 1000 as we have no way of getting the framerate
-                    EventHandler.emit(
-                        `clock-update-${this.identifier.show}:${this.identifier.session}`,
-                        this.identifier.id,
-                        {additional: {data: {...this.data()}, duration: this.duration(), displayName: this.displayName()} }
-                    );
-                });
+        clipDuration().then((v) => {
+            if (v !== undefined && v.code !== "-1") {
+                const duration = new SMPTE(v.timecode, 1000); // Set framerate to 1000 as we have no way of getting the framerate
+                if (duration.isIncorrectFramerate() && !this.incorrectFramerate)
+                    this.incorrectFramerate = true;
+                this.syncData.duration = duration;
             }
-        }
         });
-
         currentTime().then((v) => {
-            if(v !== undefined && v.code !== "-1") {
-            const current = new SMPTE(v.timecode, 1000); // Set framerate to 1000 as we have no way of getting the framerate
-            if(current.isIncorrectFramerate() && !this.incorrectFramerate) this.incorrectFramerate = true; //Set is once
-            if (
-                this.state === ClockState.RUNNING &&
-                this.syncData.lastTime.equals(current, true)
-            ) {
-                this.state = this.syncData.lastRequest;
-                this.syncData.lastRequest = ClockState.PAUSED;
-            } else if (!this.syncData.lastTime.equals(current, true)) {
-                this.syncData.lastTime = current;
-                if (this.state !== ClockState.RUNNING)
-                    this.state = ClockState.RUNNING;
+            if (v !== undefined && v.code !== "-1") {
+                const current = new SMPTE(v.timecode, 1000); // Set framerate to 1000 as we have no way of getting the framerate
+                if (
+                    this.state === ClockState.RUNNING &&
+                    this.syncData.lastTime.equals(current, true)
+                ) {
+                    this.state = this.syncData.lastRequest;
+                    this.syncData.lastRequest = ClockState.PAUSED;
+                } else if (!this.syncData.lastTime.equals(current, true)) {
+                    this.syncData.lastTime = current;
+                    if (this.state !== ClockState.RUNNING)
+                        this.state = ClockState.RUNNING;
+                }
             }
-        }
         });
-    }
-
-    data(): object {
-        return { currentId: this.syncData.currentID };
     }
 
     setData(data: any): void {
@@ -189,29 +189,21 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
         if (data.channel) this.settings.channel = data.channel;
         if (data.direction) this.settings.direction = data.direction;
     }
-
-    identifier: ClockIdentifier;
-    type: string = "ampctrl";
-    // prettier-ignore
-    settings: BaseClockSettings & {
-        channel: string;
-        direction: ClockDirection;
-    };
-
-    overrun: boolean = false;
-    automation: boolean = false;
-    state: ClockState = ClockState.RESET;
-    incorrectFramerate: boolean = false;
     // prettier-ignore
     private syncData: {
         lastTime: SMPTE;
         duration: SMPTE;
-        currentID: string;
         lastRequest: ClockState;
     } = {
             lastTime: new SMPTE(),
             duration: new SMPTE(),
-            currentID: "",
             lastRequest: ClockState.RESET
         };
+
+    identifier: ClockIdentifier;
+    type: string = "videoctrl";
+    settings: BaseClockSettings & VideoCtrlData;
+    state: ClockState = ClockState.RESET;
+    overrun: boolean = false;
+    incorrectFramerate: boolean = false;
 }

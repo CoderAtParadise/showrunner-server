@@ -1,17 +1,17 @@
-import {
-    ListFirstID,
-    ListNextID
-} from "@coderatparadise/amp-grassvalley";
+import { ListFirstID, ListNextID } from "@coderatparadise/amp-grassvalley";
 import {
     ShowHandler,
     ClockSource,
     getSyncClock,
-    History
+    History,
+    ClockDirection
 } from "@coderatparadise/showrunner-common";
 import { AmpCtrlClock } from "../clock/AmpCtrlClockSource";
+import { VideoCtrlClockSource } from "../clock/VideoCtrlClockSource";
 import { EventHandler } from "../Scheduler";
 import { loadClocks, saveClocks } from "../util/FileHandler";
-import { openChannels, videoCache } from "./AmpChannelManager";
+import { videoCache } from "./AmpChannelSource";
+import { externalSourceManager } from "./ExternalSourceManager";
 
 class GlobalShowHandler implements ShowHandler {
     tick(): void {
@@ -59,7 +59,7 @@ class GlobalShowHandler implements ShowHandler {
             case "clocks":
                 // eslint-disable-next-line no-case-declarations
                 const clock = value as ClockSource<any>;
-                this.clocks.set(clock.id, clock);
+                this.clocks.set(clock.identifier.id, clock);
                 break;
         }
     }
@@ -80,7 +80,38 @@ export const initGlobalShowHandler = (): void => {
         mGlobalShowHandler.setValue("clocks", getSyncClock());
         mGlobalShowHandler.setValue(
             "clocks",
-            new AmpCtrlClock("PVS", "PVS", "Video Sync Clock")
+            new AmpCtrlClock(
+                {
+                    show: "system",
+                    session: "system",
+                    owner: "system",
+                    id: "PVS"
+                },
+                {
+                    channel: "PVS",
+                    displayName: "Video Sync Clock",
+                    direction: ClockDirection.COUNTUP,
+                    automation: false
+                }
+            )
+        );
+        mGlobalShowHandler.setValue(
+            "clocks",
+            new VideoCtrlClockSource(
+                {
+                    show: "system",
+                    session: "system",
+                    owner: "system",
+                    id: "testvideo"
+                },
+                {
+                    channel: "PVS",
+                    displayName: "Video Test Clock",
+                    source: "TestVideo",
+                    direction: ClockDirection.COUNTUP,
+                    automation: false
+                }
+            )
         );
         EventHandler.on("clock", () => globalShowHandler().tick());
         loadClocks();
@@ -93,21 +124,25 @@ export const initGlobalShowHandler = (): void => {
 
         const fetchVideos = () => {
             videoCache.forEach((value: string[], key: string) => {
-                const channel = openChannels.get(key);
+                const channel = externalSourceManager.getSource(key)?.get();
                 let videos: string[];
                 if (channel) {
                     channel
                         .sendCommand(ListFirstID, { byteCount: "2" })
-                        .then((v) => {
-                            videos = v.data.clipNames;
-                            channel
-                                .sendCommand(ListNextID, {
-                                    data: { count: 255 }
-                                })
-                                .then((lv) => {
-                                    videos = videos.concat(lv.data.clipNames);
-                                    videoCache.set(key, videos);
-                                });
+                        .then((v: any | undefined) => {
+                            if (v !== undefined && v.code !== "-1") {
+                                videos = v.data.clipNames;
+                                channel
+                                    .sendCommand(ListNextID, {
+                                        data: { count: 255 }
+                                    })
+                                    .then((lv: any) => {
+                                        videos = videos.concat(
+                                            lv.data.clipNames
+                                        );
+                                        videoCache.set(key, videos);
+                                    });
+                            }
                         });
                 }
             });

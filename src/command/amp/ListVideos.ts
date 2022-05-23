@@ -1,5 +1,5 @@
 import { CommandReturn, ICommand } from "@coderatparadise/showrunner-common";
-import { videoCache } from "../../show/AmpChannelManager";
+import { videoCache } from "../../show/AmpChannelSource";
 
 export const ListVideos: ICommand<{ channel: string }> = {
     id: "amp.list",

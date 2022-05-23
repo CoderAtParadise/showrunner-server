@@ -9,10 +9,9 @@ import { router as ClockSyncRouter } from "./route/production/ClockSync";
 import { router as RunsheetRouter } from "./route/production/List";
 import { router as CommandRouter } from "./route/production/Command";
 import { init as CommandInit } from "./command/";
-import {
-    closeChannels,
-    openChannel
-} from "./show/AmpChannelManager";
+import { AmpChannelSource } from "./show/AmpChannelSource";
+import { CueUpWithData } from "@coderatparadise/amp-grassvalley";
+import { externalSourceManager } from "./show/ExternalSourceManager";
 
 const normalizePort = (val: any) => {
     const port = parseInt(val, 10);
@@ -27,11 +26,13 @@ app.use(bodyparser.json());
 app.use(bodyparser.urlencoded({ extended: true }));
 const debug = Debug("showrunner:server");
 const port = normalizePort(process.env.PORT || "3001");
-openChannel("PVS", "192.168.0.16", 3811, "Channel 1");
+externalSourceManager.registerSource(
+    new AmpChannelSource("PVS", "PVS", "192.168.0.16", 3811, "Channel 1")
+);
+externalSourceManager.openSource("PVS");
 CommandInit();
 EventHandler.onAny((msg, id) => {
-    if (msg !== "clock")
-        Debug(("showrunner:" + msg) as string)(`(${id}`);
+    if (msg !== "clock") Debug(("showrunner:" + msg) as string)(`(${id}`);
 });
 app.use(
     morgan("dev", {
@@ -55,7 +56,7 @@ server.on("connection", (connection) => {
 
 const startGracefullShutdown = () => {
     server.close(() => {
-        closeChannels();
+        externalSourceManager.closeAll();
         process.exit(0);
     });
     setTimeout(() => {

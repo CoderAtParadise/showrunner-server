@@ -6,7 +6,7 @@ import { globalShowHandler } from "../../show/GlobalShowHandler";
 import { ClockSourceCodec } from "../../codec/sync/ClockSourceCodec";
 export const router = Router();
 
-router.post(
+router.get(
     "/production/:show/:session/clocks",
     async (req: Request, res: Response) => {
         const show = req.params.show;
@@ -36,12 +36,10 @@ router.post(
 
         const updatecb = (id: string, diff: object) => {
             res.write(
-                `event:clocks-update\ndata: ${JSON.stringify(
-                    {
-                        id: id,
-                        data: diff
-                    }
-                )}\n\n`
+                `event:clocks-update\ndata: ${JSON.stringify({
+                    id: id,
+                    data: diff
+                })}\n\n`
             );
         };
 
@@ -53,11 +51,13 @@ router.post(
                         .get("clocks")
                         .forEach((clock: ClockSource<any>) => {
                             clocks.push({
-                                id: clock.id,
-                                owner: clock.owner,
-                                current: clock.current().toString(),
-                                state: clock.state,
-                                overrun: clock.overrun
+                                identifier: clock.identifier,
+                                currentState: {
+                                    current: clock.current().toString(),
+                                    state: clock.state,
+                                    overrun: clock.overrun,
+                                    incorrectFramerate: clock.incorrectFramerate
+                                }
                             });
                         });
                 }
@@ -65,9 +65,7 @@ router.post(
                 return clocks;
             };
             res.write(
-                `event:clocks-sync\ndata: ${JSON.stringify(
-                    gatherClocks()
-                )}\n\n`
+                `event:clocks-sync\ndata: ${JSON.stringify(gatherClocks())}\n\n`
             );
         };
         res.on("close", () => {
