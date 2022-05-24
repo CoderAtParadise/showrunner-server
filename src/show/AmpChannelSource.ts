@@ -32,6 +32,7 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
 
     close(): void {
         this.source?.close();
+        videoCache.set(this.id, []);
     }
 
     get(): AmpChannel {

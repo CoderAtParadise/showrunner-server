@@ -1,3 +1,5 @@
+import { videoCache } from "./AmpChannelSource";
+
 export interface ExternalSource<T> {
     readonly id: string;
     readonly type: string;
@@ -66,7 +68,7 @@ export class ExternalSourceManager {
     getAllOfType(type: string): string[] {
         const channels: string[] = [];
         this.sources.forEach((value: ExternalSource<any>, key: string) => {
-            if (value.type === type) channels.push(key);
+            if (value.type === type && value.isOpen()) channels.push(key);
         });
         return channels;
     }
