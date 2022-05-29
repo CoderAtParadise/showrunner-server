@@ -122,28 +122,37 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
 
     update(): void {
         const currentTime = async () => {
+            const source = await externalSourceManager.getSource(this.settings.channel);
+            if(source) {
             return await (
-                await externalSourceManager
-                    .getSource(this.settings.channel)?.get()!
+                await source?.get()!
                     .sendCommand(CurrentTimeSense)
             ).data;
+            }
+            return undefined;
         };
 
         const clipDuration = async () => {
+            const source = await externalSourceManager.getSource(this.settings.channel);
+            if(source) {
             return await (
-                await externalSourceManager
-                    .getSource(this.settings.channel)?.get()!
+                await source?.get()!
                     .sendCommand(IDDurationRequest, {
                         data: { clipName: this.syncData.currentID }
                     })
             ).data;
+                }
+            return undefined;
         };
         const currentId = async () => {
-            return await (
-                await externalSourceManager
-                    .getSource(this.settings.channel)?.get()!
+            const source = await externalSourceManager.getSource(this.settings.channel);
+            if(source) {
+                return await (
+                source?.get()
                     .sendCommand(IDLoadedRequest)
             ).data;
+            }
+            return undefined;
         };
         currentId().then((v) => {
             if(v !== undefined && v.code !== "-1") {

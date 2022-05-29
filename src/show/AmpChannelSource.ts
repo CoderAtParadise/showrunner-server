@@ -8,6 +8,7 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
         name: string,
         address: string,
         port: number,
+        framerate?: number,
         channel?: string,
         retry?: { maxRetries: number; timeBetweenRetries: number[] }
     ) {
@@ -15,6 +16,7 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
         this.name = name;
         this.address = address;
         this.port = port;
+        this.framerate = framerate || 25;
         this.channel = channel;
         this.maxRetries = retry?.maxRetries || 10;
         this.timeBetweenRetries = retry?.timeBetweenRetries || [10000];
@@ -31,13 +33,33 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
     }
 
     close(): void {
-        this.source?.close();
+        this.source?.close(false);
+        videoCache.set(this.id, []);
+    }
+
+    restart(): void {
+        this.source?.close(true);
         videoCache.set(this.id, []);
     }
 
     get(): AmpChannel {
         if (this.source) return this.source;
         throw new Error("Amp Channel not open");
+    }
+
+    configure(newSettings?: object): object {
+        if (newSettings !== undefined) {
+        }
+        return {
+            id: this.id,
+            maxRetries: this.maxRetries,
+            timeBetweenRetries: this.timeBetweenRetries,
+            name: this.name,
+            address: this.address,
+            port: this.port,
+            channel: this.channel,
+            framerate: this.framerate
+        };
     }
 
     id: string;
@@ -47,6 +69,7 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
     name: string;
     address: string;
     port: number;
+    framerate: number;
     channel: string | undefined;
     source: AmpChannel | undefined = undefined;
     tryCounter: number = 0;

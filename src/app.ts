@@ -27,7 +27,7 @@ app.use(bodyparser.urlencoded({ extended: true }));
 const debug = Debug("showrunner:server");
 const port = normalizePort(process.env.PORT || "3001");
 externalSourceManager.registerSource(
-    new AmpChannelSource("PVS", "PVS", "192.168.0.16", 3811, "Channel 1")
+    new AmpChannelSource("PVS", "PVS", "192.168.0.16", 3811, 25, "Channel 1")
 );
 externalSourceManager.openSource("PVS");
 CommandInit();

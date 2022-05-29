@@ -1,5 +1,3 @@
-import { videoCache } from "./AmpChannelSource";
-
 export interface ExternalSource<T> {
     readonly id: string;
     readonly type: string;
@@ -11,7 +9,9 @@ export interface ExternalSource<T> {
     open(retryHandler: () => Promise<boolean>): Promise<boolean>;
     isOpen(): boolean;
     close(): void;
+    restart(): void;
     get(): T;
+    configure(newSettings?: object): object;
     tryCounter: number;
 }
 
@@ -61,14 +61,18 @@ export class ExternalSourceManager {
         return this.sources.get(id);
     }
 
+    removeSource(id: string): boolean {
+        return this.sources.delete(id);
+    }
+
     closeAll() {
         this.sources.forEach((source) => source.close());
     }
 
-    getAllOfType(type: string): string[] {
-        const channels: string[] = [];
+    getAllOfType(type: string): ExternalSource<any>[] {
+        const channels: ExternalSource<any>[] = [];
         this.sources.forEach((value: ExternalSource<any>, key: string) => {
-            if (value.type === type && value.isOpen()) channels.push(key);
+            if (value.type === type && value.isOpen()) channels.push(value);
         });
         return channels;
     }

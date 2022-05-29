@@ -14,18 +14,14 @@ router.get(
         updgradeSSE(res);
         const initial = () => {
             const gatherClocks = () => {
-                const clocks: object[] = [];
                 if (show === "system") {
-                    globalShowHandler()
+                    return globalShowHandler()
                         .get("clocks")
-                        .forEach((clock: ClockSource<any>) => {
-                            clocks.push(
-                                ClockSourceCodec.serialize(clock) as object
-                            );
+                        .map((clock: ClockSource<any>) => {
+                            return ClockSourceCodec.serialize(clock) as object;
                         });
                 }
-
-                return clocks;
+                return [];
             };
             res.write(
                 `event:clocks-initial\ndata: ${JSON.stringify(
@@ -47,10 +43,10 @@ router.get(
             const gatherClocks = () => {
                 const clocks: object[] = [];
                 if (show === "system") {
-                    globalShowHandler()
+                    return globalShowHandler()
                         .get("clocks")
-                        .forEach((clock: ClockSource<any>) => {
-                            clocks.push({
+                        .map((clock: ClockSource<any>) => {
+                            return {
                                 identifier: clock.identifier,
                                 currentState: {
                                     current: clock.current().toString(),
@@ -58,7 +54,7 @@ router.get(
                                     overrun: clock.overrun,
                                     incorrectFramerate: clock.incorrectFramerate
                                 }
-                            });
+                            };
                         });
                 }
 

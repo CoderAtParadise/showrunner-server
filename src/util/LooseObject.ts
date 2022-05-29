@@ -18,13 +18,11 @@ export const encodeData = (data: LooseObject): LooseObject => {
 };
 
 export const encodeArray = (data: any[]): any[] => {
-    const rdata: any[] = [];
-    data.forEach((val: any) => {
-        if (val instanceof SMPTE) rdata.push((val as SMPTE).toString());
-        else if (Array.isArray(val)) rdata.push(encodeArray(val));
+    return data.map((val: any) => {
+        if (val instanceof SMPTE) return (val as SMPTE).toString();
+        else if (Array.isArray(val)) return encodeArray(val);
         else if (val instanceof Object || typeof val === "object")
-            rdata.push(encodeData(val));
-        else rdata.push(val);
+            return encodeData(val);
+        else return val;
     });
-    return rdata;
 };

@@ -140,23 +140,29 @@ export class VideoCtrlClockSource implements MutableClockSource<VideoCtrlData> {
 
     update(): void {
         const currentTime = async () => {
-            return await (
-                await externalSourceManager
-                    .getSource(this.settings.channel)
-                    ?.get()!
-                    .sendCommand(CurrentTimeSense)
-            ).data;
+            const source = await externalSourceManager.getSource(
+                this.settings.channel
+            );
+            if (source) {
+                return await (
+                    await source?.get()!.sendCommand(CurrentTimeSense)
+                ).data;
+            }
+            return undefined;
         };
 
         const clipDuration = async () => {
-            return await (
-                await externalSourceManager
-                    .getSource(this.settings.channel)
-                    ?.get()!
-                    .sendCommand(IDDurationRequest, {
+            const source = await externalSourceManager.getSource(
+                this.settings.channel
+            );
+            if (source) {
+                return await (
+                    await source?.get()!.sendCommand(IDDurationRequest, {
                         data: { clipName: this.settings.source }
                     })
-            ).data;
+                ).data;
+            }
+            return undefined;
         };
         clipDuration().then((v) => {
             if (v !== undefined && v.code !== "-1") {
