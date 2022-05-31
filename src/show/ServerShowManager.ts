@@ -20,7 +20,7 @@ export class ServerShowManager implements ShowManager {
             this.shows.set(show.id, {
                 loaded: true,
                 displayName: show.displayName,
-                show: show
+                show
             });
         }
     }

@@ -20,7 +20,7 @@ export const GetServerSettings: ICommand<{}> = {
             message: {
                 server: {
                     ...ServerSettings,
-                    ampChannels: ampChannels
+                    ampChannels
                 }
             }
         };

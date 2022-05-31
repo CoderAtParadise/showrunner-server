@@ -12,14 +12,14 @@ export interface ExternalSource<T> {
     restart(): void;
     get(): T;
     configure(newSettings?: object): object;
+    data(id: string, dataid?: string): any;
+    update(): void;
     tryCounter: number;
 }
 
 export class ExternalSourceManager {
     registerSource<T>(source: ExternalSource<T>) {
-        if (!this.sources.has(source.id)) {
-            this.sources.set(source.id, source);
-        }
+        if (!this.sources.has(source.id)) this.sources.set(source.id, source);
     }
 
     async openSource(id: string) {
@@ -30,13 +30,15 @@ export class ExternalSourceManager {
                     const open = await source.open(tryOpen);
                     if (!open) {
                         source.tryCounter++;
+                        // prettier-ignore
                         const time =
                             source.tryCounter < source.timeBetweenRetries.length
                                 ? source.timeBetweenRetries[source.tryCounter]
                                 : source.timeBetweenRetries[
-                                      source.timeBetweenRetries.length - 1
-                                  ];
+                                    source.timeBetweenRetries.length - 1
+                                ];
                         if (source.tryCounter < source.maxRetries) {
+                            // eslint-disable-next-line promise/param-names
                             return new Promise<boolean>((res) => {
                                 setTimeout(() => {
                                     res(tryOpen());
@@ -61,6 +63,10 @@ export class ExternalSourceManager {
         return this.sources.get(id);
     }
 
+    startUpdating() {
+        this.sources.forEach((v) => v.update());
+    }
+
     removeSource(id: string): boolean {
         return this.sources.delete(id);
     }
@@ -71,14 +77,14 @@ export class ExternalSourceManager {
 
     getAllOfType(type: string): ExternalSource<any>[] {
         const channels: ExternalSource<any>[] = [];
-        this.sources.forEach((value: ExternalSource<any>, key: string) => {
+        this.sources.forEach((value: ExternalSource<any>) => {
             if (value.type === type && value.isOpen()) channels.push(value);
         });
         return channels;
     }
 
     // prettier-ignore
-    private sources: Map<string,ExternalSource<any>> = new Map<string,ExternalSource<any>>();
+    private sources: Map<string, ExternalSource<any>> = new Map<string, ExternalSource<any>>();
 }
 
 export const externalSourceManager = new ExternalSourceManager();

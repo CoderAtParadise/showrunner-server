@@ -1,6 +1,20 @@
-import { AmpChannel } from "@coderatparadise/amp-grassvalley";
+import {
+    AmpChannel,
+    CurrentTimeSense,
+    IDDurationRequest,
+    IDLoadedRequest,
+    ListFirstID,
+    ListNextID
+} from "@coderatparadise/amp-grassvalley";
+import { ClockState, SMPTE } from "@coderatparadise/showrunner-common";
 import { ExternalSource } from "./ExternalSourceManager";
-export const videoCache: Map<string, string[]> = new Map<string, string[]>();
+
+export interface VideoData {
+    id: string;
+    duration: SMPTE;
+    incorrectFramerate: boolean;
+    running: ClockState;
+}
 
 export class AmpChannelSource implements ExternalSource<AmpChannel> {
     constructor(
@@ -24,8 +38,12 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
 
     async open(retryHandler: () => Promise<boolean>): Promise<boolean> {
         this.source = new AmpChannel(this.address, this.port, this.channel);
-        videoCache.set(this.id, []);
-        return await this.source.open(retryHandler);
+        this.videoCache.clear();
+        this.current = { id: "", time: new SMPTE(), raw: "" };
+        const open = await this.source.open(retryHandler);
+        if (open) this.update();
+
+        return open;
     }
 
     isOpen(): boolean {
@@ -34,17 +52,30 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
 
     close(): void {
         this.source?.close(false);
-        videoCache.set(this.id, []);
+        this.videoCache.clear();
+        this.current = { id: "", time: new SMPTE(), raw: "" };
     }
 
     restart(): void {
         this.source?.close(true);
-        videoCache.set(this.id, []);
+        this.videoCache.clear();
+        this.current = { id: "", time: new SMPTE(), raw: "" };
     }
 
     get(): AmpChannel {
         if (this.source) return this.source;
         throw new Error("Amp Channel not open");
+    }
+
+    data(id: string, dataid?: string): any {
+        if (id === "video") {
+            if (dataid !== undefined) return this.videoCache.get(dataid);
+            else return this.videoCache;
+        } else if (id === "current") {
+            if (dataid === "id") return this.current.id;
+            else if (dataid === "time") return this.current.time;
+            else return this.current;
+        }
     }
 
     configure(newSettings?: object): object {
@@ -62,6 +93,132 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
         };
     }
 
+    private pollCurrentInfo() {
+        const currentTime = async () => {
+            return await (
+                await this.get().sendCommand(CurrentTimeSense)
+            ).data;
+        };
+        const currentID = async () => {
+            return await (
+                await this.get().sendCommand(IDLoadedRequest)
+            ).data;
+        };
+        currentID().then((v) => {
+            if (this.current.id !== v.name) {
+                const data = this.data("video", this.current.id) as VideoData;
+                if (data !== undefined) data.running = ClockState.RESET;
+
+                this.current.id = v.name;
+            }
+        });
+        currentTime().then((v) => {
+            const current = new SMPTE(v.timecode, this.framerate);
+            if (this.lastChange === -1) this.lastChange = Date.now();
+            const data = this.data("video", this.current.id) as VideoData;
+            if (data !== undefined) {
+                if (this.current.raw !== v.timecode) {
+                    data.running = ClockState.RUNNING;
+                    this.lastChange = Date.now();
+                } else if (
+                    this.current.raw === v.timecode &&
+                    Date.now() - this.lastChange > 1000 / this.framerate
+                ) {
+                    if (data.running !== ClockState.RESET) {
+                        data.running = ClockState.PAUSED;
+                        if (data.duration.equals(current, true))
+                            data.running = ClockState.STOPPED;
+                    }
+                }
+            }
+            this.current.time = current;
+            this.current.raw = v.timecode;
+            if (current.isIncorrectFramerate()) {
+                const video: VideoData = this.videoCache.get(
+                    this.current.id
+                ) as VideoData;
+                if (video !== undefined)
+                    video.incorrectFramerate = current.isIncorrectFramerate();
+            }
+        });
+    }
+
+    private pollVideoData() {
+        const firstId = async () => {
+            return await (
+                await this.get().sendCommand(ListFirstID, {
+                    byteCount: "2"
+                })
+            ).data;
+        };
+
+        const nextId = async () => {
+            return await (
+                await this.get().sendCommand(ListNextID, {
+                    data: { count: 255 }
+                })
+            ).data;
+        };
+
+        const getDuration = async (id: string) => {
+            if (id !== undefined) {
+                return await (
+                    await this.get().sendCommand(IDDurationRequest, {
+                        data: { clipName: id }
+                    })
+                ).data;
+            }
+            return { timecode: "00:00:00:00" };
+        };
+        let allVideos: string[] = [];
+        firstId()
+            .then((v) => {
+                return v;
+            })
+            .then((v: any) => {
+                allVideos = [...v.clipNames];
+            })
+            .then(() => {
+                nextId()
+                    .then((v) => {
+                        allVideos = [...allVideos, ...v.clipNames];
+                    })
+                    .then(() => {
+                        const keys = Array.from(this.videoCache.keys());
+                        const allFound = allVideos.every((id: string) =>
+                            keys.includes(id)
+                        );
+                        if (!allFound) {
+                            allVideos.forEach(async (id: string) => {
+                                const timecode = await (
+                                    await getDuration(id)
+                                ).timecode;
+                                const duration = new SMPTE(
+                                    timecode,
+                                    this.framerate
+                                );
+                                this.videoCache.set(id, {
+                                    id,
+                                    duration,
+                                    incorrectFramerate:
+                                        duration.isIncorrectFramerate(),
+                                    running: ClockState.RESET
+                                });
+                            });
+                        }
+                    });
+            });
+    }
+
+    update() {
+        setInterval(() => {
+            if (this.isOpen()) this.pollVideoData();
+        }, 1000);
+        setInterval(() => {
+            if (this.isOpen()) this.pollCurrentInfo();
+        }, 1000 / 30);
+    }
+
     id: string;
     type: string = AmpChannel.name;
     maxRetries: number;
@@ -73,4 +230,12 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
     channel: string | undefined;
     source: AmpChannel | undefined = undefined;
     tryCounter: number = 0;
+    private current: { id: string; time: SMPTE; raw: string } = {
+        id: "",
+        time: new SMPTE(),
+        raw: ""
+    };
+
+    private videoCache: Map<string, VideoData> = new Map<string, VideoData>();
+    private lastChange: number = -1;
 }

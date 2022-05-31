@@ -29,7 +29,9 @@ const port = normalizePort(process.env.PORT || "3001");
 externalSourceManager.registerSource(
     new AmpChannelSource("PVS", "PVS", "192.168.0.16", 3811, 25, "Channel 1")
 );
-externalSourceManager.openSource("PVS");
+externalSourceManager
+    .openSource("PVS")
+    .then(() => externalSourceManager.startUpdating());
 CommandInit();
 EventHandler.onAny((msg, id) => {
     if (msg !== "clock") Debug(("showrunner:" + msg) as string)(`(${id}`);

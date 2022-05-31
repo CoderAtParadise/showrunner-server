@@ -10,7 +10,6 @@ import { AmpCtrlClock } from "../clock/AmpCtrlClockSource";
 import { VideoCtrlClockSource } from "../clock/VideoCtrlClockSource";
 import { EventHandler } from "../Scheduler";
 import { loadClocks, saveClocks } from "../util/FileHandler";
-import { videoCache } from "./AmpChannelSource";
 import { externalSourceManager } from "./ExternalSourceManager";
 
 class GlobalShowHandler implements ShowHandler {
@@ -121,36 +120,6 @@ export const initGlobalShowHandler = (): void => {
                 mGlobalShowHandler.markDirty(false);
             }
         }, 5000);
-
-        const fetchVideos = () => {
-            videoCache.forEach((value: string[], key: string) => {
-                const channel = externalSourceManager.getSource(key)?.get();
-                let videos: string[];
-                if (channel) {
-                    channel
-                        .sendCommand(ListFirstID, { byteCount: "2" })
-                        .then((v: any | undefined) => {
-                            if (v !== undefined && v.code !== "-1") {
-                                videos = v.data.clipNames;
-                                channel
-                                    .sendCommand(ListNextID, {
-                                        data: { count: 255 }
-                                    })
-                                    .then((lv: any) => {
-                                        videos = videos.concat(
-                                            lv.data.clipNames
-                                        );
-                                        videoCache.set(key, videos);
-                                    });
-                            }
-                        });
-                }
-            });
-        };
-        setTimeout(() => {
-            fetchVideos();
-            setInterval(() => fetchVideos(), 300000);
-        }, 3000);
     }
 };
 

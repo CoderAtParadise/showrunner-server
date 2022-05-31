@@ -1,5 +1,5 @@
 import { CommandReturn, ICommand } from "@coderatparadise/showrunner-common";
-import { videoCache } from "../../show/AmpChannelSource";
+import { externalSourceManager } from "../../show/ExternalSourceManager";
 
 export const ListVideos: ICommand<{ channel: string }> = {
     id: "amp.list",
@@ -13,7 +13,9 @@ export const ListVideos: ICommand<{ channel: string }> = {
         commandInfo: { show: string; session: string },
         data?: { channel: string }
     ): CommandReturn => {
-        const channel = videoCache.get(data!.channel);
+        const channel = Array.from(
+            externalSourceManager.getSource(data!.channel)?.data("video").keys()
+        );
         if (channel) return { status: 200, message: channel };
         else {
             return {

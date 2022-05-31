@@ -33,9 +33,20 @@ router.get(
         const updatecb = (id: string, diff: object) => {
             res.write(
                 `event:clocks-update\ndata: ${JSON.stringify({
-                    id: id,
+                    id,
                     data: diff
                 })}\n\n`
+            );
+        };
+
+        const addcb = (id: string) => {
+            const clock = globalShowHandler()
+                .get("clocks")
+                .find((clock) => (clock.identifier.id === id));
+            res.write(
+                `event:clocks-add\ndata: ${JSON.stringify(
+                    ClockSourceCodec.serialize(clock)
+                )}\n\n`
             );
         };
 
@@ -52,7 +63,8 @@ router.get(
                                     current: clock.current().toString(),
                                     state: clock.state,
                                     overrun: clock.overrun,
-                                    incorrectFramerate: clock.incorrectFramerate
+                                    incorrectFramerate:
+                                        clock.incorrectFramerate()
                                 }
                             };
                         });
@@ -70,6 +82,10 @@ router.get(
                 `clock-update-${req.params.show}:${req.params.session}`,
                 updatecb
             );
+            EventHandler.removeListener(
+                `clock-add-${req.params.show}:${req.params.session}`,
+                addcb
+            );
             res.end();
         });
         initial();
@@ -77,6 +93,10 @@ router.get(
         EventHandler.addListener(
             `clock-update-${req.params.show}:${req.params.session}`,
             updatecb
+        );
+        EventHandler.addListener(
+            `clock-add-${req.params.show}:${req.params.session}`,
+            addcb
         );
     }
 );

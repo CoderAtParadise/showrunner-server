@@ -1,4 +1,4 @@
 
 export const ServerSettings = {
-    dummyValue: "Hello"
-}
+    port: 3001
+};

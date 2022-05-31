@@ -16,6 +16,8 @@ export interface TimerSettings extends ClockSettingsBase {
 
 export interface OffsetSettings extends ClockSettingsBase {
     authority: string;
+    time: SMPTE;
+    direction: ClockDirection;
 }
 
 export interface VideoClockSettings {

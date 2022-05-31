@@ -19,6 +19,10 @@ export class TODClockSource implements MutableClockSource<ClockSettingsBase> {
         this.settings = settings;
     }
 
+    incorrectFramerate(): boolean {
+        return false;
+    }
+
     current(): SMPTE {
         if (
             this.state === ClockState.STOPPED ||
@@ -50,6 +54,8 @@ export class TODClockSource implements MutableClockSource<ClockSettingsBase> {
             this.state = ClockState.RUNNING;
         }
     }
+
+    setTime(time: SMPTE): void {}
 
     stop(): void {
         if (this.state !== ClockState.STOPPED) {
@@ -103,7 +109,6 @@ export class TODClockSource implements MutableClockSource<ClockSettingsBase> {
     identifier: ClockIdentifier;
     state: ClockState = ClockState.RESET;
     overrun: boolean = false;
-    incorrectFramerate: boolean = false;
     private stopTime: SMPTE = new SMPTE();
     private completed: boolean = false;
     settings: BaseClockSettings & ClockSettingsBase;

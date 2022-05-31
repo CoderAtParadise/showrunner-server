@@ -5,7 +5,8 @@ import {
     ShowHandler,
     Offset,
     BaseClockSettings,
-    ClockIdentifier
+    ClockIdentifier,
+    ClockSource
 } from "@coderatparadise/showrunner-common";
 import { EventHandler } from "../Scheduler";
 import { globalShowHandler } from "../show/GlobalShowHandler";
@@ -20,14 +21,17 @@ export class OffsetClockSource implements MutableClockSource<OffsetSettings> {
         this.settings = settings;
     }
 
+    incorrectFramerate(): boolean {
+        return false;
+    }
+
     current(): SMPTE {
         const authClock = this.getHandler()?.getValue(
             "clocks",
             this.settings.authority
-        );
+        ) as ClockSource<any>;
         if (authClock && authClock.type === "timer") {
-            const settings = (authClock.data() as any)!
-                .settings as TimerSettings;
+            const settings = authClock.settings;
             if (
                 (authClock.state !== ClockState.STOPPED &&
                     this.state === ClockState.STOPPED) ||
@@ -131,6 +135,8 @@ export class OffsetClockSource implements MutableClockSource<OffsetSettings> {
         }
     }
 
+    setTime(time: SMPTE): void {}
+
     stop(override: boolean): void {
         if (this.state !== ClockState.STOPPED) {
             EventHandler.emit("clock.stop", this.identifier);
@@ -157,7 +163,7 @@ export class OffsetClockSource implements MutableClockSource<OffsetSettings> {
 
     reset(override: boolean): void {
         if (this.state !== ClockState.STOPPED) this.stop(override);
-        EventHandler.emit("clock.reset",this.identifier);
+        EventHandler.emit("clock.reset", this.identifier);
         this.overrun = false;
         this.state = ClockState.RESET;
         this.complete = false;
@@ -242,7 +248,6 @@ export class OffsetClockSource implements MutableClockSource<OffsetSettings> {
     identifier: ClockIdentifier;
     state: ClockState = ClockState.RESET;
     overrun: boolean = false;
-    incorrectFramerate: boolean = false;
     private stopTime: SMPTE = new SMPTE();
     private lastParentState: ClockState = ClockState.RESET;
     private complete: boolean = false;

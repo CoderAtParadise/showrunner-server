@@ -15,11 +15,16 @@ export class TimerClockSource implements MutableClockSource<TimerSettings> {
         settings: BaseClockSettings & TimerSettings
     ) {
         this.identifier = identifier;
-        this.settings = settings ;
+        this.settings = settings;
+    }
+
+    incorrectFramerate(): boolean {
+        return false;
     }
 
     current(): SMPTE {
-        if (this.startTimes.length === 0) return new SMPTE("00:00:00:00");
+        if (this.state === ClockState.RESET && this.startTimes.length === 0)
+            return this.duration();
         let currentTime: SMPTE = new SMPTE();
         this.startTimes.forEach((value: SMPTE, index: number) => {
             let end: SMPTE;
@@ -29,7 +34,9 @@ export class TimerClockSource implements MutableClockSource<TimerSettings> {
             )
                 end = getSyncClock().current();
             else end = this.endTimes.at(index) as SMPTE;
-            currentTime = currentTime.add(end.subtract(value, true));
+            if (currentTime.frameCount() === -1)
+                currentTime = end.subtract(value, true);
+            else currentTime = currentTime.add(end.subtract(value, true));
         });
         return currentTime;
     }
@@ -46,6 +53,8 @@ export class TimerClockSource implements MutableClockSource<TimerSettings> {
             this.startTimes.push(getSyncClock().current());
         }
     }
+
+    setTime(time: SMPTE): void {}
 
     stop(): void {
         if (this.state !== ClockState.STOPPED) {
@@ -76,7 +85,7 @@ export class TimerClockSource implements MutableClockSource<TimerSettings> {
         if (
             this.state === ClockState.RUNNING &&
             !this.overrun &&
-            this.current().greaterThan(this.settings.time)
+            this.current().greaterThanOrEqual(this.settings.time)
         ) {
             EventHandler.emit("clock.complete", this.identifier);
             if (this.settings.behaviour !== ClockBehaviour.OVERRUN) this.stop();
@@ -108,7 +117,6 @@ export class TimerClockSource implements MutableClockSource<TimerSettings> {
     identifier: ClockIdentifier;
     state: ClockState = ClockState.RESET;
     overrun: boolean = false;
-    incorrectFramerate: boolean = false;
     startTimes: SMPTE[] = [];
     endTimes: SMPTE[] = [];
     settings: BaseClockSettings & TimerSettings;

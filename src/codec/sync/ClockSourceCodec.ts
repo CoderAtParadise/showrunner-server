@@ -10,7 +10,7 @@ export const ClockSourceCodec: Codec<ClockSource<any>> = {
                 current: clock.current().toString(),
                 state: clock.state,
                 overrun: clock.overrun,
-                incorrectFramerate: clock.incorrectFramerate
+                incorrectFramerate: clock.incorrectFramerate()
             },
             settings: encodeData(clock.settings),
             additional: {

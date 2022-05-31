@@ -6,16 +6,10 @@ import {
     BaseClockSettings,
     ClockIdentifier
 } from "@coderatparadise/showrunner-common";
-import {
-    CurrentTimeSense,
-    IDDurationRequest,
-    IDLoadedRequest,
-    InPreset,
-    Play,
-    Stop
-} from "@coderatparadise/amp-grassvalley";
+import { InPreset, Play, Stop } from "@coderatparadise/amp-grassvalley";
 import { EventHandler } from "../Scheduler";
 import { externalSourceManager } from "../show/ExternalSourceManager";
+import { VideoData } from "../show/AmpChannelSource";
 
 // prettier-ignore
 export class AmpCtrlClock implements MutableClockSource<{ channel: string; direction: ClockDirection }> {
@@ -31,18 +25,42 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
             : this.settings.channel + " - " + this.settings.displayName;
     }
 
-    current(): SMPTE {
-        if (this.state === ClockState.RESET) return this.duration();
-        switch (this.settings.direction) {
-            case ClockDirection.COUNTUP:
-                return this.syncData.lastTime;
-            case ClockDirection.COUNTDOWN:
-                return this.duration().subtract(this.syncData.lastTime, true);
+    incorrectFramerate(): boolean {
+        const currentId = externalSourceManager.getSource(this.settings.channel)?.data("current", "id");
+        if (currentId) {
+            const data: VideoData = externalSourceManager
+                .getSource(this.settings.channel)
+                ?.data("video", currentId) as VideoData;
+            if (data !== undefined) return data.incorrectFramerate;
         }
+        return false;
+    }
+
+    current(): SMPTE {
+        const current = externalSourceManager
+            .getSource(this.settings.channel)
+            ?.data("current", "time");
+        if (this.state === ClockState.RESET) return this.duration();
+        if (current !== undefined) {
+            switch (this.settings.direction) {
+                case ClockDirection.COUNTUP:
+                    return current;
+                case ClockDirection.COUNTDOWN:
+                    return this.duration().subtract(current, true);
+            }
+        } else return new SMPTE();
     }
 
     duration(): SMPTE {
-        return this.syncData.duration;
+        const currentId = externalSourceManager.getSource(this.settings.channel)?.data("current", "id");
+
+        if (currentId !== undefined) {
+            const data: VideoData = externalSourceManager
+                .getSource(this.settings.channel)
+                ?.data("video", currentId) as VideoData;
+            if (data !== undefined) return data.duration;
+        }
+        return new SMPTE();
     }
 
     start(): void {
@@ -69,6 +87,10 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
         }
     }
 
+    setTime(time: SMPTE): void {
+        // externalSourceManager.getSource(this.settings.channel)?.get().sendCommand(CueUpWithData,{byteCount: "4",data:{}})
+    };
+
     pause(): void {
         if (this.state === ClockState.RUNNING) {
             externalSourceManager
@@ -93,10 +115,9 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
     }
 
     reset(): void {
-        if (this.state !== ClockState.RESET) {
             externalSourceManager
                 .getSource(this.settings.channel)?.get()!
-                .sendCommand(Stop)
+                .sendCommand(Stop, { byteCount: "0" })
                 .then(() => {
                     externalSourceManager
                         .getSource(this.settings.channel)?.get()!
@@ -106,14 +127,12 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
                         }).then(() => {
                             externalSourceManager.getSource(this.settings.channel)?.get()?.sendCommand(InPreset, {
                                 byteCount: "A",
-                                data: { clipName: this.syncData.currentID }
+                                data: { clipName: externalSourceManager.getSource(this.settings.channel)?.data("current", "id") }
                             });
                         });
                 });
-            this.syncData.lastTime = new SMPTE("00:00:00:00");
             this.state = this.syncData.lastRequest = ClockState.RESET;
             EventHandler.emit("clock.reset", this.identifier);
-        }
     }
 
     getBit(byte: number, bit: number): boolean {
@@ -121,72 +140,86 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
     }
 
     update(): void {
-        const currentTime = async () => {
-            const source = await externalSourceManager.getSource(this.settings.channel);
-            if(source) {
-            return await (
-                await source?.get()!
-                    .sendCommand(CurrentTimeSense)
-            ).data;
-            }
-            return undefined;
-        };
-
-        const clipDuration = async () => {
-            const source = await externalSourceManager.getSource(this.settings.channel);
-            if(source) {
-            return await (
-                await source?.get()!
-                    .sendCommand(IDDurationRequest, {
-                        data: { clipName: this.syncData.currentID }
-                    })
-            ).data;
+        const currentId = externalSourceManager.getSource(this.settings.channel)?.data("current", "id");
+        if (currentId !== undefined) {
+            const videoData = externalSourceManager.getSource(this.settings.channel)?.data("video", currentId) as VideoData;
+            if (videoData !== undefined) {
+                if (this.syncData.lastRequest !== undefined && this.syncData.lastRequest !== videoData.running) {
+                    this.state = videoData.running = this.syncData.lastRequest;
+                    this.syncData.lastRequest = undefined;
                 }
-            return undefined;
-        };
-        const currentId = async () => {
-            const source = await externalSourceManager.getSource(this.settings.channel);
-            if(source) {
-                return await (
-                source?.get()
-                    .sendCommand(IDLoadedRequest)
-            ).data;
-            }
-            return undefined;
-        };
-        currentId().then((v) => {
-            if(v !== undefined && v.code !== "-1") {
-            if (this.syncData.currentID !== v.name) {
-                this.syncData.currentID = v.name;
-                clipDuration().then((v) => {
-                    this.syncData.duration = new SMPTE(v.timecode, 1000); // Set framerate to 1000 as we have no way of getting the framerate
-                    EventHandler.emit(
-                        `clock-update-${this.identifier.show}:${this.identifier.session}`,
-                        this.identifier.id,
-                        {additional: {data: {...this.data()}, duration: this.duration(), displayName: this.displayName()} }
-                    );
-                });
-            }
-        }
-        });
-
-        currentTime().then((v) => {
-            if(v !== undefined && v.code !== "-1") {
-            const current = new SMPTE(v.timecode, 1000); // Set framerate to 1000 as we have no way of getting the framerate
-            if(current.isIncorrectFramerate() && !this.incorrectFramerate) this.incorrectFramerate = true; //Set is once
-            if (
-                this.state === ClockState.RUNNING &&
-                this.syncData.lastTime.equals(current, true)
-            ) {
-                this.state = this.syncData.lastRequest;
-                this.syncData.lastRequest = ClockState.PAUSED;
-            } else if (!this.syncData.lastTime.equals(current, true)) {
-                this.syncData.lastTime = current;
-                if (this.state !== ClockState.RUNNING)
+                if (videoData.running === ClockState.RUNNING)
                     this.state = ClockState.RUNNING;
+                else if (this.state === ClockState.RUNNING)
+                    this.state = ClockState.PAUSED;
             }
         }
-        });
+        // const currentTime = async () => {
+        //     const source = externalSourceManager.getSource(this.settings.channel);
+        //     if(source) {
+        //     return await (
+        //         await source?.get()!
+        //             .sendCommand(CurrentTimeSense)
+        //     ).data;
+        //     }
+        //     return undefined;
+        // };
+
+        // const clipDuration = async () => {
+        //     const source = await externalSourceManager.getSource(this.settings.channel);
+        //     if(source) {
+        //     return await (
+        //         await source?.get()!
+        //             .sendCommand(IDDurationRequest, {
+        //                 data: { clipName: this.syncData.currentID }
+        //             })
+        //     ).data;
+        //         }
+        //     return undefined;
+        // };
+        // const currentId = async () => {
+        //     const source = await externalSourceManager.getSource(this.settings.channel);
+        //     if(source) {
+        //         return await (
+        //         source?.get()
+        //             .sendCommand(IDLoadedRequest)
+        //     ).data;
+        //     }
+        //     return undefined;
+        // };
+        // currentId().then((v) => {
+        //     if(v !== undefined && v.code !== "-1") {
+        //     if (this.syncData.currentID !== v.name) {
+        //         this.syncData.currentID = v.name;
+        //         clipDuration().then((v) => {
+        //             this.syncData.duration = new SMPTE(v.timecode, 1000); // Set framerate to 1000 as we have no way of getting the framerate
+        //             EventHandler.emit(
+        //                 `clock-update-${this.identifier.show}:${this.identifier.session}`,
+        //                 this.identifier.id,
+        //                 {additional: {data: {...this.data()}, duration: this.duration(), displayName: this.displayName()} }
+        //             );
+        //         });
+        //     }
+        // }
+        // });
+
+        // currentTime().then((v) => {
+        //     if(v !== undefined && v.code !== "-1") {
+        //     const current = new SMPTE(v.timecode, 1000); // Set framerate to 1000 as we have no way of getting the framerate
+        //     if(current.isIncorrectFramerate() && !this.incorrectFramerate) this.incorrectFramerate = true; //Set is once
+        //     if (
+        //         this.state === ClockState.RUNNING &&
+        //         this.syncData.lastTime.equals(current, true)
+        //     ) {
+        //         this.state = this.syncData.lastRequest;
+        //         this.syncData.lastRequest = ClockState.PAUSED;
+        //     } else if (!this.syncData.lastTime.equals(current, true)) {
+        //         this.syncData.lastTime = current;
+        //         if (this.state !== ClockState.RUNNING)
+        //             this.state = ClockState.RUNNING;
+        //     }
+        // }
+        // });
     }
 
     data(): object {
@@ -210,17 +243,12 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
     overrun: boolean = false;
     automation: boolean = false;
     state: ClockState = ClockState.RESET;
-    incorrectFramerate: boolean = false;
     // prettier-ignore
     private syncData: {
-        lastTime: SMPTE;
-        duration: SMPTE;
         currentID: string;
-        lastRequest: ClockState;
+        lastRequest: ClockState | undefined;
     } = {
-            lastTime: new SMPTE(),
-            duration: new SMPTE(),
             currentID: "",
-            lastRequest: ClockState.RESET
+            lastRequest: undefined
         };
 }

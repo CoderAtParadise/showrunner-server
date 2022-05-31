@@ -29,16 +29,16 @@ export const EditCommand: ICommand<ClockEditData> = {
         if (clock && (clock as MutableClockSource<any>)) {
             const oldSetttings = { ...clock.settings };
             const oldData = {
-                displayName: clock.displayName(),
+                displayName: clock?.displayName ? clock.displayName() : clock.settings.displayName,
                 duration: clock.duration(),
-                data: clock.data()
+                data: clock?.data ? clock.data() : {}
             };
             (clock as MutableClockSource<any>).setData(data!.data);
             const diff = diffObject(oldSetttings, clock.settings);
             const datadiff = diffObject(oldData, {
-                displayName: clock.displayName(),
+                displayName: clock?.displayName ? clock.displayName() : clock.settings.displayName,
                 duration: clock.duration(),
-                data: clock.data()
+                data: clock?.data ? clock.data() : {}
             });
             EventHandler.emit(
                 `clock-update-${commandInfo.show}:${commandInfo.session}`,

@@ -4,7 +4,6 @@ import { externalSourceManager } from "../../show/ExternalSourceManager";
 export const RemoveChannel: ICommand<{ channel: string }> = {
     id: "amp.remove",
     validate: (data?: any): CommandReturn | undefined => {
-        console.log(data);
         // prettier-ignore
         return data.channel !== undefined
             ? undefined

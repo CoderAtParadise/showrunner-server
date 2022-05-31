@@ -22,6 +22,10 @@ export class TODOffsetClockSource implements MutableClockSource<OffsetSettings> 
         this.settings = settings;
     }
 
+    incorrectFramerate(): boolean {
+        return false;
+    }
+
     current(): SMPTE {
         const authClock = this.getHandler()?.getValue("clocks", this.settings.authority);
         if (authClock && authClock.type === "tod") {
@@ -145,6 +149,10 @@ export class TODOffsetClockSource implements MutableClockSource<OffsetSettings> 
         }
     }
 
+    setTime(time: SMPTE): void {
+
+    }
+
     stop(override: boolean): void {
         if (this.state !== ClockState.STOPPED) {
             EventHandler.emit("clock.stop", this.identifier);
@@ -255,7 +263,6 @@ export class TODOffsetClockSource implements MutableClockSource<OffsetSettings> 
     identifier: ClockIdentifier;
     state: ClockState = ClockState.RESET;
     overrun: boolean = false;
-    incorrectFramerate: boolean = false;
     private lastParentState: ClockState = ClockState.RESET;
     private stopTime: SMPTE = new SMPTE();
     private override: boolean = false;
