@@ -27,9 +27,15 @@ export class VideoCtrlClockSource implements MutableClockSource<VideoCtrlData> {
     }
 
     displayName(): string {
-        return this.settings.source !== ""
-            ? this.settings.channel + " - " + this.settings.source
-            : this.settings.channel + " - " + this.settings.displayName;
+        const channel = externalSourceManager.getSource(
+            this.settings.channel
+        )?.name;
+        if (channel) {
+            return this.settings.source !== ""
+                ? channel + " - " + this.settings.source
+                : channel + " - " + this.settings.displayName;
+        }
+        return this.settings.displayName;
     }
 
     incorrectFramerate(): boolean {

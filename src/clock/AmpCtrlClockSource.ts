@@ -20,9 +20,15 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
     }
 
     displayName(): string {
-        return this.syncData.currentID !== ""
-            ? `${this.settings.channel}-${this.syncData.currentID} \u0028${this.settings.displayName}\u0029`
-            : this.settings.channel + " - " + this.settings.displayName;
+        const channel = externalSourceManager.getSource(
+            this.settings.channel
+        )?.name;
+        if (channel) {
+            return this.syncData.currentID !== ""
+                ? `${channel}-${this.syncData.currentID} \u0028${this.settings.displayName}\u0029`
+                : channel + " - " + this.settings.displayName;
+        }
+        return this.settings.displayName;
     }
 
     incorrectFramerate(): boolean {

@@ -195,11 +195,13 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
                     })
                     .then(() => {
                         const keys = Array.from(this.videoCache.keys());
-                        const allFound = allVideos.every((id: string) =>
-                            keys.includes(id)
-                        );
+                        const allFound = allVideos.every((id: string) => {
+                            if (id === "Reset") return true;
+                            return keys.includes(id);
+                        });
                         if (!allFound) {
                             allVideos.forEach(async (id: string) => {
+                                if (id === "Reset") return;
                                 const timecode = await (
                                     await getDuration(id)
                                 ).timecode;

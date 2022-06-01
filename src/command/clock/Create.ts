@@ -124,7 +124,6 @@ export const CreateCommand: ICommand<
             case "videoctrl":
                 handler.markDirty(true);
                 cdata = data as VideoData;
-                console.log("Hello");
                 handler.setValue(
                     "clocks",
                     new VideoCtrlClockSource(
