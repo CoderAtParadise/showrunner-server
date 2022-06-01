@@ -52,6 +52,10 @@ router.get(
             );
         };
 
+        const deletecb = (id: string) => {
+            res.write(`event:clocks-delete\ndata: ${id}\n\n`);
+        };
+
         const cb = () => {
             const gatherClocks = () => {
                 const clocks: object[] = [];
@@ -88,6 +92,10 @@ router.get(
                 `clock-add-${req.params.show}:${req.params.session}`,
                 addcb
             );
+            EventHandler.removeListener(
+                `clock-delete-${req.params.show}:${req.params.session}`,
+                deletecb
+            );
             res.end();
         });
         initial();
@@ -99,6 +107,10 @@ router.get(
         EventHandler.addListener(
             `clock-add-${req.params.show}:${req.params.session}`,
             addcb
+        );
+        EventHandler.addListener(
+            `clock-delete-${req.params.show}:${req.params.session}`,
+            deletecb
         );
     }
 );

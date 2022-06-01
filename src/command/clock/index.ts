@@ -5,6 +5,7 @@ import { PauseCommand } from "./Pause";
 import { ResetCommand } from "./Reset";
 import { EditCommand } from "./Edit";
 import { SetCommand } from "./Set";
+import { DeleteCommand } from "./Delete";
 import { registerCommand } from "@coderatparadise/showrunner-common";
 
 export function init() {
@@ -15,4 +16,5 @@ export function init() {
     registerCommand(PauseCommand);
     registerCommand(ResetCommand);
     registerCommand(EditCommand);
+    registerCommand(DeleteCommand);
 }

@@ -77,41 +77,6 @@ export const initGlobalShowHandler = (): void => {
     if (mGlobalShowHandler === undefined) {
         mGlobalShowHandler = new GlobalShowHandler();
         mGlobalShowHandler.setValue("clocks", getSyncClock());
-        mGlobalShowHandler.setValue(
-            "clocks",
-            new AmpCtrlClock(
-                {
-                    show: "system",
-                    session: "system",
-                    owner: "system",
-                    id: "PVS"
-                },
-                {
-                    channel: "PVS",
-                    displayName: "Video Sync Clock",
-                    direction: ClockDirection.COUNTUP,
-                    automation: false
-                }
-            )
-        );
-        mGlobalShowHandler.setValue(
-            "clocks",
-            new VideoCtrlClockSource(
-                {
-                    show: "system",
-                    session: "system",
-                    owner: "system",
-                    id: "testvideo"
-                },
-                {
-                    channel: "PVS",
-                    displayName: "Video Test Clock",
-                    source: "TestVideo",
-                    direction: ClockDirection.COUNTUP,
-                    automation: false
-                }
-            )
-        );
         EventHandler.on("clock", () => globalShowHandler().tick());
         loadClocks();
         setInterval(() => {

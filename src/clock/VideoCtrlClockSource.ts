@@ -45,7 +45,7 @@ export class VideoCtrlClockSource implements MutableClockSource<VideoCtrlData> {
             .getSource(this.settings.channel)
             ?.data("current");
         if (
-            current.id !== this.settings.source ||
+            current?.id !== this.settings.source ||
             this.state === ClockState.RESET
         )
             return this.duration();

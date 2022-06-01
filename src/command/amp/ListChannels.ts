@@ -1,6 +1,6 @@
 import { AmpChannel } from "@coderatparadise/amp-grassvalley";
 import { CommandReturn, ICommand } from "@coderatparadise/showrunner-common";
-import { values } from "lodash";
+import { AmpChannelSource } from "../../show/AmpChannelSource";
 import { externalSourceManager } from "../../show/ExternalSourceManager";
 
 export const ListChannels: ICommand<{}> = {
@@ -13,7 +13,16 @@ export const ListChannels: ICommand<{}> = {
             status: 200,
             message: externalSourceManager
                 .getAllOfType(AmpChannel.name)
-                .map((value) => value.id)
+                .map((value) => {
+                    return {
+                        id: value.id,
+                        displayName: value.name,
+                        address: value.address,
+                        port: value.port,
+                        framerate: (value as AmpChannelSource).framerate,
+                        channel: (value as AmpChannelSource).channel
+                    };
+                })
         };
     }
 };

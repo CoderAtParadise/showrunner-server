@@ -6,8 +6,17 @@ import {
     ListFirstID,
     ListNextID
 } from "@coderatparadise/amp-grassvalley";
-import { ClockState, SMPTE } from "@coderatparadise/showrunner-common";
+import {
+    ClockDirection,
+    ClockState,
+    SMPTE
+} from "@coderatparadise/showrunner-common";
+import { AmpCtrlClock } from "../clock/AmpCtrlClockSource";
+import { VideoCtrlClockSource } from "../clock/VideoCtrlClockSource";
 import { ExternalSource } from "./ExternalSourceManager";
+import { globalShowHandler } from "./GlobalShowHandler";
+import { v4 as uuidv4 } from "uuid";
+import { CreateCommand } from "../command/clock/Create";
 
 export interface VideoData {
     id: string;
@@ -205,7 +214,43 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
                                         duration.isIncorrectFramerate(),
                                     running: ClockState.RESET
                                 });
+                                CreateCommand.run(
+                                    {
+                                        show: "system",
+                                        session: "system"
+                                    },
+                                    {
+                                        type: "videoctrl",
+                                        id,
+                                        owner: "",
+                                        channel: this.id,
+                                        source: id,
+                                        displayName: "Video Sync Clock",
+                                        direction: ClockDirection.COUNTUP
+                                    }
+                                );
                             });
+                        }
+                    })
+                    .then(() => {
+                        if (
+                            globalShowHandler().getValue("clocks", this.id) ===
+                            undefined
+                        ) {
+                            CreateCommand.run(
+                                {
+                                    show: "system",
+                                    session: "system"
+                                },
+                                {
+                                    type: "ampctrl",
+                                    id: this.id,
+                                    owner: "",
+                                    channel: this.id,
+                                    displayName: "Video Sync Clock",
+                                    direction: ClockDirection.COUNTUP
+                                }
+                            );
                         }
                     });
             });

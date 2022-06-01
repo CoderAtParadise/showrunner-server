@@ -12,6 +12,7 @@ import { init as CommandInit } from "./command/";
 import { AmpChannelSource } from "./show/AmpChannelSource";
 import { externalSourceManager } from "./show/ExternalSourceManager";
 import { Framerate } from "@coderatparadise/showrunner-common";
+import { loadAmpChannels } from "./util/FileHandler";
 
 const normalizePort = (val: any) => {
     const port = parseInt(val, 10);
@@ -26,19 +27,7 @@ app.use(bodyparser.json());
 app.use(bodyparser.urlencoded({ extended: true }));
 const debug = Debug("showrunner:server");
 const port = normalizePort(process.env.PORT || "3001");
-externalSourceManager.registerSource(
-    new AmpChannelSource(
-        "PVS",
-        "PVS",
-        "192.168.0.16",
-        3811,
-        Framerate.F25,
-        "Channel 1"
-    )
-);
-externalSourceManager
-    .openSource("PVS")
-    .then(() => externalSourceManager.startUpdating());
+loadAmpChannels();
 CommandInit();
 EventHandler.onAny((msg, id) => {
     if (msg !== "clock") Debug(("showrunner:" + msg) as string)(`(${id}`);

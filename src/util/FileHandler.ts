@@ -1,10 +1,10 @@
-import {
-    ShowHandler
-} from "@coderatparadise/showrunner-common";
+import { ShowHandler } from "@coderatparadise/showrunner-common";
 import debug from "debug";
 import fs from "fs";
 import { ClockSourceFileCodec } from "../codec/file/ClockSourceFileCodec";
 import { CreateCommand } from "../command/clock/Create";
+import { AmpChannelSource } from "../show/AmpChannelSource";
+import { externalSourceManager } from "../show/ExternalSourceManager";
 import { globalShowHandler } from "../show/GlobalShowHandler";
 
 export const saveClocks = (): void => {
@@ -40,6 +40,26 @@ export const loadClocks = (): void => {
             };
             if (CreateCommand.validate(commandData) === undefined)
                 CreateCommand.run(identifier, commandData);
+        });
+    });
+};
+
+export const loadAmpChannels = (): void => {
+    load("storage", "ampchannels", (json: any) => {
+        json.forEach((j: any) => {
+            externalSourceManager.registerSource(
+                new AmpChannelSource(
+                    j.id,
+                    j.displayName,
+                    j.address,
+                    j.port,
+                    j.framerate,
+                    j?.channel
+                )
+            );
+            externalSourceManager
+                .openSource(j.id)
+                .then(() => externalSourceManager.startUpdating());
         });
     });
 };

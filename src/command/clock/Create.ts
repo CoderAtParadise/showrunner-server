@@ -13,6 +13,8 @@ import { TODClockSource } from "../../clock/ToDClockSource";
 import { OffsetClockSource } from "../../clock/OffsetClockSource";
 import { TODOffsetClockSource } from "../../clock/ToDOffsetClockSource";
 import { EventHandler } from "../../Scheduler";
+import { VideoCtrlClockSource } from "../../clock/VideoCtrlClockSource";
+import { AmpCtrlClock } from "../../clock/AmpCtrlClockSource";
 
 interface BaseData {
     id?: string;
@@ -37,6 +39,17 @@ interface OffsetData {
 interface TODData {
     behaviour: string;
     time: string;
+}
+
+interface VideoData {
+    channel: string;
+    source: string;
+    direction: string;
+}
+
+interface AmpData {
+    channel: string;
+    direction: string;
 }
 
 function isTimerData(data: any): data is TimerData {
@@ -69,7 +82,7 @@ function isBaseData(data: any): data is BaseData {
 }
 
 export const CreateCommand: ICommand<
-    BaseData & (TimerData | OffsetData | TODData)
+    BaseData & (TimerData | OffsetData | TODData | VideoData | AmpData)
 > = {
     id: "clock.create",
     validate: (data?: any): CommandReturn | undefined => {
@@ -94,7 +107,7 @@ export const CreateCommand: ICommand<
     },
     run: (
         commandInfo: { show: string; session: string },
-        data?: BaseData & (TimerData | OffsetData | TODData)
+        data?: BaseData & (TimerData | OffsetData | TODData | VideoData | AmpData)
     ): CommandReturn => {
         const handler = globalShowHandler();
         let authority: ClockSource<any> | undefined;
@@ -106,17 +119,53 @@ export const CreateCommand: ICommand<
             ) as ClockSource<any>;
         }
         const id = data?.id ? data.id : uuidv4();
+        let cdata: any;
         switch (data?.type) {
+            case "videoctrl":
+                handler.markDirty(true);
+                cdata = data as VideoData;
+                console.log("Hello");
+                handler.setValue(
+                    "clocks",
+                    new VideoCtrlClockSource(
+                        { ...commandInfo, id, owner: data.owner },
+                        {
+                            displayName: data.displayName,
+                            automation: false,
+                            channel: cdata.channel,
+                            source: cdata.source,
+                            direction: ClockDirection.COUNTUP
+                        }
+                    )
+                );
+                break;
+            case "ampctrl":
+                handler.markDirty(true);
+                cdata = data as AmpData;
+                handler.setValue(
+                    "clocks",
+                    new AmpCtrlClock(
+                        { ...commandInfo, id, owner: data.owner },
+                        {
+                            displayName: data.displayName,
+                            automation: false,
+                            channel: cdata.channel,
+                            direction: ClockDirection.COUNTUP
+                        }
+                    )
+                );
+                break;
             case "tod":
                 handler.markDirty(true);
+                cdata = data as TODData;
                 handler.setValue(
                     "clocks",
                     new TODClockSource(
                         { ...commandInfo, id, owner: data.owner },
                         {
                             displayName: data.displayName,
-                            behaviour: data.behaviour as ClockBehaviour,
-                            time: new SMPTE(data.time),
+                            behaviour: cdata.behaviour as ClockBehaviour,
+                            time: new SMPTE(cdata.time),
                             automation: false
                         }
                     )
@@ -124,16 +173,16 @@ export const CreateCommand: ICommand<
                 break;
             case "timer":
                 handler.markDirty(true);
+                cdata = data as TimerData;
                 handler.setValue(
                     "clocks",
                     new TimerClockSource(
                         { ...commandInfo, id, owner: data.owner },
                         {
                             displayName: data.displayName,
-                            behaviour: data.behaviour as ClockBehaviour,
-                            direction: (data as TimerData)
-                                .direction as ClockDirection,
-                            time: new SMPTE(data.time),
+                            behaviour: cdata.behaviour as ClockBehaviour,
+                            direction: cdata.direction as ClockDirection,
+                            time: new SMPTE(cdata.time),
                             automation: false
                         }
                     )
@@ -144,6 +193,7 @@ export const CreateCommand: ICommand<
                     case "videoctrl":
                     case "timer":
                         handler.markDirty(true);
+                        cdata = data as OffsetData;
                         handler.setValue(
                             "clocks",
                             new OffsetClockSource(
@@ -151,10 +201,11 @@ export const CreateCommand: ICommand<
                                 {
                                     displayName: data.displayName,
                                     authority: authority.identifier.id,
-                                    behaviour: data.behaviour as ClockBehaviour,
-                                    direction: (data as OffsetData)
-                                        .direction as ClockDirection,
-                                    time: new SMPTE(data.time),
+                                    behaviour:
+                                        cdata.behaviour as ClockBehaviour,
+                                    direction:
+                                        cdata.direction as ClockDirection,
+                                    time: new SMPTE(cdata.time),
                                     automation: false
                                 }
                             )
@@ -169,10 +220,11 @@ export const CreateCommand: ICommand<
                                 {
                                     displayName: data.displayName,
                                     authority: authority.identifier.id,
-                                    behaviour: data.behaviour as ClockBehaviour,
-                                    direction: (data as OffsetData)
-                                        .direction as ClockDirection,
-                                    time: new SMPTE(data.time),
+                                    behaviour:
+                                        cdata.behaviour as ClockBehaviour,
+                                    direction:
+                                        cdata.direction as ClockDirection,
+                                    time: new SMPTE(cdata.time),
                                     automation: false
                                 }
                             )
