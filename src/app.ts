@@ -10,8 +10,8 @@ import { router as RunsheetRouter } from "./route/production/List";
 import { router as CommandRouter } from "./route/production/Command";
 import { init as CommandInit } from "./command/";
 import { AmpChannelSource } from "./show/AmpChannelSource";
-import { CueUpWithData } from "@coderatparadise/amp-grassvalley";
 import { externalSourceManager } from "./show/ExternalSourceManager";
+import { Framerate } from "@coderatparadise/showrunner-common";
 
 const normalizePort = (val: any) => {
     const port = parseInt(val, 10);
@@ -27,7 +27,14 @@ app.use(bodyparser.urlencoded({ extended: true }));
 const debug = Debug("showrunner:server");
 const port = normalizePort(process.env.PORT || "3001");
 externalSourceManager.registerSource(
-    new AmpChannelSource("PVS", "PVS", "192.168.0.16", 3811, 25, "Channel 1")
+    new AmpChannelSource(
+        "PVS",
+        "PVS",
+        "192.168.0.16",
+        3811,
+        Framerate.F25,
+        "Channel 1"
+    )
 );
 externalSourceManager
     .openSource("PVS")

@@ -1,7 +1,7 @@
 import { Codec, ClockSource } from "@coderatparadise/showrunner-common";
 import { encodeData } from "../../util/LooseObject";
 
-export const ClockSourceCodec: Codec<ClockSource<any>> = {
+export const ClockSourceSyncCodec: Codec<ClockSource<any>> = {
     serialize(clock: ClockSource<any>): object {
         const serObj = {
             type: clock.type,

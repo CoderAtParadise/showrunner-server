@@ -22,6 +22,7 @@ smpte.7z //File is too big even compressed
 
 # production
 /dist
+/storage
 
 # misc
 .DS_Store

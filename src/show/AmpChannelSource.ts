@@ -80,6 +80,7 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
 
     configure(newSettings?: object): object {
         if (newSettings !== undefined) {
+            // if(newSettings.maxRetries)
         }
         return {
             id: this.id,

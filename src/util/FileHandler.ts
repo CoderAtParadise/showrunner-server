@@ -1,75 +1,45 @@
 import {
-    ClockDirection,
     ShowHandler
 } from "@coderatparadise/showrunner-common";
 import debug from "debug";
 import fs from "fs";
-import {
-    ClockSettingsBase,
-    OffsetSettings,
-    TimerSettings
-} from "../clock/ClockData";
+import { ClockSourceFileCodec } from "../codec/file/ClockSourceFileCodec";
 import { CreateCommand } from "../command/clock/Create";
 import { globalShowHandler } from "../show/GlobalShowHandler";
-import { LooseObject } from "./LooseObject";
 
 export const saveClocks = (): void => {
     const saveObject: object[] = [];
-    // globalShowHandler()
-    //     .get("clocks")
-    //     .forEach((clock) => {
-    //         if (
-    //             clock.clock.type !== "sync" &&
-    //             clock.clock.type !== "ampctrlclock"
-    //         ) {
-    //             const object: LooseObject = {};
-    //             object.type = clock.clock.type;
-    //             object.owner = clock.clock.owner;
-    //             object.displayName = clock.clock.settings.displayName;
-    //             let settings;
-    //             switch (clock.clock.type) {
-    //                 case "tod:offset":
-    //                     object.type = "offset";
-    //                 // eslint-disable-next-line no-fallthrough
-    //                 case "offset":
-    //                     settings = (clock.clock.data() as any)
-    //                         .settings as OffsetSettings;
-    //                     object.time = settings.time.toString();
-    //                     object.direction = ClockDirection.COUNTDOWN;
-    //                     object.behaviour = settings.behaviour;
-    //                     object.authority = settings.authority;
-    //                     break;
-    //                 case "tod":
-    //                     settings = (clock.clock.data() as any)
-    //                         .settings as ClockSettingsBase;
-    //                     object.time = settings.time.toString();
-    //                     object.direction = ClockDirection.COUNTDOWN;
-    //                     object.behaviour = settings.behaviour;
-    //                     object.authority = "";
-    //                     break;
-    //                 case "timer":
-    //                     settings = (clock.clock.data() as any)
-    //                         .settings as TimerSettings;
-    //                     object.time = settings.time.toString();
-    //                     object.direction = settings.direction;
-    //                     object.behaviour = settings.behaviour;
-    //                     object.authority = "";
-    //                     break;
-    //             }
-    //             saveObject.push({
-    //                 show: clock.clock.show,
-    //                 id: clock.clock.id,
-    //                 data: object
-    //             });
-    //         }
-    //     });
-    // save("storage", "clocks", saveObject);
+    globalShowHandler()
+        .get("clocks")
+        .forEach((clock) => {
+            if (
+                clock.type !== "sync" &&
+                clock.type !== "ampctrl" &&
+                clock.type !== "videoctrl"
+            ) {
+                saveObject.push(
+                    ClockSourceFileCodec.serialize(clock) as object
+                );
+            }
+        });
+    save("storage", "clocks", saveObject);
 };
 
 export const loadClocks = (): void => {
     load("storage", "clocks", (json: any) => {
         json.forEach((j: any) => {
-            if (CreateCommand.validate(j) === undefined) CreateCommand.run(j);
+            const commandData = {
+                type: j.type,
+                id: j.identifier.id,
+                owner: j.identifier.owner,
+                ...j.settings
+            };
+            const identifier = {
+                show: j.identifier.show,
+                session: j.identifier.session
+            };
+            if (CreateCommand.validate(commandData) === undefined)
+                CreateCommand.run(identifier, commandData);
         });
     });
 };

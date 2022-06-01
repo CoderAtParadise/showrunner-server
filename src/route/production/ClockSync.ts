@@ -3,7 +3,7 @@ import { EventHandler } from "../../Scheduler";
 import updgradeSSE from "../../util/UpgradeSSE";
 import { ClockSource } from "@coderatparadise/showrunner-common";
 import { globalShowHandler } from "../../show/GlobalShowHandler";
-import { ClockSourceCodec } from "../../codec/sync/ClockSourceCodec";
+import { ClockSourceSyncCodec } from "../../codec/sync/ClockSourceSyncCodec";
 export const router = Router();
 
 router.get(
@@ -18,7 +18,9 @@ router.get(
                     return globalShowHandler()
                         .get("clocks")
                         .map((clock: ClockSource<any>) => {
-                            return ClockSourceCodec.serialize(clock) as object;
+                            return ClockSourceSyncCodec.serialize(
+                                clock
+                            ) as object;
                         });
                 }
                 return [];
@@ -42,10 +44,10 @@ router.get(
         const addcb = (id: string) => {
             const clock = globalShowHandler()
                 .get("clocks")
-                .find((clock) => (clock.identifier.id === id));
+                .find((clock) => clock.identifier.id === id);
             res.write(
                 `event:clocks-add\ndata: ${JSON.stringify(
-                    ClockSourceCodec.serialize(clock)
+                    ClockSourceSyncCodec.serialize(clock)
                 )}\n\n`
             );
         };
