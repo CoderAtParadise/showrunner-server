@@ -32,7 +32,6 @@ interface TimerData {
 interface OffsetData {
     authority: string;
     behaviour: string;
-    direction: string;
     time: string;
 }
 
@@ -64,7 +63,6 @@ function isOffsetData(data: any): data is OffsetData {
     return (
         data.authority !== undefined &&
         data.behaviour !== undefined &&
-        data.direction !== undefined &&
         data.time !== undefined
     );
 }
@@ -94,6 +92,7 @@ export const CreateCommand: ICommand<
                 case "timer":
                     if (isTimerData(data)) return undefined;
                     break;
+                case "offset:tod":
                 case "offset":
                     if (isOffsetData(data)) return undefined;
                     break;
@@ -107,7 +106,8 @@ export const CreateCommand: ICommand<
     },
     run: (
         commandInfo: { show: string; session: string },
-        data?: BaseData & (TimerData | OffsetData | TODData | VideoData | AmpData)
+        data?: BaseData &
+            (TimerData | OffsetData | TODData | VideoData | AmpData)
     ): CommandReturn => {
         const handler = globalShowHandler();
         let authority: ClockSource<any> | undefined;
@@ -120,6 +120,7 @@ export const CreateCommand: ICommand<
         }
         const id = data?.id ? data.id : uuidv4();
         let cdata: any;
+        console.log(data?.type);
         switch (data?.type) {
             case "videoctrl":
                 handler.markDirty(true);
@@ -130,7 +131,7 @@ export const CreateCommand: ICommand<
                         { ...commandInfo, id, owner: data.owner },
                         {
                             displayName: data.displayName,
-                            automation: false,
+                            automation: true,
                             channel: cdata.channel,
                             source: cdata.source,
                             direction: ClockDirection.COUNTUP
@@ -147,7 +148,7 @@ export const CreateCommand: ICommand<
                         { ...commandInfo, id, owner: data.owner },
                         {
                             displayName: data.displayName,
-                            automation: false,
+                            automation: true,
                             channel: cdata.channel,
                             direction: ClockDirection.COUNTUP
                         }
@@ -165,7 +166,7 @@ export const CreateCommand: ICommand<
                             displayName: data.displayName,
                             behaviour: cdata.behaviour as ClockBehaviour,
                             time: new SMPTE(cdata.time),
-                            automation: false
+                            automation: true
                         }
                     )
                 );
@@ -182,15 +183,50 @@ export const CreateCommand: ICommand<
                             behaviour: cdata.behaviour as ClockBehaviour,
                             direction: cdata.direction as ClockDirection,
                             time: new SMPTE(cdata.time),
-                            automation: false
+                            automation: true
+                        }
+                    )
+                );
+                break;
+            case "offset:tod":
+                handler.markDirty(true);
+                cdata = data as OffsetData;
+                handler.setValue(
+                    "clocks",
+                    new TODOffsetClockSource(
+                        { ...commandInfo, id, owner: data.owner },
+                        {
+                            displayName: data.displayName,
+                            authority: cdata.authority,
+                            behaviour:
+                                cdata.behaviour as ClockBehaviour,
+                            time: new SMPTE(cdata.time),
+                            automation: true
                         }
                     )
                 );
                 break;
             case "offset":
                 switch (authority?.type) {
-                    case "videoctrl":
-                    case "timer":
+                    case "tod":
+                        handler.markDirty(true);
+                        cdata = data as OffsetData;
+                        handler.setValue(
+                            "clocks",
+                            new TODOffsetClockSource(
+                                { ...commandInfo, id, owner: data.owner },
+                                {
+                                    displayName: data.displayName,
+                                    authority: cdata.authority,
+                                    behaviour:
+                                        cdata.behaviour as ClockBehaviour,
+                                    time: new SMPTE(cdata.time),
+                                    automation: true
+                                }
+                            )
+                        );
+                        break;
+                    default:
                         handler.markDirty(true);
                         cdata = data as OffsetData;
                         handler.setValue(
@@ -199,42 +235,15 @@ export const CreateCommand: ICommand<
                                 { ...commandInfo, id, owner: data.owner },
                                 {
                                     displayName: data.displayName,
-                                    authority: authority.identifier.id,
+                                    authority: cdata.authority,
                                     behaviour:
                                         cdata.behaviour as ClockBehaviour,
-                                    direction:
-                                        cdata.direction as ClockDirection,
                                     time: new SMPTE(cdata.time),
-                                    automation: false
+                                    automation: true
                                 }
                             )
                         );
                         break;
-                    case "tod":
-                        handler.markDirty(true);
-                        handler.setValue(
-                            "clocks",
-                            new TODOffsetClockSource(
-                                { ...commandInfo, id, owner: data.owner },
-                                {
-                                    displayName: data.displayName,
-                                    authority: authority.identifier.id,
-                                    behaviour:
-                                        cdata.behaviour as ClockBehaviour,
-                                    direction:
-                                        cdata.direction as ClockDirection,
-                                    time: new SMPTE(cdata.time),
-                                    automation: false
-                                }
-                            )
-                        );
-                        break;
-                    default:
-                        return {
-                            status: 404,
-                            error: "clock.unknownType",
-                            message: "Unknown Clock Type"
-                        };
                 }
                 break;
             default:

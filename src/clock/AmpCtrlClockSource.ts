@@ -4,12 +4,12 @@ import {
     ClockDirection,
     MutableClockSource,
     BaseClockSettings,
-    ClockIdentifier
+    ClockIdentifier,
+    ClockSource
 } from "@coderatparadise/showrunner-common";
-import { InPreset, Play, Stop } from "@coderatparadise/amp-grassvalley";
-import { EventHandler } from "../Scheduler";
 import { externalSourceManager } from "../show/ExternalSourceManager";
 import { VideoData } from "../show/AmpChannelSource";
+import { globalShowHandler } from "../show/GlobalShowHandler";
 
 // prettier-ignore
 export class AmpCtrlClock implements MutableClockSource<{ channel: string; direction: ClockDirection }> {
@@ -43,18 +43,17 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
     }
 
     current(): SMPTE {
-        const current = externalSourceManager
-            .getSource(this.settings.channel)
-            ?.data("current", "time");
-        if (this.state === ClockState.RESET) return this.duration();
-        if (current !== undefined) {
-            switch (this.settings.direction) {
-                case ClockDirection.COUNTUP:
-                    return current;
-                case ClockDirection.COUNTDOWN:
-                    return this.duration().subtract(current, true);
+        const currentId = externalSourceManager.getSource(this.settings.channel)?.data("current", "id");
+        if (currentId) {
+            const data: VideoData = externalSourceManager
+                .getSource(this.settings.channel)
+                ?.data("video", currentId) as VideoData;
+            if (data) {
+                const clock = globalShowHandler().getValue("clocks", data.id) as ClockSource<any>;
+                return clock.current();
             }
-        } else return new SMPTE();
+        }
+        return new SMPTE();
     }
 
     duration(): SMPTE {
@@ -70,162 +69,81 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
     }
 
     start(): void {
-        if (this.state !== ClockState.RUNNING) {
-            if (this.state === ClockState.STOPPED) {
-                externalSourceManager
-                    .getSource(this.settings.channel)?.get()
-                    ?.sendCommand(InPreset, {
-                        byteCount: "A",
-                        data: { clipName: this.syncData.currentID }
-                    })
-                    .then(() => {
-                        externalSourceManager
-                            .getSource(this.settings.channel)?.get()!
-                            .sendCommand(Play, { byteCount: "0" });
-                    });
-            } else {
-                externalSourceManager
-                    .getSource(this.settings.channel)?.get()!
-                    .sendCommand(Play, { byteCount: "0" });
+        const currentId = externalSourceManager.getSource(this.settings.channel)?.data("current", "id");
+        if (currentId) {
+            const data: VideoData = externalSourceManager
+                .getSource(this.settings.channel)
+                ?.data("video", currentId) as VideoData;
+            if (data) {
+                const clock = globalShowHandler().getValue("clocks", data.id) as ClockSource<any>;
+                clock.start();
             }
-            this.state = ClockState.RUNNING;
-            EventHandler.emit("clock.pause", this.identifier);
         }
     }
 
     setTime(time: SMPTE): void {
-        // externalSourceManager.getSource(this.settings.channel)?.get().sendCommand(CueUpWithData,{byteCount: "4",data:{}})
+        const currentId = externalSourceManager.getSource(this.settings.channel)?.data("current", "id");
+        if (currentId) {
+            const data: VideoData = externalSourceManager
+                .getSource(this.settings.channel)
+                ?.data("video", currentId) as VideoData;
+            if (data) {
+                const clock = globalShowHandler().getValue("clocks", data.id) as ClockSource<any>;
+                clock.setTime(time);
+            }
+        }
     };
 
     pause(): void {
-        if (this.state === ClockState.RUNNING) {
-            externalSourceManager
-                .getSource(this.settings.channel)?.get()!
-                .sendCommand(Stop, { byteCount: "0" }); // PVS pauses on stop and will resume where left off
-            this.state = this.syncData.lastRequest = ClockState.PAUSED;
-            EventHandler.emit("clock.pause", this.identifier);
+        const currentId = externalSourceManager.getSource(this.settings.channel)?.data("current", "id");
+        if (currentId) {
+            const data: VideoData = externalSourceManager
+                .getSource(this.settings.channel)
+                ?.data("video", currentId) as VideoData;
+            if (data) {
+                const clock = globalShowHandler().getValue("clocks", data.id) as ClockSource<any>;
+                clock.pause(false);
+            }
         }
     }
 
     stop(): void {
-        if (
-            this.state === ClockState.RUNNING ||
-            this.state === ClockState.PAUSED
-        ) {
-            externalSourceManager
-                .getSource(this.settings.channel)?.get()!
-                .sendCommand(Stop, { byteCount: "0" });
-            this.state = this.syncData.lastRequest = ClockState.STOPPED;
-            EventHandler.emit("clock.stop", this.identifier);
+        const currentId = externalSourceManager.getSource(this.settings.channel)?.data("current", "id");
+        if (currentId) {
+            const data: VideoData = externalSourceManager
+                .getSource(this.settings.channel)
+                ?.data("video", currentId) as VideoData;
+            if (data) {
+                const clock = globalShowHandler().getValue("clocks", data.id) as ClockSource<any>;
+                clock.stop(false);
+            }
         }
     }
 
     reset(): void {
-            externalSourceManager
-                .getSource(this.settings.channel)?.get()!
-                .sendCommand(Stop, { byteCount: "0" })
-                .then(() => {
-                    externalSourceManager
-                        .getSource(this.settings.channel)?.get()!
-                        .sendCommand(InPreset, {
-                            byteCount: "A",
-                            data: { clipName: "TestVideo copy" }
-                        }).then(() => {
-                            externalSourceManager.getSource(this.settings.channel)?.get()?.sendCommand(InPreset, {
-                                byteCount: "A",
-                                data: { clipName: externalSourceManager.getSource(this.settings.channel)?.data("current", "id") }
-                            });
-                        });
-                });
-            this.state = this.syncData.lastRequest = ClockState.RESET;
-            EventHandler.emit("clock.reset", this.identifier);
-    }
-
-    getBit(byte: number, bit: number): boolean {
-        return (byte >> bit) % 2 === 0;
+        const currentId = externalSourceManager.getSource(this.settings.channel)?.data("current", "id");
+        if (currentId) {
+            const data: VideoData = externalSourceManager
+                .getSource(this.settings.channel)
+                ?.data("video", currentId) as VideoData;
+            if (data) {
+                const clock = globalShowHandler().getValue("clocks", data.id) as ClockSource<any>;
+                clock.reset(false);
+            }
+        }
     }
 
     update(): void {
         const currentId = externalSourceManager.getSource(this.settings.channel)?.data("current", "id");
-        if (currentId !== undefined) {
-            const videoData = externalSourceManager.getSource(this.settings.channel)?.data("video", currentId) as VideoData;
-            if (videoData !== undefined) {
-                if (this.syncData.lastRequest !== undefined && this.syncData.lastRequest !== videoData.running) {
-                    this.state = videoData.running = this.syncData.lastRequest;
-                    this.syncData.lastRequest = undefined;
-                }
-                if (videoData.running === ClockState.RUNNING)
-                    this.state = ClockState.RUNNING;
-                else if (this.state === ClockState.RUNNING)
-                    this.state = ClockState.PAUSED;
-            }
-        }
-        // const currentTime = async () => {
-        //     const source = externalSourceManager.getSource(this.settings.channel);
-        //     if(source) {
-        //     return await (
-        //         await source?.get()!
-        //             .sendCommand(CurrentTimeSense)
-        //     ).data;
-        //     }
-        //     return undefined;
-        // };
-
-        // const clipDuration = async () => {
-        //     const source = await externalSourceManager.getSource(this.settings.channel);
-        //     if(source) {
-        //     return await (
-        //         await source?.get()!
-        //             .sendCommand(IDDurationRequest, {
-        //                 data: { clipName: this.syncData.currentID }
-        //             })
-        //     ).data;
-        //         }
-        //     return undefined;
-        // };
-        // const currentId = async () => {
-        //     const source = await externalSourceManager.getSource(this.settings.channel);
-        //     if(source) {
-        //         return await (
-        //         source?.get()
-        //             .sendCommand(IDLoadedRequest)
-        //     ).data;
-        //     }
-        //     return undefined;
-        // };
-        // currentId().then((v) => {
-        //     if(v !== undefined && v.code !== "-1") {
-        //     if (this.syncData.currentID !== v.name) {
-        //         this.syncData.currentID = v.name;
-        //         clipDuration().then((v) => {
-        //             this.syncData.duration = new SMPTE(v.timecode, 1000); // Set framerate to 1000 as we have no way of getting the framerate
-        //             EventHandler.emit(
-        //                 `clock-update-${this.identifier.show}:${this.identifier.session}`,
-        //                 this.identifier.id,
-        //                 {additional: {data: {...this.data()}, duration: this.duration(), displayName: this.displayName()} }
-        //             );
-        //         });
-        //     }
-        // }
-        // });
-
-        // currentTime().then((v) => {
-        //     if(v !== undefined && v.code !== "-1") {
-        //     const current = new SMPTE(v.timecode, 1000); // Set framerate to 1000 as we have no way of getting the framerate
-        //     if(current.isIncorrectFramerate() && !this.incorrectFramerate) this.incorrectFramerate = true; //Set is once
-        //     if (
-        //         this.state === ClockState.RUNNING &&
-        //         this.syncData.lastTime.equals(current, true)
-        //     ) {
-        //         this.state = this.syncData.lastRequest;
-        //         this.syncData.lastRequest = ClockState.PAUSED;
-        //     } else if (!this.syncData.lastTime.equals(current, true)) {
-        //         this.syncData.lastTime = current;
-        //         if (this.state !== ClockState.RUNNING)
-        //             this.state = ClockState.RUNNING;
-        //     }
-        // }
-        // });
+        if (currentId) {
+            const data: VideoData = externalSourceManager
+                .getSource(this.settings.channel)
+                ?.data("video", currentId) as VideoData;
+            if (data) {
+                const clock = globalShowHandler().getValue("clocks", data.id) as ClockSource<any>;
+                this.state = clock.state;
+            } else this.state = ClockState.RESET;
+        } else this.state = ClockState.RESET;
     }
 
     data(): object {
@@ -252,9 +170,7 @@ export class AmpCtrlClock implements MutableClockSource<{ channel: string; direc
     // prettier-ignore
     private syncData: {
         currentID: string;
-        lastRequest: ClockState | undefined;
     } = {
-            currentID: "",
-            lastRequest: undefined
+            currentID: ""
         };
 }

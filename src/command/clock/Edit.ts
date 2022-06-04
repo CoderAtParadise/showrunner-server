@@ -29,20 +29,28 @@ export const EditCommand: ICommand<ClockEditData> = {
         if (clock && (clock as MutableClockSource<any>)) {
             const oldSetttings = { ...clock.settings };
             const oldData = {
-                displayName: clock?.displayName ? clock.displayName() : clock.settings.displayName,
+                displayName: clock?.displayName
+                    ? clock.displayName()
+                    : clock.settings.displayName,
                 duration: clock.duration(),
                 data: clock?.data ? clock.data() : {}
             };
             (clock as MutableClockSource<any>).setData(data!.data);
             const diff = diffObject(oldSetttings, clock.settings);
             const datadiff = diffObject(oldData, {
-                displayName: clock?.displayName ? clock.displayName() : clock.settings.displayName,
+                displayName: clock?.displayName
+                    ? clock.displayName()
+                    : clock.settings.displayName,
                 duration: clock.duration(),
                 data: clock?.data ? clock.data() : {}
             });
+            if (diff.time !== undefined)
+                diff.time = clock.settings.time.toString();
+            if (datadiff.duration !== undefined)
+                datadiff.duration = clock.duration().toString();
             EventHandler.emit(
                 `clock-update-${commandInfo.show}:${commandInfo.session}`,
-                clock.id,
+                clock.identifier.id,
                 { settings: diff, additional: datadiff }
             );
             handler.markDirty(true);

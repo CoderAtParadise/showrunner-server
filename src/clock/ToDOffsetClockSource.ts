@@ -27,29 +27,27 @@ export class TODOffsetClockSource implements MutableClockSource<OffsetSettings> 
     }
 
     current(): SMPTE {
-        const authClock = this.getHandler()?.getValue("clocks", this.settings.authority);
+        const authClock = this.getHandler()?.getValue("clocks", this.authority().id);
         if (authClock && authClock.type === "tod") {
-            const settings = (authClock.data() as any)!
-                .settings as ClockSettingsBase;
             if (
                 this.settings.behaviour === ClockBehaviour.STOP &&
                 this.state === ClockState.STOPPED
             )
                 return new SMPTE("00:00:00:00");
             if (this.state === ClockState.RESET) {
-                switch (this.settings.time.offset()) {
+                switch (this.duration().offset()) {
                     case Offset.NONE:
                     case Offset.START:
-                        return new SMPTE(this.settings.time).setOffset(
+                        return new SMPTE(this.duration()).setOffset(
                             Offset.START
                         );
                     case Offset.END:
-                        return new SMPTE(this.settings.time).setOffset(
+                        return new SMPTE(this.duration()).setOffset(
                             Offset.END
                         );
                 }
             }
-            switch (this.settings.time.offset()) {
+            switch (this.duration().offset()) {
                 case Offset.NONE:
                 case Offset.START:
                     if (
@@ -57,29 +55,29 @@ export class TODOffsetClockSource implements MutableClockSource<OffsetSettings> 
                         this.state === ClockState.STOPPED
                     ) {
                         if (
-                            this.stopTime.lessThanOrEqual(settings.time, true)
+                            this.stopTime.lessThanOrEqual(authClock.duration(), true)
                         ) {
-                            return settings.time
+                            return authClock.duration()
                                 .subtract(this.stopTime, true)
-                                .add(this.settings.time, true)
+                                .add(this.duration(), true)
                                 .setOffset(Offset.END);
                         }
                         return this.stopTime
-                            .subtract(settings.time, true)
-                            .subtract(this.settings.time, true)
+                            .subtract(authClock.duration(), true)
+                            .subtract(this.duration(), true)
                             .setOffset(Offset.START);
                     }
                     if (
                         getSyncClock()
                             .current()
-                            .greaterThanOrEqual(settings.time, true)
+                            .greaterThanOrEqual(authClock.duration(), true)
                     ) {
                         return authClock
                             .current()
-                            .subtract(this.settings.time, true)
+                            .subtract(this.duration(), true)
                             .setOffset(Offset.START);
                     } else {
-                        const c = authClock.current().add(this.settings.time);
+                        const c = authClock.current().add(this.duration());
                         c.setOffset(Offset.END);
                         return c;
                     }
@@ -89,39 +87,39 @@ export class TODOffsetClockSource implements MutableClockSource<OffsetSettings> 
                         this.state === ClockState.STOPPED
                     ) {
                         if (
-                            this.stopTime.lessThanOrEqual(settings.time, true)
+                            this.stopTime.lessThanOrEqual(authClock.duration(), true)
                         ) {
-                            return settings.time
+                            return authClock.duration()
                                 .subtract(this.stopTime, true)
-                                .subtract(this.settings.time, true)
+                                .subtract(this.duration(), true)
                                 .setOffset(Offset.END);
                         }
                         return this.stopTime
-                            .subtract(settings.time, true)
-                            .add(this.settings.time, true)
+                            .subtract(authClock.duration(), true)
+                            .add(this.duration(), true)
                             .setOffset(Offset.START);
                     }
                     if (
                         getSyncClock()
                             .current()
-                            .greaterThanOrEqual(settings.time, true)
+                            .greaterThanOrEqual(authClock.duration(), true)
                     ) {
                         return authClock
                             .current()
-                            .add(this.settings.time, true)
+                            .add(this.duration(), true)
                             .setOffset(Offset.START);
                     } else {
                         const current = authClock.current();
                         if (
-                            current.lessThanOrEqual(this.settings.time, true)
+                            current.lessThanOrEqual(this.duration(), true)
                         ) {
-                            return this.settings.time
+                            return this.duration()
                                 .subtract(current)
                                 .setOffset(Offset.START);
                         } else {
                             return authClock
                                 .current()
-                                .subtract(this.settings.time)
+                                .subtract(this.duration())
                                 .setOffset(Offset.END);
                         }
                     }
@@ -136,7 +134,7 @@ export class TODOffsetClockSource implements MutableClockSource<OffsetSettings> 
 
     start(): void {
         if (this.state === ClockState.STOPPED) this.reset(false);
-        const authClock = this.getHandler()?.getValue("clocks", this.settings.authority);
+        const authClock = this.getHandler()?.getValue("clocks", this.authority().id);
         if (authClock && authClock.type === "tod") {
             if (authClock.state === ClockState.RUNNING) {
                 this.state = ClockState.RUNNING;
@@ -182,7 +180,7 @@ export class TODOffsetClockSource implements MutableClockSource<OffsetSettings> 
     }
 
     update(): void {
-        const authClock = this.getHandler()?.getValue("clocks", this.settings.authority);
+        const authClock = this.getHandler()?.getValue("clocks", this.authority().id);
         if (authClock && authClock.type === "tod") {
             if (this.lastParentState !== authClock.state)
                 this.lastParentState = authClock.state;
@@ -222,12 +220,10 @@ export class TODOffsetClockSource implements MutableClockSource<OffsetSettings> 
                     break;
             }
             if (this.state === ClockState.RUNNING && !this.overrun) {
-                const settings = (authClock.data() as any)!
-                    .settings as ClockSettingsBase;
                 const end =
-                    this.settings.time.offset() === Offset.END
-                        ? settings.time.subtract(this.settings.time, true)
-                        : settings.time.add(this.settings.time, true);
+                    this.duration().offset() === Offset.END
+                        ? authClock.duration().subtract(this.duration(), true)
+                        : authClock.duration().add(this.duration(), true);
                 if (getSyncClock().current().greaterThanOrEqual(end)) {
                     this.complete = true;
                     EventHandler.emit(
@@ -259,6 +255,25 @@ export class TODOffsetClockSource implements MutableClockSource<OffsetSettings> 
         return globalShowHandler();
     }
 
+    private authority(): ClockIdentifier {
+        if (
+            this.mauthority !== undefined &&
+            `${this.mauthority.show}:${this.mauthority.session}:${this.mauthority.id}` ===
+                this.settings.authority
+        )
+            return this.mauthority;
+        else {
+            const split = this.settings.authority.split(":");
+            this.mauthority = {
+                show: split[0],
+                session: split[1],
+                id: split[2],
+                owner: ""
+            };
+            return this.mauthority;
+        }
+    }
+
     type: string = "offset:tod";
     identifier: ClockIdentifier;
     state: ClockState = ClockState.RESET;
@@ -267,5 +282,6 @@ export class TODOffsetClockSource implements MutableClockSource<OffsetSettings> 
     private stopTime: SMPTE = new SMPTE();
     private override: boolean = false;
     private complete: boolean = false;
+    private mauthority: ClockIdentifier | undefined;
     settings: BaseClockSettings & OffsetSettings;
 }
