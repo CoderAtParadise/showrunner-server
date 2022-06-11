@@ -1,28 +1,49 @@
 import {
-    MutableClockSource,
     SMPTE,
-    ClockState,
+    ClockStatus,
     ShowHandler,
     Offset,
     BaseClockSettings,
     ClockIdentifier,
-    ClockSource
+    ClockSource,
+    ClockBehaviour,
+    ControlBar
 } from "@coderatparadise/showrunner-common";
 import { EventHandler } from "../Scheduler";
 import { globalShowHandler } from "../show/GlobalShowHandler";
-import { ClockBehaviour, OffsetSettings } from "./ClockData";
+import { OffsetSettings } from "./ClockData";
 
-export class OffsetClockSource implements MutableClockSource<OffsetSettings> {
+export class OffsetClockSource implements ClockSource<OffsetSettings> {
     constructor(
         identifier: ClockIdentifier,
         settings: BaseClockSettings & OffsetSettings
     ) {
         this.identifier = identifier;
-        this.settings = settings;
+        this._settings = settings;
     }
 
-    incorrectFramerate(): boolean {
+    status(): ClockStatus {
+        return this._status;
+    }
+
+    settings(): BaseClockSettings & OffsetSettings {
+        return this._settings;
+    }
+
+    controlBar(): ControlBar[] {
+        return [ControlBar.PLAY_PAUSE, ControlBar.STOP, ControlBar.RESET];
+    }
+
+    displayName(): string {
+        return this._settings.displayName;
+    }
+
+    hasIncorrectFrameRate(): boolean {
         return false;
+    }
+
+    isOverrun(): boolean {
+        return this._overrun;
     }
 
     current(): SMPTE {
@@ -32,33 +53,37 @@ export class OffsetClockSource implements MutableClockSource<OffsetSettings> {
         ) as ClockSource<any>;
         if (authClock) {
             if (
-                (authClock.state !== ClockState.STOPPED &&
-                    this.state === ClockState.STOPPED) ||
+                (authClock.status() !== ClockStatus.STOPPED &&
+                    this.status() === ClockStatus.STOPPED) ||
                 (authClock.current().greaterThan(this.duration(), true) &&
-                    this.settings.behaviour === ClockBehaviour.STOP)
+                    this.settings().behaviour === ClockBehaviour.STOP)
             )
                 return new SMPTE("00:00:00:00");
-            if (this.state === ClockState.RESET) {
+            if (this.status() === ClockStatus.RESET) {
                 switch (this.duration().offset()) {
                     case Offset.NONE:
                     case Offset.START:
                         return new SMPTE(this.duration()).setOffset(Offset.END);
                     case Offset.END:
-                        return authClock.duration()
+                        return authClock
+                            .duration()
                             .subtract(this.duration(), true)
                             .setOffset(Offset.END);
                 }
             }
-            const difference = authClock.duration().subtract(this.duration(), true);
+            const difference = authClock
+                .duration()
+                .subtract(this.duration(), true);
             switch (this.duration().offset()) {
                 case Offset.NONE:
                 case Offset.START:
                     if (
-                        this.state === ClockState.PAUSED ||
-                        this.state === ClockState.STOPPED
+                        this.status() === ClockStatus.PAUSED ||
+                        this.status() === ClockStatus.STOPPED
                     ) {
                         if (this.stopTime.lessThanOrEqual(difference, true)) {
-                            return authClock.duration()
+                            return authClock
+                                .duration()
                                 .subtract(this.stopTime, true)
                                 .subtract(this.duration(), true)
                                 .setOffset(Offset.END);
@@ -83,11 +108,12 @@ export class OffsetClockSource implements MutableClockSource<OffsetSettings> {
                         .setOffset(Offset.END);
                 case Offset.END:
                     if (
-                        this.state === ClockState.PAUSED ||
-                        this.state === ClockState.STOPPED
+                        this.status() === ClockStatus.PAUSED ||
+                        this.status() === ClockStatus.STOPPED
                     ) {
                         if (this.stopTime.lessThanOrEqual(difference, true)) {
-                            return authClock.duration()
+                            return authClock
+                                .duration()
                                 .subtract(this.stopTime, true)
                                 .subtract(this.duration(), true)
                                 .setOffset(Offset.END);
@@ -114,57 +140,59 @@ export class OffsetClockSource implements MutableClockSource<OffsetSettings> {
     }
 
     duration(): SMPTE {
-        return this.settings.time;
+        return this._settings.time;
     }
 
-    start(): void {
-        if (this.state === ClockState.STOPPED) this.reset(false);
+    play(): void {
+        if (this.status() === ClockStatus.STOPPED) this.reset(false);
         const authClock = this.getHandler()?.getValue(
             "clocks",
             this.authority().id
         );
         if (authClock) {
-            if (authClock.state === ClockState.RUNNING) {
-                this.state = ClockState.RUNNING;
-                EventHandler.emit("clock.start", this.identifier);
-                this.override = false;
+            if (authClock.status() === ClockStatus.RUNNING) {
+                this._status = ClockStatus.RUNNING;
+                EventHandler.emit("clock.play", this.identifier);
+                this._override = false;
             }
         }
     }
 
-    setTime(time: SMPTE): void {}
+    setTime(): void {
+        // NOOP
+    }
 
     stop(override: boolean): void {
-        if (this.state !== ClockState.STOPPED) {
+        if (this._status !== ClockStatus.STOPPED) {
             EventHandler.emit("clock.stop", this.identifier);
-            this.state = ClockState.STOPPED;
+            this._status = ClockStatus.STOPPED;
             this.stopTime =
                 this.getHandler()
                     ?.getValue("clocks", this.authority().id)
                     ?.current() || new SMPTE();
-            if (override) this.override = true;
+            if (override) this._override = true;
         }
     }
 
     pause(override: boolean): void {
-        if (this.state === ClockState.RUNNING) {
-            this.state = ClockState.PAUSED;
+        if (this.status() === ClockStatus.RUNNING) {
+            this._status = ClockStatus.PAUSED;
             EventHandler.emit("clock.pause", this.identifier);
             this.stopTime =
                 this.getHandler()
                     ?.getValue("clocks", this.authority().id)
                     ?.current() || new SMPTE();
-            if (override) this.override = true;
+            if (override) this._override = true;
         }
     }
 
     reset(override: boolean): void {
-        if (this.state !== ClockState.STOPPED) this.stop(override);
+        if (this._status !== ClockStatus.STOPPED) this.stop(override);
         EventHandler.emit("clock.reset", this.identifier);
-        this.overrun = false;
-        this.state = ClockState.RESET;
-        this.complete = false;
-        if (override) this.override = true;
+        this._overrun = false;
+        this._status = ClockStatus.RESET;
+        this._complete = false;
+        if (override) this._override = true;
     }
 
     update(): void {
@@ -173,66 +201,62 @@ export class OffsetClockSource implements MutableClockSource<OffsetSettings> {
             this.authority().id
         );
         if (authClock) {
-            if (this.lastParentState !== authClock.state)
-                this.lastParentState = authClock.state;
-            switch (this.lastParentState) {
-                case ClockState.RESET:
-                    if (
-                        this.state !== ClockState.RESET &&
-                        this.settings.automation &&
-                        !this.override
-                    )
+            if (this._lastParent_status !== authClock.status())
+                this._lastParent_status = authClock.status();
+            switch (this._lastParent_status) {
+                case ClockStatus.RESET:
+                    if (this._status !== ClockStatus.RESET && !this._override)
                         this.reset(false);
                     break;
-                case ClockState.STOPPED:
+                case ClockStatus.STOPPED:
                     if (
-                        this.state !== ClockState.STOPPED &&
-                        this.settings.automation &&
-                        !this.override
+                        this.status() !== ClockStatus.STOPPED &&
+                        !this._override
                     )
                         this.stop(false);
                     break;
-                case ClockState.PAUSED:
-                    if (
-                        this.state !== ClockState.PAUSED &&
-                        this.settings.automation &&
-                        !this.override
-                    )
+                case ClockStatus.PAUSED:
+                    if (this.status() !== ClockStatus.PAUSED && !this._override)
                         this.pause(false);
                     break;
-                case ClockState.RUNNING:
+                case ClockStatus.RUNNING:
                     if (
-                        this.state !== ClockState.RUNNING &&
-                        this.settings.automation &&
-                        !this.complete &&
-                        !this.override
+                        this.status() !== ClockStatus.RUNNING &&
+                        !this._complete &&
+                        !this._override
                     )
-                        this.start();
+                        this.play();
             }
-            if (this.state === ClockState.RUNNING && !this.overrun) {
+            if (this.status() === ClockStatus.RUNNING && !this._overrun) {
                 const end =
                     this.duration().offset() === Offset.END
                         ? authClock.duration().subtract(this.duration(), true)
                         : this.duration();
                 if (authClock.current().greaterThanOrEqual(end)) {
-                    this.complete = true;
+                    this._complete = true;
                     EventHandler.emit("clock.complete", this.identifier);
-                    if (this.settings.behaviour !== ClockBehaviour.OVERRUN)
+                    if (this.settings().behaviour !== ClockBehaviour.OVERRUN)
                         this.stop(false);
                     else {
                         EventHandler.emit("clock.overrun", this.identifier);
-                        this.overrun = true;
+                        this._overrun = true;
                     }
                 }
             }
         }
     }
 
-    public setData(data: any) {
-        if (data?.displayName as string)
-            this.settings.displayName = data.displayName;
-        if (data?.time as string) this.settings.time = new SMPTE(data.time);
-        if (data?.behaviour as string) this.settings.behaviour = data.behaviour;
+    updateSettings(settings: any): BaseClockSettings & OffsetSettings {
+        if (settings?.displayName as string)
+            this._settings.displayName = settings.displayName;
+        if (settings?.time as string) this._settings.time = new SMPTE(settings.time);
+        if (settings?.behaviour as string)
+            this._settings.behaviour = settings.behaviour;
+        return this._settings;
+    }
+
+    data(): object {
+        return {};
     }
 
     private getHandler(): ShowHandler | undefined {
@@ -241,31 +265,31 @@ export class OffsetClockSource implements MutableClockSource<OffsetSettings> {
 
     private authority(): ClockIdentifier {
         if (
-            this.mauthority !== undefined &&
-            `${this.mauthority.show}:${this.mauthority.session}:${this.mauthority.id}` ===
-                this.settings.authority
+            this._authority !== undefined &&
+            `${this._authority.show}:${this._authority.session}:${this._authority.id}` ===
+                this.settings().authority
         )
-            return this.mauthority;
+            return this._authority;
         else {
-            const split = this.settings.authority.split(":");
-            this.mauthority = {
+            const split = this.settings().authority.split(":");
+            this._authority = {
                 show: split[0],
                 session: split[1],
                 id: split[2],
                 owner: ""
             };
-            return this.mauthority;
+            return this._authority;
         }
     }
 
     type: string = "offset";
     identifier: ClockIdentifier;
-    state: ClockState = ClockState.RESET;
-    overrun: boolean = false;
+    private _status: ClockStatus = ClockStatus.RESET;
+    private _overrun: boolean = false;
     private stopTime: SMPTE = new SMPTE();
-    private lastParentState: ClockState = ClockState.RESET;
-    private complete: boolean = false;
-    private override: boolean = false;
-    private mauthority: ClockIdentifier | undefined;
-    settings: BaseClockSettings & OffsetSettings;
+    private _lastParent_status: ClockStatus = ClockStatus.RESET;
+    private _complete: boolean = false;
+    private _override: boolean = false;
+    private _authority: ClockIdentifier | undefined;
+    private _settings: BaseClockSettings & OffsetSettings;
 }

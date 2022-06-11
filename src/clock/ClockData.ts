@@ -1,9 +1,8 @@
-import { SMPTE, ClockDirection } from "@coderatparadise/showrunner-common";
-
-export enum ClockBehaviour {
-    STOP = "stop",
-    OVERRUN = "overrun"
-}
+import {
+    SMPTE,
+    ClockDirection,
+    ClockBehaviour
+} from "@coderatparadise/showrunner-common";
 
 export interface ClockSettingsBase {
     behaviour: ClockBehaviour;

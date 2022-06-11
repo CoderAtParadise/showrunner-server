@@ -8,21 +8,22 @@ import {
 } from "@coderatparadise/amp-grassvalley";
 import {
     ClockDirection,
-    ClockState,
+    ClockStatus,
     SMPTE
 } from "@coderatparadise/showrunner-common";
-import { AmpCtrlClock } from "../clock/AmpCtrlClockSource";
-import { VideoCtrlClockSource } from "../clock/VideoCtrlClockSource";
 import { ExternalSource } from "./ExternalSourceManager";
 import { globalShowHandler } from "./GlobalShowHandler";
-import { v4 as uuidv4 } from "uuid";
 import { CreateCommand } from "../command/clock/Create";
+
+export interface VideoMetadata {
+}
 
 export interface VideoData {
     id: string;
     duration: SMPTE;
-    incorrectFramerate: boolean;
-    running: ClockState;
+    incorrectframeRate: boolean;
+    running: ClockStatus;
+    metadata?: VideoMetadata;
 }
 
 export class AmpChannelSource implements ExternalSource<AmpChannel> {
@@ -31,7 +32,7 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
         name: string,
         address: string,
         port: number,
-        framerate?: number,
+        frameRate?: number,
         channel?: string,
         retry?: { maxRetries: number; timeBetweenRetries: number[] }
     ) {
@@ -39,7 +40,7 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
         this.name = name;
         this.address = address;
         this.port = port;
-        this.framerate = framerate || 25;
+        this.frameRate = frameRate || 25;
         this.channel = channel;
         this.maxRetries = retry?.maxRetries || 10;
         this.timeBetweenRetries = retry?.timeBetweenRetries || [10000];
@@ -99,7 +100,7 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
             address: this.address,
             port: this.port,
             channel: this.channel,
-            framerate: this.framerate
+            frameRate: this.frameRate
         };
     }
 
@@ -117,38 +118,38 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
         currentID().then((v) => {
             if (this.current.id !== v.name) {
                 const data = this.data("video", this.current.id) as VideoData;
-                if (data !== undefined) data.running = ClockState.RESET;
+                if (data !== undefined) data.running = ClockStatus.RESET;
 
                 this.current.id = v.name;
             }
         });
         currentTime().then((v) => {
-            const current = new SMPTE(v.timecode, this.framerate);
+            const current = new SMPTE(v.timecode, this.frameRate);
             if (this.lastChange === -1) this.lastChange = Date.now();
             const data = this.data("video", this.current.id) as VideoData;
             if (data !== undefined) {
                 if (this.current.raw !== v.timecode) {
-                    data.running = ClockState.RUNNING;
+                    data.running = ClockStatus.RUNNING;
                     this.lastChange = Date.now();
                 } else if (
                     this.current.raw === v.timecode &&
-                    Date.now() - this.lastChange > 1000 / this.framerate
+                    Date.now() - this.lastChange > 1000 / this.frameRate
                 ) {
-                    if (data.running !== ClockState.RESET) {
-                        data.running = ClockState.PAUSED;
+                    if (data.running !== ClockStatus.RESET) {
+                        data.running = ClockStatus.PAUSED;
                         if (data.duration.equals(current, true))
-                            data.running = ClockState.STOPPED;
+                            data.running = ClockStatus.STOPPED;
                     }
                 }
             }
             this.current.time = current;
             this.current.raw = v.timecode;
-            if (current.isIncorrectFramerate()) {
+            if (current.hasIncorrectFrameRate()) {
                 const video: VideoData = this.videoCache.get(
                     this.current.id
                 ) as VideoData;
                 if (video !== undefined)
-                    video.incorrectFramerate = current.isIncorrectFramerate();
+                    video.incorrectframeRate = current.hasIncorrectFrameRate();
             }
         });
     }
@@ -207,14 +208,14 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
                                 ).timecode;
                                 const duration = new SMPTE(
                                     timecode,
-                                    this.framerate
+                                    this.frameRate
                                 );
                                 this.videoCache.set(id, {
                                     id,
                                     duration,
-                                    incorrectFramerate:
-                                        duration.isIncorrectFramerate(),
-                                    running: ClockState.RESET
+                                    incorrectframeRate:
+                                        duration.hasIncorrectFrameRate(),
+                                    running: ClockStatus.RESET
                                 });
                                 CreateCommand.run(
                                     {
@@ -224,7 +225,7 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
                                     {
                                         type: "videoctrl",
                                         id,
-                                        owner: "",
+                                        owner: "system:system",
                                         channel: this.id,
                                         source: id,
                                         displayName: "Video Sync Clock",
@@ -247,7 +248,7 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
                                 {
                                     type: "ampctrl",
                                     id: this.id,
-                                    owner: "",
+                                    owner: "system:system",
                                     channel: this.id,
                                     displayName: "Video Sync Clock",
                                     direction: ClockDirection.COUNTUP
@@ -264,7 +265,7 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
         }, 1000);
         setInterval(() => {
             if (this.isOpen()) this.pollCurrentInfo();
-        }, 1000 / 30);
+        }, 1000 / this.frameRate);
     }
 
     id: string;
@@ -274,7 +275,7 @@ export class AmpChannelSource implements ExternalSource<AmpChannel> {
     name: string;
     address: string;
     port: number;
-    framerate: number;
+    frameRate: number;
     channel: string | undefined;
     source: AmpChannel | undefined = undefined;
     tryCounter: number = 0;

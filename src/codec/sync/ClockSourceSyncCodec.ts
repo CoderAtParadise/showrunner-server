@@ -8,15 +8,15 @@ export const ClockSourceSyncCodec: Codec<ClockSource<any>> = {
             identifier: clock.identifier,
             currentState: {
                 current: clock.current().toString(),
-                state: clock.state,
-                overrun: clock.overrun,
-                incorrectFramerate: clock.incorrectFramerate()
+                state: clock.status(),
+                overrun: clock.isOverrun(),
+                incorrectFramerate: clock.hasIncorrectFrameRate()
             },
-            settings: encodeData(clock.settings),
+            settings: encodeData(clock.settings()),
             additional: {
                 displayName: clock.displayName?.() || "",
                 duration: clock.duration().toString(),
-                data: encodeData(clock.data?.() || {}),
+                data: encodeData(clock.data()),
                 framerate: clock.current().frameRate()
             }
         };

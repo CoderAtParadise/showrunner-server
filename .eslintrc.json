@@ -30,9 +30,6 @@
             "anonymous": "always",
             "named": "never",
             "asyncArrow": "always"
-        }],
-        "node/no-missing-import": ["error",{
-            "tryExtensions": [".js",".json",".ts"]
         }]
     }
 }

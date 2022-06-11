@@ -19,7 +19,7 @@ export const ListChannels: ICommand<{}> = {
                         displayName: value.name,
                         address: value.address,
                         port: value.port,
-                        framerate: (value as AmpChannelSource).framerate,
+                        framerate: (value as AmpChannelSource).frameRate,
                         channel: (value as AmpChannelSource).channel
                     };
                 })

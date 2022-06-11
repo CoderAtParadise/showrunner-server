@@ -6,7 +6,7 @@ export const ClockSourceFileCodec: Codec<ClockSource<any>> = {
         const serObj = {
             type: clock.type,
             identifier: clock.identifier,
-            settings: encodeData(clock.settings)
+            settings: encodeData(clock.settings())
         };
         return serObj;
     },

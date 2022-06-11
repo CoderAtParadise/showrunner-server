@@ -1,7 +1,6 @@
 import {
     CommandReturn,
-    ICommand,
-    MutableClockSource
+    ICommand
 } from "@coderatparadise/showrunner-common";
 import { EventHandler } from "../../Scheduler";
 import { globalShowHandler } from "../../show/GlobalShowHandler";
@@ -26,23 +25,19 @@ export const EditCommand: ICommand<ClockEditData> = {
     ): CommandReturn => {
         const handler = globalShowHandler(); // TODO replace with get
         const clock = handler.getValue("clocks", data!.id);
-        if (clock && (clock as MutableClockSource<any>)) {
+        if (clock !== undefined) {
             const oldSetttings = { ...clock.settings };
             const oldData = {
-                displayName: clock?.displayName
-                    ? clock.displayName()
-                    : clock.settings.displayName,
+                displayName: clock.displayName(),
                 duration: clock.duration(),
-                data: clock?.data ? clock.data() : {}
+                data: clock.data()
             };
-            (clock as MutableClockSource<any>).setData(data!.data);
+            clock.updateSettings(data!.data);
             const diff = diffObject(oldSetttings, clock.settings);
             const datadiff = diffObject(oldData, {
-                displayName: clock?.displayName
-                    ? clock.displayName()
-                    : clock.settings.displayName,
+                displayName: clock.displayName(),
                 duration: clock.duration(),
-                data: clock?.data ? clock.data() : {}
+                data: clock.data()
             });
             if (diff.time !== undefined)
                 diff.time = clock.settings.time.toString();

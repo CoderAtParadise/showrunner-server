@@ -1,5 +1,6 @@
 import {
     ClockDirection,
+    ClockBehaviour,
     ICommand,
     CommandReturn,
     SMPTE,
@@ -8,7 +9,6 @@ import {
 import { TimerClockSource } from "../../clock/TimerClockSource";
 import { globalShowHandler } from "../../show/GlobalShowHandler";
 import { v4 as uuidv4 } from "uuid";
-import { ClockBehaviour } from "../../clock/ClockData";
 import { TODClockSource } from "../../clock/ToDClockSource";
 import { OffsetClockSource } from "../../clock/OffsetClockSource";
 import { TODOffsetClockSource } from "../../clock/ToDOffsetClockSource";
@@ -120,7 +120,6 @@ export const CreateCommand: ICommand<
         }
         const id = data?.id ? data.id : uuidv4();
         let cdata: any;
-        console.log(data?.type);
         switch (data?.type) {
             case "videoctrl":
                 handler.markDirty(true);
@@ -131,7 +130,6 @@ export const CreateCommand: ICommand<
                         { ...commandInfo, id, owner: data.owner },
                         {
                             displayName: data.displayName,
-                            automation: true,
                             channel: cdata.channel,
                             source: cdata.source,
                             direction: ClockDirection.COUNTUP
@@ -148,7 +146,6 @@ export const CreateCommand: ICommand<
                         { ...commandInfo, id, owner: data.owner },
                         {
                             displayName: data.displayName,
-                            automation: true,
                             channel: cdata.channel,
                             direction: ClockDirection.COUNTUP
                         }
@@ -165,8 +162,7 @@ export const CreateCommand: ICommand<
                         {
                             displayName: data.displayName,
                             behaviour: cdata.behaviour as ClockBehaviour,
-                            time: new SMPTE(cdata.time),
-                            automation: true
+                            time: new SMPTE(cdata.time)
                         }
                     )
                 );
@@ -182,8 +178,7 @@ export const CreateCommand: ICommand<
                             displayName: data.displayName,
                             behaviour: cdata.behaviour as ClockBehaviour,
                             direction: cdata.direction as ClockDirection,
-                            time: new SMPTE(cdata.time),
-                            automation: true
+                            time: new SMPTE(cdata.time)
                         }
                     )
                 );
@@ -198,10 +193,8 @@ export const CreateCommand: ICommand<
                         {
                             displayName: data.displayName,
                             authority: cdata.authority,
-                            behaviour:
-                                cdata.behaviour as ClockBehaviour,
-                            time: new SMPTE(cdata.time),
-                            automation: true
+                            behaviour: cdata.behaviour as ClockBehaviour,
+                            time: new SMPTE(cdata.time)
                         }
                     )
                 );
@@ -220,8 +213,7 @@ export const CreateCommand: ICommand<
                                     authority: cdata.authority,
                                     behaviour:
                                         cdata.behaviour as ClockBehaviour,
-                                    time: new SMPTE(cdata.time),
-                                    automation: true
+                                    time: new SMPTE(cdata.time)
                                 }
                             )
                         );
@@ -238,8 +230,7 @@ export const CreateCommand: ICommand<
                                     authority: cdata.authority,
                                     behaviour:
                                         cdata.behaviour as ClockBehaviour,
-                                    time: new SMPTE(cdata.time),
-                                    automation: true
+                                    time: new SMPTE(cdata.time)
                                 }
                             )
                         );

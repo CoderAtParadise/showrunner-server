@@ -1,115 +1,146 @@
 import {
-    MutableClockSource,
     SMPTE,
     getSyncClock,
-    ClockState,
+    ClockStatus,
     Offset,
     BaseClockSettings,
-    ClockIdentifier
+    ClockIdentifier,
+    ClockSource,
+    ClockBehaviour,
+    ControlBar
 } from "@coderatparadise/showrunner-common";
 import { EventHandler } from "../Scheduler";
-import { ClockBehaviour, ClockSettingsBase } from "./ClockData";
+import { ClockSettingsBase } from "./ClockData";
 
-export class TODClockSource implements MutableClockSource<ClockSettingsBase> {
+export class TODClockSource implements ClockSource<ClockSettingsBase> {
     constructor(
         identifier: ClockIdentifier,
         settings: BaseClockSettings & ClockSettingsBase
     ) {
         this.identifier = identifier;
-        this.settings = settings;
+        this._settings = settings;
     }
 
-    incorrectFramerate(): boolean {
+    status(): ClockStatus {
+        return this._status;
+    }
+
+    displayName(): string {
+        return this._settings.displayName;
+    }
+
+    controlBar(): ControlBar[] {
+        return [ControlBar.PLAY_PAUSE, ControlBar.STOP, ControlBar.RESET];
+    }
+
+    hasIncorrectFrameRate(): boolean {
         return false;
+    }
+
+    isOverrun(): boolean {
+        return this._overrun;
+    }
+
+    settings(): BaseClockSettings & ClockSettingsBase {
+        return this._settings;
     }
 
     current(): SMPTE {
         if (
-            this.state === ClockState.STOPPED ||
-            this.state === ClockState.PAUSED
+            this.status() === ClockStatus.STOPPED ||
+            this.status() === ClockStatus.PAUSED
         )
-            return this.stopTime;
-        if (this.state === ClockState.RESET) return this.settings.time;
-        if (this.completed) {
-            if (this.overrun) {
+            return this._stopTime;
+        if (this.status() === ClockStatus.RESET) return this._settings.time;
+        if (this._complete) {
+            if (this._overrun) {
                 return getSyncClock()
                     .current()
-                    .subtract(this.settings.time, true)
+                    .subtract(this._settings.time, true)
                     .setOffset(Offset.START);
             } else return new SMPTE("00:00:00:00");
         }
-        return this.settings.time
+        return this._settings.time
             .subtract(getSyncClock().current(), true)
             .setOffset(Offset.END);
     }
 
     duration(): SMPTE {
-        return this.settings.time;
+        return this._settings.time;
     }
 
-    start(): void {
-        if (this.state === ClockState.STOPPED) this.reset();
-        if (this.state !== ClockState.RUNNING) {
-            EventHandler.emit("clock.start", this.identifier);
-            this.state = ClockState.RUNNING;
+    play(): void {
+        if (this.status() === ClockStatus.STOPPED) this.reset();
+        if (this._status !== ClockStatus.RUNNING) {
+            EventHandler.emit("clock.play", this.identifier);
+            this._status = ClockStatus.RUNNING;
         }
     }
 
-    setTime(time: SMPTE): void {}
+    setTime(): void {
+        // NOOP
+    }
 
     stop(): void {
-        if (this.state !== ClockState.STOPPED) {
+        if (this._status !== ClockStatus.STOPPED) {
             EventHandler.emit("clock.stop", this.identifier);
-            this.state = ClockState.STOPPED;
-            this.stopTime = getSyncClock().current();
+            this._status = ClockStatus.STOPPED;
+            this._stopTime = getSyncClock().current();
         }
     }
 
     pause(): void {
-        if (this.state === ClockState.RUNNING) {
+        if (this.status() === ClockStatus.RUNNING) {
             EventHandler.emit("clock.pause", this.identifier);
-            this.state = ClockState.PAUSED;
-            this.stopTime = getSyncClock().current();
+            this._status = ClockStatus.PAUSED;
+            this._stopTime = getSyncClock().current();
         }
     }
 
     reset(): void {
-        if (this.state !== ClockState.STOPPED) this.stop();
+        if (this._status !== ClockStatus.STOPPED) this.stop();
         EventHandler.emit("clock.reset", this.identifier);
-        this.state = ClockState.RESET;
-        this.overrun = false;
-        this.completed = false;
-        this.stopTime = new SMPTE();
+        this._status = ClockStatus.RESET;
+        this._overrun = false;
+        this._complete = false;
+        this._stopTime = new SMPTE();
     }
 
     update(): void {
         if (
-            this.state === ClockState.RUNNING &&
-            !this.overrun &&
-            getSyncClock().current().greaterThanOrEqual(this.settings.time)
+            this.status() === ClockStatus.RUNNING &&
+            !this._overrun &&
+            getSyncClock().current().greaterThanOrEqual(this._settings.time)
         ) {
             EventHandler.emit("clock.complete", this.identifier);
-            this.completed = true;
-            if (this.settings.behaviour !== ClockBehaviour.OVERRUN) this.stop();
+            this._complete = true;
+            if (this._settings.behaviour !== ClockBehaviour.OVERRUN)
+                this.stop();
             else {
                 EventHandler.emit("clock.overrun", this.identifier);
-                this.overrun = true;
+                this._overrun = true;
             }
         }
     }
 
-    setData(data: any): void {
-        if (data?.displayName as string)
-            this.settings.displayName = data.displayName;
-        if (data?.time as string) this.settings.time = new SMPTE(data.time);
-        if (data?.behaviour as string) this.settings.behaviour = data.behaviour;
+    updateSettings(settings: any): BaseClockSettings & ClockSettingsBase {
+        if (settings?.displayName as string)
+            this._settings.displayName = settings.displayName;
+        if (settings?.time as string) this._settings.time = new SMPTE(settings.time);
+        if (settings?.behaviour as string)
+            this._settings.behaviour = settings.behaviour;
+        return this._settings;
+    }
+
+    data(): object {
+        return {};
     }
 
     type: string = "tod";
     identifier: ClockIdentifier;
-    state: ClockState = ClockState.RESET;
-    overrun: boolean = false;
-    private stopTime: SMPTE = new SMPTE();
-    private completed: boolean = false;
-    settings: BaseClockSettings & ClockSettingsBase;
+    private _status: ClockStatus = ClockStatus.RESET;
+    private _overrun: boolean = false;
+    private _stopTime: SMPTE = new SMPTE();
+    private _complete: boolean = false;
+    private _settings: BaseClockSettings & ClockSettingsBase;
 }

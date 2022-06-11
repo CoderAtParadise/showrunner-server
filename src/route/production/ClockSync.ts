@@ -67,10 +67,10 @@ router.get(
                                 identifier: clock.identifier,
                                 currentState: {
                                     current: clock.current().toString(),
-                                    state: clock.state,
-                                    overrun: clock.overrun,
+                                    state: clock.status(),
+                                    overrun: clock.isOverrun(),
                                     incorrectFramerate:
-                                        clock.incorrectFramerate()
+                                        clock.hasIncorrectFrameRate()
                                 }
                             };
                         });
