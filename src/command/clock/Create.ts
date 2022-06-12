@@ -120,7 +120,6 @@ export const CreateCommand: ICommand<
         }
         const id = data?.id ? data.id : uuidv4();
         let cdata: any;
-        console.log(data?.type);
         switch (data?.type) {
             case "videoctrl":
                 handler.markDirty(true);

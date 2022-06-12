@@ -14,17 +14,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@coderatparadise/amp-grassvalley@portal:/D:/Dev/amp-grassvalley::locator=showrunner-server%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@coderatparadise/amp-grassvalley@portal:/D:/Dev/amp-grassvalley::locator=showrunner-server%40workspace%3A."
+"@coderatparadise/amp-grassvalley@npm:^1.0.0":
+  version: 1.0.0
+  resolution: "@coderatparadise/amp-grassvalley@npm:1.0.0::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40coderatparadise%2Famp-grassvalley%2F1.0.0%2F4b3ceb1e08fc2326746adefdb12d9bbfdfa78a1770d05d589eace2e7098b4884"
+  checksum: e761c763ecf9e205e9733d6a5b16e8b552bb7bad334edfe66c11b39fedeed18ace6aae056143f4400a503526626a1abc05a10246201cc7c54dae54ce8f2d4de1
   languageName: node
-  linkType: soft
+  linkType: hard
 
-"@coderatparadise/showrunner-common@portal:/D:/Dev/showrunner-common::locator=showrunner-server%40workspace%3A.":
-  version: 0.0.0-use.local
-  resolution: "@coderatparadise/showrunner-common@portal:/D:/Dev/showrunner-common::locator=showrunner-server%40workspace%3A."
+"@coderatparadise/showrunner-common@npm:^0.1.1":
+  version: 0.1.1
+  resolution: "@coderatparadise/showrunner-common@npm:0.1.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40coderatparadise%2Fshowrunner-common%2F0.1.1%2F0a03abd5520a2c2186a8399c867e4117211189aaf7221dc3b580ab6d4b7d2ebd"
+  checksum: d5e534f80b658d162d683036b514837109ffb1eff397daae6180fb5e853473c5c9e69deed38d8a97cfe78fadbff8a2dc8cf48a16a510fe4acd9aa532c6c517f0
   languageName: node
-  linkType: soft
+  linkType: hard
 
 "@cspotcode/source-map-support@npm:^0.8.0":
   version: 0.8.1
@@ -3951,7 +3953,7 @@ __metadata:
   resolution: "showrunner-server@workspace:."
   dependencies:
     "@coderatparadise/amp-grassvalley": ^1.0.0
-    "@coderatparadise/showrunner-common": ^0.5.3
+    "@coderatparadise/showrunner-common": ^0.1.1
     "@types/body-parser": ^1.19.2
     "@types/cors": ^2.8.12
     "@types/debug": ^4.1.7

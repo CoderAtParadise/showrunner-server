@@ -33,8 +33,8 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         [null, {\
           "packageLocation": "./",\
           "packageDependencies": [\
-            ["@coderatparadise/amp-grassvalley", "portal:/D:/Dev/amp-grassvalley::locator=showrunner-server%40workspace%3A."],\
-            ["@coderatparadise/showrunner-common", "portal:/D:/Dev/showrunner-common::locator=showrunner-server%40workspace%3A."],\
+            ["@coderatparadise/amp-grassvalley", "npm:1.0.0::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40coderatparadise%2Famp-grassvalley%2F1.0.0%2F4b3ceb1e08fc2326746adefdb12d9bbfdfa78a1770d05d589eace2e7098b4884"],\
+            ["@coderatparadise/showrunner-common", "npm:0.1.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40coderatparadise%2Fshowrunner-common%2F0.1.1%2F0a03abd5520a2c2186a8399c867e4117211189aaf7221dc3b580ab6d4b7d2ebd"],\
             ["@types/body-parser", "npm:1.19.2"],\
             ["@types/cors", "npm:2.8.12"],\
             ["@types/debug", "npm:4.1.7"],\
@@ -83,21 +83,21 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
         }]\
       ]],\
       ["@coderatparadise/amp-grassvalley", [\
-        ["portal:/D:/Dev/amp-grassvalley::locator=showrunner-server%40workspace%3A.", {\
-          "packageLocation": "../amp-grassvalley/",\
+        ["npm:1.0.0::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40coderatparadise%2Famp-grassvalley%2F1.0.0%2F4b3ceb1e08fc2326746adefdb12d9bbfdfa78a1770d05d589eace2e7098b4884", {\
+          "packageLocation": "./.yarn/cache/@coderatparadise-amp-grassvalley-npm-1.0.0-62a2159709-e761c763ec.zip/node_modules/@coderatparadise/amp-grassvalley/",\
           "packageDependencies": [\
-            ["@coderatparadise/amp-grassvalley", "portal:/D:/Dev/amp-grassvalley::locator=showrunner-server%40workspace%3A."]\
+            ["@coderatparadise/amp-grassvalley", "npm:1.0.0::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40coderatparadise%2Famp-grassvalley%2F1.0.0%2F4b3ceb1e08fc2326746adefdb12d9bbfdfa78a1770d05d589eace2e7098b4884"]\
           ],\
-          "linkType": "SOFT"\
+          "linkType": "HARD"\
         }]\
       ]],\
       ["@coderatparadise/showrunner-common", [\
-        ["portal:/D:/Dev/showrunner-common::locator=showrunner-server%40workspace%3A.", {\
-          "packageLocation": "../showrunner-common/",\
+        ["npm:0.1.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40coderatparadise%2Fshowrunner-common%2F0.1.1%2F0a03abd5520a2c2186a8399c867e4117211189aaf7221dc3b580ab6d4b7d2ebd", {\
+          "packageLocation": "./.yarn/cache/@coderatparadise-showrunner-common-npm-0.1.1-bba167ca79-d5e534f80b.zip/node_modules/@coderatparadise/showrunner-common/",\
           "packageDependencies": [\
-            ["@coderatparadise/showrunner-common", "portal:/D:/Dev/showrunner-common::locator=showrunner-server%40workspace%3A."]\
+            ["@coderatparadise/showrunner-common", "npm:0.1.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40coderatparadise%2Fshowrunner-common%2F0.1.1%2F0a03abd5520a2c2186a8399c867e4117211189aaf7221dc3b580ab6d4b7d2ebd"]\
           ],\
-          "linkType": "SOFT"\
+          "linkType": "HARD"\
         }]\
       ]],\
       ["@cspotcode/source-map-support", [\
@@ -4770,8 +4770,8 @@ function $$SETUP_STATE(hydrateRuntimeState, basePath) {
           "packageLocation": "./",\
           "packageDependencies": [\
             ["showrunner-server", "workspace:."],\
-            ["@coderatparadise/amp-grassvalley", "portal:/D:/Dev/amp-grassvalley::locator=showrunner-server%40workspace%3A."],\
-            ["@coderatparadise/showrunner-common", "portal:/D:/Dev/showrunner-common::locator=showrunner-server%40workspace%3A."],\
+            ["@coderatparadise/amp-grassvalley", "npm:1.0.0::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40coderatparadise%2Famp-grassvalley%2F1.0.0%2F4b3ceb1e08fc2326746adefdb12d9bbfdfa78a1770d05d589eace2e7098b4884"],\
+            ["@coderatparadise/showrunner-common", "npm:0.1.1::__archiveUrl=https%3A%2F%2Fnpm.pkg.github.com%2Fdownload%2F%40coderatparadise%2Fshowrunner-common%2F0.1.1%2F0a03abd5520a2c2186a8399c867e4117211189aaf7221dc3b580ab6d4b7d2ebd"],\
             ["@types/body-parser", "npm:1.19.2"],\
             ["@types/cors", "npm:2.8.12"],\
             ["@types/debug", "npm:4.1.7"],\
